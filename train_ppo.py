@@ -31,6 +31,7 @@ model = PPO(
     vf_coef=0.5,
     max_grad_norm=0.5,
     tensorboard_log="./ppo_minigrid_tensorboard/",
+    device="cuda",
 )
 
 # Train the model

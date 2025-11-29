@@ -34,6 +34,7 @@ model = DQN(
     exploration_final_eps=0.05,
     max_grad_norm=10,
     tensorboard_log="./dqn_minigrid_tensorboard/",
+    device="cuda",
 )
 
 # Train the model
