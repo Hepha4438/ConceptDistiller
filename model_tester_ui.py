@@ -71,6 +71,22 @@ class ProgressCallback(BaseCallback):
         return True
 
 
+class StopTrainingCallback(BaseCallback):
+    """Callback to stop training when flag is set"""
+    def __init__(self, stop_flag, verbose=0):
+        super().__init__(verbose)
+        self.stop_flag = stop_flag  # Should be a function that returns True to stop
+        
+    def _on_step(self) -> bool:
+        # Return False to stop training, True to continue
+        return not self.stop_flag()
+
+
+def get_stop_flag(ui_instance):
+    """Helper function to check if training should stop"""
+    return not ui_instance.is_training
+
+
 def run_env_human_mode(model_path, env_id, algorithm, num_episodes, result_queue):
     """Run environment in human mode in a separate process"""
     try:
@@ -706,17 +722,32 @@ class ModelTesterUI:
                 )
                 
                 progress_callback = ProgressCallback(self.training_queue, total_timesteps)
+                stop_callback = StopTrainingCallback(lambda: not self.is_training)
                 
                 from stable_baselines3.common.callbacks import CallbackList
-                callback = CallbackList([checkpoint_callback, eval_callback, progress_callback])
+                callback = CallbackList([checkpoint_callback, eval_callback, progress_callback, stop_callback])
                 
                 # Train with callback
-                model.learn(
-                    total_timesteps=total_timesteps,
-                    callback=callback,
-                    tb_log_name=run_name,
-                    progress_bar=False
-                )
+                try:
+                    model.learn(
+                        total_timesteps=total_timesteps,
+                        callback=callback,
+                        tb_log_name=run_name,
+                        progress_bar=False
+                    )
+                except KeyboardInterrupt:
+                    # Handle manual stop
+                    pass
+                
+                # Check if training was stopped early
+                if not self.is_training:
+                    self.training_queue.put(('stopped', {
+                        'algo': algo,
+                        'env_id': env_id
+                    }))
+                    train_env.close()
+                    eval_env.close()
+                    return
                 
                 # Copy best_model.zip from last_train/ to final location with numbered name
                 best_model_in_last_train = f"{checkpoint_dir}/best_model.zip"
@@ -809,17 +840,32 @@ class ModelTesterUI:
                 )
                 
                 progress_callback = ProgressCallback(self.training_queue, total_timesteps)
+                stop_callback = StopTrainingCallback(lambda: not self.is_training)
                 
                 from stable_baselines3.common.callbacks import CallbackList
-                callback = CallbackList([checkpoint_callback, eval_callback, progress_callback])
+                callback = CallbackList([checkpoint_callback, eval_callback, progress_callback, stop_callback])
                 
                 # Train with callback
-                model.learn(
-                    total_timesteps=total_timesteps,
-                    callback=callback,
-                    tb_log_name=run_name,
-                    progress_bar=False
-                )
+                try:
+                    model.learn(
+                        total_timesteps=total_timesteps,
+                        callback=callback,
+                        tb_log_name=run_name,
+                        progress_bar=False
+                    )
+                except KeyboardInterrupt:
+                    # Handle manual stop
+                    pass
+                
+                # Check if training was stopped early
+                if not self.is_training:
+                    self.training_queue.put(('stopped', {
+                        'algo': algo,
+                        'env_id': env_id
+                    }))
+                    train_env.close()
+                    eval_env.close()
+                    return
                 
                 # Copy best_model.zip from last_train/ to final location with numbered name
                 best_model_in_last_train = f"{checkpoint_dir}/best_model.zip"
@@ -908,6 +954,20 @@ class ModelTesterUI:
                     self.train_log.see(tk.END)
                     
                     messagebox.showerror("Training Error", f"An error occurred:\n{data}")
+                
+                elif msg_type == 'stopped':
+                    self.is_training = False
+                    self.train_button.config(state=tk.NORMAL)
+                    self.stop_button.config(state=tk.DISABLED)
+                    self.train_status_var.set("Training stopped!")
+                    
+                    self.train_log.insert(tk.END, "\n" + "=" * 50 + "\n")
+                    self.train_log.insert(tk.END, f"Training stopped at {datetime.now().strftime('%H:%M:%S')}\n")
+                    self.train_log.insert(tk.END, f"Training was stopped early for {data['env_id']} - {data['algo']}\n")
+                    self.train_log.see(tk.END)
+                    
+                    messagebox.showinfo("Training Stopped", 
+                        f"Training stopped!\n\nEnvironment: {data['env_id']}\nAlgorithm: {data['algo']}\n\nAny checkpoints saved in last_train/ folder.")
         
         except queue.Empty:
             pass
@@ -967,7 +1027,7 @@ class ModelTesterUI:
         """Create the results display interface"""
         # Results table
         columns = ("Environment", "Algorithm", "Model", "Episodes", "Mode", "Avg Reward", 
-                  "Std Reward", "Avg Steps", "Std Steps", "Success Rate", "Test Time")
+                  "Std Reward", "Avg Steps", "Std Steps", "Success Rate", "Test Time", "Video")
         
         self.results_tree = ttk.Treeview(self.results_frame, columns=columns, show="headings")
         
@@ -975,8 +1035,13 @@ class ModelTesterUI:
             self.results_tree.heading(col, text=col)
             if col == "Model":
                 self.results_tree.column(col, width=200)  # Wider for model names
+            elif col == "Video":
+                self.results_tree.column(col, width=80)   # Narrower for video button
             else:
                 self.results_tree.column(col, width=120)
+        
+        # Bind double-click event to handle video opening
+        self.results_tree.bind('<Double-1>', self.on_result_double_click)
         
         # Scrollbars
         results_scroll_y = ttk.Scrollbar(self.results_frame, orient="vertical", 
@@ -999,6 +1064,15 @@ class ModelTesterUI:
                   command=self.export_results).pack(side=tk.LEFT, padx=5)
         ttk.Button(button_frame, text="Clear Results", 
                   command=self.clear_results).pack(side=tk.LEFT, padx=5)
+        
+        # Help text
+        help_frame = ttk.Frame(self.results_frame)
+        help_frame.pack(fill=tk.X, padx=10, pady=(0, 5))
+        
+        help_label = ttk.Label(help_frame, 
+                              text="💡 Tip: Double-click on a row with '📹 Available' to watch the video!",
+                              font=('Arial', 9), foreground='blue')
+        help_label.pack(side=tk.LEFT)
     
     def load_models(self):
         """Scan the models directory and populate the tree"""
@@ -1305,10 +1379,17 @@ class ModelTesterUI:
     
     def add_result_to_table(self, result):
         """Add a test result to the results table"""
+        # Check if video exists for this model
+        env_id = result['env_id']
+        algorithm = result['algorithm']
+        model_file = result.get('model_file', 'N/A')
+        
+        video_status = "📹 Available" if self.check_video_exists(env_id, algorithm, model_file) else "❌ Not Available"
+        
         values = (
-            result['env_id'],
-            result['algorithm'],
-            result.get('model_file', 'N/A'),  # Add model filename
+            env_id,
+            algorithm,
+            model_file,  # Add model filename
             result['episodes'],
             result['mode'],
             f"{result['avg_reward']:.3f}",
@@ -1316,7 +1397,8 @@ class ModelTesterUI:
             f"{result['avg_steps']:.1f}",
             f"{result['std_steps']:.1f}",
             f"{result['success_rate']:.1f}%",
-            f"{result['test_time']:.1f}s"
+            f"{result['test_time']:.1f}s",
+            video_status  # Add video status
         )
         
         self.results_tree.insert("", "end", values=values)
@@ -1347,6 +1429,74 @@ class ModelTesterUI:
             for item in self.results_tree.get_children():
                 self.results_tree.delete(item)
             self.status_text.delete(1.0, tk.END)
+
+    def on_result_double_click(self, event):
+        """Handle double-click on results table to open video"""
+        selection = self.results_tree.selection()
+        if not selection:
+            return
+            
+        item = selection[0]
+        values = self.results_tree.item(item, 'values')
+        if len(values) < 12:  # Ensure we have all columns including Video
+            return
+            
+        env_id = values[0]
+        algorithm = values[1]
+        model_name = values[2]
+        video_status = values[11]  # Video column
+        
+        if "📹 Available" in video_status:
+            self.open_video(env_id, algorithm, model_name)
+        else:
+            messagebox.showinfo("No Video", f"No video available for {model_name}\n\nRun a test with this model to generate a video.")
+    
+    def open_video(self, env_id, algorithm, model_name):
+        """Open video file using system default video player"""
+        import subprocess
+        import platform
+        
+        # Construct video path based on test_agent.py naming convention
+        model_dir = model_name.replace('.zip', '')
+        video_dir = f"./video/{env_id}/{algorithm.lower()}/{model_dir}"
+        
+        # Find video file in directory
+        import glob
+        video_files = glob.glob(f"{video_dir}/*.mp4")
+        
+        if not video_files:
+            messagebox.showerror("Video Not Found", 
+                f"No video files found in: {video_dir}")
+            return
+            
+        video_path = video_files[0]  # Take the first (should be only one)
+        
+        try:
+            system = platform.system()
+            if system == "Darwin":  # macOS
+                subprocess.run(["open", video_path])
+            elif system == "Windows":
+                subprocess.run(["start", video_path], shell=True)
+            else:  # Linux
+                subprocess.run(["xdg-open", video_path])
+                
+            print(f"Opening video: {video_path}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not open video: {str(e)}")
+    
+    def check_video_exists(self, env_id, algorithm, model_name):
+        """Check if video file exists for given model"""
+        model_dir = model_name.replace('.zip', '')
+        video_dir = f"./video/{env_id}/{algorithm.lower()}/{model_dir}"
+        
+        import glob
+        import os
+        
+        if not os.path.exists(video_dir):
+            return False
+            
+        video_files = glob.glob(f"{video_dir}/*.mp4")
+        return len(video_files) > 0
 
 def main():
     # Set multiprocessing start method to avoid issues on macOS
