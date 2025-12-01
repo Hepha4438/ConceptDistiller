@@ -21,6 +21,29 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 from minigrid_features_extractor import MinigridFeaturesExtractor
 import numpy as np
 
+def get_next_model_number(save_dir, prefix="dqn_minigrid"):
+    """
+    Find the next available model number (000-999) in the save directory.
+    Scans for existing files matching pattern: {prefix}_XXX.zip
+    Returns the next number after the highest found.
+    """
+    if not os.path.exists(save_dir):
+        return 0
+
+    # Find all files matching the pattern
+    pattern = re.compile(rf"{re.escape(prefix)}_(\d{{3}})\.zip")
+    existing_numbers = []
+
+    for filename in os.listdir(save_dir):
+        match = pattern.match(filename)
+        if match:
+            existing_numbers.append(int(match.group(1)))
+
+    # Return next number (0 if none found)
+    if not existing_numbers:
+        return 0
+
+    return max(existing_numbers) + 1
 
 class DetailedLoggingCallback(BaseCallback):
     """
