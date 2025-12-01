@@ -121,7 +121,7 @@ def train_dqn(
     exploration_fraction=0.1,  # Linearly decay epsilon over 10% of training
     exploration_final_eps=0.01,  # Mnih et al. (2015): final epsilon = 0.01 (not 0.1)
     seed=0,
-    device="mps",
+    device="cuda",
 ):
     """
     Train DQN agent on MiniGrid environment.

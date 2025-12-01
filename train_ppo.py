@@ -117,7 +117,7 @@ def train_ppo(
     max_grad_norm=0.5,  # Gradient clipping: 0.5 (standard)
     n_envs=4,  # Number of parallel environments
     seed=0,
-    device="mps",
+    device="cuda",
 ):
     """
     Train PPO agent on MiniGrid environment.
