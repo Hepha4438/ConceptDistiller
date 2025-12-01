@@ -42,9 +42,9 @@ Examples:
                         help="Learning rate (default: auto-detect based on env)")
     parser.add_argument("--seed", type=int, default=42,
                         help="Random seed (default: 42)")
-    parser.add_argument("--device", type=str, default="mps",
+    parser.add_argument("--device", type=str, default="cuda",
                         choices=["cpu", "cuda", "mps"],
-                        help="Device to use for training (default: mps)")
+                        help="Device to use for training (default: cuda)")
     
     # DQN specific
     parser.add_argument("--buffer-size", type=int, default=None,
