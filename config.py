@@ -69,7 +69,7 @@ PPO_CONFIGS = {
     
     # Medium environments (8x8 to 16x16 grids)
     "medium": {
-        "total_timesteps": 300000,
+        "total_timesteps": 500000,
         "learning_rate": 3e-4,
         "n_steps": 2048,
         "batch_size": 64,
@@ -85,7 +85,23 @@ PPO_CONFIGS = {
     
     # Hard environments (complex tasks, large grids)
     "hard": {
-        "total_timesteps": 1000000,
+        "total_timesteps": 5000000,
+        "learning_rate": 3e-4,
+        "n_steps": 2048,
+        "batch_size": 64,
+        "n_epochs": 10,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": 0.2,
+        "ent_coef": 0.0,  # Pure exploitation for hard tasks
+        "vf_coef": 0.5,
+        "max_grad_norm": 0.5,
+        "n_envs": 8,
+    },
+
+    # Extremely hard environments (very complex tasks, very large grids)
+    "extreme": {
+        "total_timesteps": 10000000,
         "learning_rate": 3e-4,
         "n_steps": 2048,
         "batch_size": 64,
@@ -104,24 +120,29 @@ PPO_CONFIGS = {
 ENV_DIFFICULTY = {
     # Easy environments
     "MiniGrid-Empty-5x5-v0": "easy",
+    "MiniGrid-Empty-Random-5x5-v0": "easy",
     "MiniGrid-Empty-6x6-v0": "easy",
-    "MiniGrid-Empty-8x8-v0": "easy",
-    "MiniGrid-FourRooms-v0": "easy",
-    
+    "MiniGrid-Unlock-v0": "easy",
+
     # Medium environments
+    "MiniGrid-Empty-8x8-v0": "medium",
     "MiniGrid-DoorKey-5x5-v0": "medium",
+    "MiniGrid-KeyCorridorS3R1-v0": "medium",
     "MiniGrid-DoorKey-6x6-v0": "medium",
-    "MiniGrid-DoorKey-8x8-v0": "medium",
-    "MiniGrid-MultiRoom-N2-S4-v0": "medium",
-    "MiniGrid-MultiRoom-N4-S5-v0": "medium",
-    
+
     # Hard environments
-    "MiniGrid-DoorKey-16x16-v0": "hard",
-    "MiniGrid-MultiRoom-N6-v0": "hard",
-    "MiniGrid-KeyCorridorS3R3-v0": "hard",
-    "MiniGrid-ObstructedMaze-2Dlh-v0": "hard",
-    "MiniGrid-RedBlueDoors-6x6-v0": "hard",
-    "MiniGrid-LockedRoom-v0": "hard",
+    "MiniGrid-MultiRoom-N2-S4-v0": "hard",
+    "MiniGrid-Fetch-5x5-N2-v0": "hard",
+    "MiniGrid-GoToDoor-5x5-v0": "hard",
+    "MiniGrid-FourRooms-v0": "hard",
+
+    #Extremely hard environments
+    "MiniGrid-MultiRoom-N4-S5-v0": "extreme",
+    "MiniGrid-DoorKey-8x8-v0": "extreme",
+    "MiniGrid-PutNear-6x6-N2-v0": "extreme",
+    "MiniGrid-ObstructedMaze-2Dlh-v0": "extreme",
+    "MiniGrid-RedBlueDoors-6x6-v0": "extreme",
+    "MiniGrid-LockedRoom-v0": "extreme",
 }
 
 

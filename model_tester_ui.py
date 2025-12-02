@@ -240,11 +240,12 @@ class ModelTesterUI:
         
         # Load environment options from config.py instead of hardcoding
         from config import ENV_DIFFICULTY
-        # Sort by difficulty: easy → medium → hard
+        # Sort by difficulty: easy → medium → hard → extreme
         easy_envs = sorted([env for env, diff in ENV_DIFFICULTY.items() if diff == "easy"])
         medium_envs = sorted([env for env, diff in ENV_DIFFICULTY.items() if diff == "medium"])
         hard_envs = sorted([env for env, diff in ENV_DIFFICULTY.items() if diff == "hard"])
-        env_options = easy_envs + medium_envs + hard_envs
+        extreme_envs = sorted([env for env, diff in ENV_DIFFICULTY.items() if diff == "extreme"])
+        env_options = easy_envs + medium_envs + hard_envs + extreme_envs
         
         env_combo = ttk.Combobox(env_frame, textvariable=self.train_env_var, values=env_options, width=30)
         env_combo.grid(row=0, column=1, padx=5, pady=2)
