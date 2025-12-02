@@ -24,7 +24,7 @@ DQN_CONFIGS = {
     
     # Medium environments (8x8 to 16x16 grids)
     "medium": {
-        "total_timesteps": 300000,
+        "total_timesteps": 500000,
         "learning_rate": 1e-4,
         "buffer_size": 200000,
         "learning_starts": 2000,
@@ -37,7 +37,20 @@ DQN_CONFIGS = {
     
     # Hard environments (complex tasks, large grids)
     "hard": {
-        "total_timesteps": 1000000,
+        "total_timesteps": 5000000,
+        "learning_rate": 1e-4,
+        "buffer_size": 500000,
+        "learning_starts": 5000,
+        "batch_size": 32,
+        "gamma": 0.99,
+        "target_update_interval": 1000,
+        "exploration_fraction": 0.3,  # Extended exploration
+        "exploration_final_eps": 0.01,
+    },
+
+    # Extremely hard environments (very complex tasks, very large grids)
+    "extreme": {
+        "total_timesteps": 10000000,
         "learning_rate": 1e-4,
         "buffer_size": 500000,
         "learning_starts": 5000,
@@ -51,68 +64,68 @@ DQN_CONFIGS = {
 
 # PPO Hyperparameters - Based on Schulman et al. (2017) and OpenAI Baselines standards
 PPO_CONFIGS = {
-    # Easy environments (5x5 grids)
+    # Easy environments
     "easy": {
         "total_timesteps": 100000,
-        "learning_rate": 3e-4,  # Schulman et al. (2017): 3e-4 is standard for PPO
-        "n_steps": 2048,  # Rollout length (Schulman et al.: 128-2048)
-        "batch_size": 64,  # Minibatch size for SGD
-        "n_epochs": 10,  # Schulman et al. (2017): 3-10 epochs per update
-        "gamma": 0.99,  # Standard discount factor
-        "gae_lambda": 0.95,  # Schulman et al. (2016, GAE): 0.95
-        "clip_range": 0.2,  # Schulman et al. (2017): 0.2 clipping
-        "ent_coef": 0.0,  # Entropy coefficient (0.0 for no exploration bonus, 0.01 for exploration)
-        "vf_coef": 0.5,  # Value function coefficient
-        "max_grad_norm": 0.5,  # Gradient clipping
-        "n_envs": 4,  # Parallel environments
-    },
-    
-    # Medium environments (8x8 to 16x16 grids)
-    "medium": {
-        "total_timesteps": 500000,
-        "learning_rate": 3e-4,
+        "learning_rate": 7e-4,
         "n_steps": 2048,
-        "batch_size": 64,
+        "batch_size": 256,
         "n_epochs": 10,
         "gamma": 0.99,
         "gae_lambda": 0.95,
         "clip_range": 0.2,
-        "ent_coef": 0.0,
+        "ent_coef": 0.01,
         "vf_coef": 0.5,
         "max_grad_norm": 0.5,
-        "n_envs": 8,  # More parallel environments for efficiency
+        "n_envs": 4,
     },
     
-    # Hard environments (complex tasks, large grids)
-    "hard": {
-        "total_timesteps": 5000000,
-        "learning_rate": 3e-4,
+    # Medium environments
+    "medium": {
+        "total_timesteps": 500000,
+        "learning_rate": 7e-4,
         "n_steps": 2048,
-        "batch_size": 64,
+        "batch_size": 256,
         "n_epochs": 10,
         "gamma": 0.99,
         "gae_lambda": 0.95,
         "clip_range": 0.2,
-        "ent_coef": 0.0,  # Pure exploitation for hard tasks
+        "ent_coef": 0.01,
+        "vf_coef": 0.5,
+        "max_grad_norm": 0.5,
+        "n_envs": 8,
+    },
+    
+    # Hard environments
+    "hard": {
+        "total_timesteps": 2500000,
+        "learning_rate": 7e-4,
+        "n_steps": 2048,
+        "batch_size": 256,
+        "n_epochs": 10,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": 0.2,
+        "ent_coef": 0.01,
         "vf_coef": 0.5,
         "max_grad_norm": 0.5,
         "n_envs": 8,
     },
 
-    # Extremely hard environments (very complex tasks, very large grids)
+    # Extremely hard environments
     "extreme": {
         "total_timesteps": 10000000,
         "learning_rate": 3e-4,
         "n_steps": 2048,
-        "batch_size": 64,
+        "batch_size": 256,
         "n_epochs": 10,
         "gamma": 0.99,
         "gae_lambda": 0.95,
         "clip_range": 0.2,
-        "ent_coef": 0.0,  # Pure exploitation for hard tasks
+        "ent_coef": 0.01,
         "vf_coef": 0.5,
         "max_grad_norm": 0.5,
-        "n_envs": 8,
+        "n_envs": 16,
     }
 }
 
@@ -122,23 +135,23 @@ ENV_DIFFICULTY = {
     "MiniGrid-Empty-5x5-v0": "easy",
     "MiniGrid-Empty-Random-5x5-v0": "easy",
     "MiniGrid-Empty-6x6-v0": "easy",
-    "MiniGrid-Unlock-v0": "easy",
 
     # Medium environments
     "MiniGrid-Empty-8x8-v0": "medium",
     "MiniGrid-DoorKey-5x5-v0": "medium",
-    "MiniGrid-KeyCorridorS3R1-v0": "medium",
+    "MiniGrid-Unlock-v0": "medium",
     "MiniGrid-DoorKey-6x6-v0": "medium",
 
     # Hard environments
+    "MiniGrid-KeyCorridorS3R1-v0": "hard",
     "MiniGrid-MultiRoom-N2-S4-v0": "hard",
     "MiniGrid-Fetch-5x5-N2-v0": "hard",
     "MiniGrid-GoToDoor-5x5-v0": "hard",
     "MiniGrid-FourRooms-v0": "hard",
+    "MiniGrid-DoorKey-8x8-v0": "hard",
 
     #Extremely hard environments
     "MiniGrid-MultiRoom-N4-S5-v0": "extreme",
-    "MiniGrid-DoorKey-8x8-v0": "extreme",
     "MiniGrid-PutNear-6x6-N2-v0": "extreme",
     "MiniGrid-ObstructedMaze-2Dlh-v0": "extreme",
     "MiniGrid-RedBlueDoors-6x6-v0": "extreme",

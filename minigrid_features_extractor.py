@@ -21,16 +21,17 @@ class MinigridFeaturesExtractor(BaseFeaturesExtractor):
         self.cnn = nn.Sequential(
             # First conv layer: extract basic features
             nn.Conv2d(n_input_channels, 32, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(32),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
             
             # Second conv layer: extract complex features
             nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(64),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
             
             # Third conv layer: high-level features
             nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(64),
             nn.ReLU(),
             
             nn.Flatten(),
@@ -50,8 +51,4 @@ class MinigridFeaturesExtractor(BaseFeaturesExtractor):
         )
 
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
-        # Normalize observations to [0, 1] if not already normalized
-        # MiniGrid observations are typically in range [0, 255]
-        if observations.max() > 1.0:
-            observations = observations / 255.0
         return self.linear(self.cnn(observations))
