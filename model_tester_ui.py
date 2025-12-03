@@ -224,6 +224,11 @@ class ModelTesterUI:
         self.results_frame = ttk.Frame(notebook)
         notebook.add(self.results_frame, text="📊 Test Results")
         self.create_results_tab()
+        
+        # GradCAM Tab
+        self.gradcam_frame = ttk.Frame(notebook)
+        notebook.add(self.gradcam_frame, text="🔍 GradCAM Analysis")
+        self.create_gradcam_tab()
     
     def create_training_tab(self):
         """Create the training interface"""
@@ -1631,6 +1636,341 @@ class ModelTesterUI:
             
         video_files = glob.glob(f"{video_dir}/*.mp4")
         return len(video_files) > 0
+
+    def create_gradcam_tab(self):
+        """Create the GradCAM analysis interface"""
+        main_container = ttk.Frame(self.gradcam_frame)
+        main_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Left panel: Model selection and configuration
+        left_panel = ttk.LabelFrame(main_container, text="GradCAM Configuration", padding=10)
+        left_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
+        
+        # Model Selection
+        model_frame = ttk.LabelFrame(left_panel, text="Select PPO_CONCEPT Model", padding=5)
+        model_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        
+        # Treeview for models
+        tree_frame = ttk.Frame(model_frame)
+        tree_frame.pack(fill=tk.BOTH, expand=True)
+        
+        self.gradcam_tree = ttk.Treeview(tree_frame, columns=("Environment", "Model"), show="tree headings", height=15)
+        self.gradcam_tree.heading("Environment", text="Environment")
+        self.gradcam_tree.heading("Model", text="Model")
+        self.gradcam_tree.column("#0", width=30)
+        self.gradcam_tree.column("Environment", width=250)
+        self.gradcam_tree.column("Model", width=250)
+        
+        scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=self.gradcam_tree.yview)
+        self.gradcam_tree.configure(yscrollcommand=scrollbar.set)
+        
+        self.gradcam_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Buttons
+        btn_frame = ttk.Frame(model_frame)
+        btn_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Button(btn_frame, text="🔄 Refresh Models", command=self.load_gradcam_models).pack(side=tk.LEFT, padx=5)
+        
+        # Parameters
+        params_frame = ttk.LabelFrame(left_panel, text="Analysis Parameters", padding=5)
+        params_frame.pack(fill=tk.X, pady=5)
+        
+        # Episodes
+        ttk.Label(params_frame, text="Episodes to test:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=3)
+        self.gradcam_episodes_var = tk.IntVar(value=10)
+        episodes_spinbox = tk.Spinbox(params_frame, from_=1, to=100, textvariable=self.gradcam_episodes_var, width=10)
+        episodes_spinbox.grid(row=0, column=1, sticky=tk.W, padx=5, pady=3)
+        
+        # Device
+        ttk.Label(params_frame, text="Device:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=3)
+        self.gradcam_device_var = tk.StringVar(value="cpu")
+        device_combo = ttk.Combobox(params_frame, textvariable=self.gradcam_device_var, 
+                                    values=["cpu", "cuda", "mps"], width=10, state="readonly")
+        device_combo.grid(row=1, column=1, sticky=tk.W, padx=5, pady=3)
+        
+        # FPS for video
+        ttk.Label(params_frame, text="Video FPS:").grid(row=2, column=0, sticky=tk.W, padx=5, pady=3)
+        self.gradcam_fps_var = tk.IntVar(value=6)
+        fps_spinbox = tk.Spinbox(params_frame, from_=1, to=30, textvariable=self.gradcam_fps_var, width=10)
+        fps_spinbox.grid(row=2, column=1, sticky=tk.W, padx=5, pady=3)
+        
+        # Run button
+        run_frame = ttk.Frame(left_panel)
+        run_frame.pack(fill=tk.X, pady=10)
+        
+        self.gradcam_run_btn = ttk.Button(run_frame, text="▶️ Run GradCAM Analysis", 
+                                         command=self.run_gradcam_analysis)
+        self.gradcam_run_btn.pack(fill=tk.X, pady=5)
+        
+        # Status
+        status_frame = ttk.LabelFrame(left_panel, text="Status", padding=5)
+        status_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        
+        self.gradcam_status_var = tk.StringVar(value="Ready")
+        ttk.Label(status_frame, textvariable=self.gradcam_status_var, font=('Arial', 10)).pack(pady=5)
+        
+        self.gradcam_progress = ttk.Progressbar(status_frame, mode='indeterminate')
+        self.gradcam_progress.pack(fill=tk.X, padx=5, pady=5)
+        
+        # Result buttons
+        result_btn_frame = ttk.Frame(status_frame)
+        result_btn_frame.pack(fill=tk.X, pady=5)
+        
+        self.gradcam_open_dir_btn = ttk.Button(result_btn_frame, text="📁 Open Output Directory",
+                                               command=self.open_gradcam_directory, state=tk.DISABLED)
+        self.gradcam_open_dir_btn.pack(fill=tk.X, pady=2)
+        
+        self.gradcam_open_video_btn = ttk.Button(result_btn_frame, text="🎬 Open Video",
+                                                 command=self.open_gradcam_video, state=tk.DISABLED)
+        self.gradcam_open_video_btn.pack(fill=tk.X, pady=2)
+        
+        # Store last result paths
+        self.last_gradcam_dir = None
+        self.last_gradcam_video = None
+        
+        # Right panel: Output log
+        right_panel = ttk.LabelFrame(main_container, text="Analysis Log", padding=10)
+        right_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(5, 0))
+        
+        self.gradcam_log = scrolledtext.ScrolledText(right_panel, height=30, width=60, wrap=tk.WORD)
+        self.gradcam_log.pack(fill=tk.BOTH, expand=True)
+        
+        # Load models
+        self.load_gradcam_models()
+    
+    def load_gradcam_models(self):
+        """Load PPO_CONCEPT models from models directory"""
+        # Clear existing
+        for item in self.gradcam_tree.get_children():
+            self.gradcam_tree.delete(item)
+        
+        models_dir = "models"
+        if not os.path.exists(models_dir):
+            self.gradcam_log.insert(tk.END, "⚠️ Models directory not found!\n")
+            return
+        
+        count = 0
+        for env_id in sorted(os.listdir(models_dir)):
+            env_path = os.path.join(models_dir, env_id)
+            if not os.path.isdir(env_path):
+                continue
+            
+            ppo_concept_path = os.path.join(env_path, "ppo_concept")
+            if not os.path.exists(ppo_concept_path):
+                continue
+            
+            # Create environment node
+            env_node = self.gradcam_tree.insert("", "end", text="", values=(env_id, ""))
+            
+            # Add models
+            for model_file in sorted(os.listdir(ppo_concept_path)):
+                if model_file.endswith('.zip') and not model_file.startswith('.'):
+                    model_path = os.path.join(ppo_concept_path, model_file)
+                    self.gradcam_tree.insert(env_node, "end", text="", 
+                                           values=("", model_file),
+                                           tags=('model',))
+                    count += 1
+        
+        self.gradcam_log.insert(tk.END, f"✓ Loaded {count} PPO_CONCEPT models\n")
+        self.gradcam_log.see(tk.END)
+    
+    def run_gradcam_analysis(self):
+        """Run GradCAM analysis on selected model"""
+        selection = self.gradcam_tree.selection()
+        if not selection:
+            messagebox.showwarning("No Selection", "Please select a model to analyze!")
+            return
+        
+        # Get selected model
+        item = selection[0]
+        values = self.gradcam_tree.item(item, 'values')
+        
+        # Check if it's a model (not environment node)
+        if 'model' not in self.gradcam_tree.item(item, 'tags'):
+            messagebox.showwarning("Invalid Selection", "Please select a model (not an environment folder)!")
+            return
+        
+        # Get environment from parent
+        parent = self.gradcam_tree.parent(item)
+        parent_values = self.gradcam_tree.item(parent, 'values')
+        env_id = parent_values[0]
+        model_file = values[1]
+        
+        model_path = f"models/{env_id}/ppo_concept/{model_file}"
+        
+        if not os.path.exists(model_path):
+            messagebox.showerror("Error", f"Model file not found:\n{model_path}")
+            return
+        
+        # Get parameters
+        episodes = self.gradcam_episodes_var.get()
+        device = self.gradcam_device_var.get()
+        fps = self.gradcam_fps_var.get()
+        
+        # Output directory
+        model_name = model_file.replace('.zip', '')
+        out_dir = f"gradcam_out/{env_id}/ppo_concept/{model_name}"
+        
+        # Log start
+        self.gradcam_log.insert(tk.END, f"\n{'='*60}\n")
+        self.gradcam_log.insert(tk.END, f"Starting GradCAM Analysis\n")
+        self.gradcam_log.insert(tk.END, f"{'='*60}\n")
+        self.gradcam_log.insert(tk.END, f"Environment: {env_id}\n")
+        self.gradcam_log.insert(tk.END, f"Model: {model_file}\n")
+        self.gradcam_log.insert(tk.END, f"Episodes: {episodes}\n")
+        self.gradcam_log.insert(tk.END, f"Device: {device}\n")
+        self.gradcam_log.insert(tk.END, f"Output: {out_dir}\n")
+        self.gradcam_log.insert(tk.END, f"{'='*60}\n")
+        self.gradcam_log.see(tk.END)
+        
+        # Disable button and start progress
+        self.gradcam_run_btn.config(state=tk.DISABLED)
+        self.gradcam_progress.start(10)
+        self.gradcam_status_var.set("Running analysis...")
+        
+        # Run in thread
+        thread = threading.Thread(target=self._run_gradcam_thread, 
+                                 args=(model_path, env_id, episodes, device, out_dir, fps))
+        thread.daemon = True
+        thread.start()
+    
+    def _run_gradcam_thread(self, model_path, env_id, episodes, device, out_dir, fps):
+        """Run GradCAM analysis in background thread"""
+        try:
+            from test_agent_gradcam import run_and_collect_best_episode, generate_gradcam_for_best
+            
+            # Run episodes and collect best
+            self.gradcam_log.insert(tk.END, "\n🎮 Running episodes to find best...\n")
+            self.gradcam_log.see(tk.END)
+            
+            model, best_obs, frames, best_reward, _ = run_and_collect_best_episode(
+                model_path=model_path,
+                env_id=env_id,
+                algorithm="PPO_CONCEPT",
+                num_episodes=episodes,
+                deterministic=True,
+                device=device,
+                out_dir=out_dir,
+                max_steps=1000
+            )
+            
+            self.gradcam_log.insert(tk.END, f"✓ Best episode reward: {best_reward}\n")
+            self.gradcam_log.insert(tk.END, f"✓ Total frames: {len(best_obs)}\n")
+            self.gradcam_log.see(tk.END)
+            
+            # Generate GradCAM
+            self.gradcam_log.insert(tk.END, "\n🔍 Generating GradCAM visualizations...\n")
+            self.gradcam_log.see(tk.END)
+            
+            result_dir = generate_gradcam_for_best(
+                model=model,
+                best_obs=best_obs,
+                frames=frames,
+                out_dir=out_dir,
+                device=device,
+                fps=fps
+            )
+            
+            self.gradcam_log.insert(tk.END, f"\n{'='*60}\n")
+            self.gradcam_log.insert(tk.END, f"✅ Analysis Complete!\n")
+            self.gradcam_log.insert(tk.END, f"{'='*60}\n")
+            self.gradcam_log.insert(tk.END, f"Results saved to:\n{result_dir}\n")
+            self.gradcam_log.insert(tk.END, f"{'='*60}\n\n")
+            self.gradcam_log.see(tk.END)
+            
+            # Success
+            self.root.after(0, self._gradcam_complete, result_dir)
+            
+        except Exception as e:
+            import traceback
+            error_msg = f"Error: {str(e)}\n{traceback.format_exc()}"
+            self.gradcam_log.insert(tk.END, f"\n❌ ERROR:\n{error_msg}\n")
+            self.gradcam_log.see(tk.END)
+            self.root.after(0, self._gradcam_error, str(e))
+    
+    def _gradcam_complete(self, result_dir):
+        """Handle GradCAM completion"""
+        self.gradcam_progress.stop()
+        self.gradcam_run_btn.config(state=tk.NORMAL)
+        self.gradcam_status_var.set("✅ Analysis complete!")
+        
+        # Store paths
+        self.last_gradcam_dir = result_dir
+        
+        # Find video file
+        import glob
+        video_files = glob.glob(f"{result_dir}/*.mp4")
+        if video_files:
+            self.last_gradcam_video = video_files[0]
+            self.gradcam_open_video_btn.config(state=tk.NORMAL)
+        else:
+            self.last_gradcam_video = None
+            self.gradcam_open_video_btn.config(state=tk.DISABLED)
+        
+        # Enable directory button
+        self.gradcam_open_dir_btn.config(state=tk.NORMAL)
+        
+        # Ask to open (now with choice)
+        response = messagebox.askquestion("Complete", 
+            f"GradCAM analysis complete!\n\nWhat would you like to open?",
+            icon='info',
+            type=messagebox.YESNOCANCEL)
+        
+        if response == 'yes':  # Open directory
+            self.open_gradcam_directory()
+        elif response == 'no':  # Open video
+            self.open_gradcam_video()
+    
+    def _gradcam_error(self, error_msg):
+        """Handle GradCAM error"""
+        self.gradcam_progress.stop()
+        self.gradcam_run_btn.config(state=tk.NORMAL)
+        self.gradcam_status_var.set("❌ Error occurred")
+        messagebox.showerror("Analysis Error", f"An error occurred:\n\n{error_msg}")
+    
+    def open_gradcam_directory(self):
+        """Open the GradCAM output directory"""
+        if not self.last_gradcam_dir or not os.path.exists(self.last_gradcam_dir):
+            messagebox.showwarning("No Directory", "No output directory available.\nPlease run an analysis first.")
+            return
+        
+        import subprocess
+        import platform
+        
+        try:
+            if platform.system() == "Darwin":  # macOS
+                subprocess.run(["open", self.last_gradcam_dir])
+            elif platform.system() == "Windows":
+                subprocess.run(["explorer", self.last_gradcam_dir])
+            else:  # Linux
+                subprocess.run(["xdg-open", self.last_gradcam_dir])
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not open directory:\n{str(e)}")
+    
+    def open_gradcam_video(self):
+        """Open the GradCAM video file"""
+        if not self.last_gradcam_video or not os.path.exists(self.last_gradcam_video):
+            messagebox.showwarning("No Video", "No video file available.\nPlease run an analysis first.")
+            return
+        
+        import subprocess
+        import platform
+        
+        try:
+            system = platform.system()
+            if system == "Darwin":  # macOS
+                subprocess.run(["open", self.last_gradcam_video])
+            elif system == "Windows":
+                subprocess.run(["start", self.last_gradcam_video], shell=True)
+            else:  # Linux
+                subprocess.run(["xdg-open", self.last_gradcam_video])
+            
+            self.gradcam_log.insert(tk.END, f"\n📹 Opened video: {os.path.basename(self.last_gradcam_video)}\n")
+            self.gradcam_log.see(tk.END)
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not open video:\n{str(e)}")
 
 def main():
     # Set multiprocessing start method to avoid issues on macOS

@@ -21,6 +21,7 @@ import gymnasium as gym
 from PIL import Image
 from minigrid.wrappers import ImgObsWrapper
 from stable_baselines3 import PPO, DQN
+from train_ppo_concept import ConceptPPO
 
 # ============================================================
 # Helpers
@@ -145,12 +146,14 @@ def run_and_collect_best_episode(model_path,
     env = gym.make(env_id, render_mode="rgb_array")
     env = ImgObsWrapper(env)
 
-    if algorithm.upper().startswith("PPO"):
+    if algorithm.upper() == "PPO_CONCEPT":
+        model = ConceptPPO.load(model_path, env=env, device=device)
+    elif algorithm.upper().startswith("PPO"):
         model = PPO.load(model_path, env=env, device=device)
     elif algorithm.upper() == "DQN":
         model = DQN.load(model_path, env=env, device=device)
     else:
-        raise ValueError("Unknown algorithm")
+        raise ValueError(f"Unknown algorithm: {algorithm}")
 
     best_reward = -1e9
     best_obs = None
