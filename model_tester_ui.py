@@ -10,11 +10,12 @@ import multiprocessing
 import gymnasium as gym
 from minigrid.wrappers import ImgObsWrapper
 from stable_baselines3 import PPO, DQN
+from train_ppo_concept import ConceptPPO
 from stable_baselines3.common.callbacks import BaseCallback
 import numpy as np
 from datetime import datetime
 
-from config import get_dqn_config, get_ppo_config, ENV_DIFFICULTY
+from config import get_dqn_config, get_ppo_config, get_ppo_concept_config, ENV_DIFFICULTY
 
 
 def get_next_model_number(save_dir, prefix="minigrid"):
@@ -93,6 +94,7 @@ def run_env_human_mode(model_path, env_id, algorithm, num_episodes, result_queue
         import gymnasium as gym
         from minigrid.wrappers import ImgObsWrapper
         from stable_baselines3 import PPO, DQN
+        from train_ppo_concept import ConceptPPO
         import numpy as np
         from datetime import datetime
         
@@ -105,6 +107,8 @@ def run_env_human_mode(model_path, env_id, algorithm, num_episodes, result_queue
             model = PPO.load(model_path, env=env)
         elif algorithm.upper() == "DQN":
             model = DQN.load(model_path, env=env)
+        elif algorithm.upper() == "PPO_CONCEPT":
+            model = ConceptPPO.load(model_path, env=env)
         else:
             raise ValueError(f"Unknown algorithm: {algorithm}")
         
@@ -257,7 +261,7 @@ class ModelTesterUI:
         
         ttk.Label(algo_frame, text="Select Algorithm:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=2)
         self.train_algo_var = tk.StringVar(value="PPO")
-        algo_combo = ttk.Combobox(algo_frame, textvariable=self.train_algo_var, values=["PPO", "DQN"], width=15)
+        algo_combo = ttk.Combobox(algo_frame, textvariable=self.train_algo_var, values=["PPO", "DQN", "PPO_CONCEPT"], width=15)
         algo_combo.grid(row=0, column=1, padx=5, pady=2, sticky=tk.W)
         algo_combo.bind('<<ComboboxSelected>>', self.on_algo_changed)
         
@@ -517,8 +521,12 @@ class ModelTesterUI:
         # Get config based on algo
         if algo == "DQN":
             config = get_dqn_config(env_id)
-        else:
+        elif algo == "PPO":
             config = get_ppo_config(env_id)
+        elif algo == "PPO_CONCEPT":
+            config = get_ppo_concept_config(env_id)
+        else:
+            config = get_ppo_config(env_id)  # fallback
         
         # Create widgets for each hyperparameter
         row = 0
@@ -768,7 +776,7 @@ class ModelTesterUI:
                     'save_path': final_save_path + '.zip'
                 }))
                     
-            else:  # PPO
+            elif algo == "PPO":  # PPO
                 from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
                 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
                 from train_ppo import make_env
@@ -826,6 +834,131 @@ class ModelTesterUI:
                     save_freq=max(10000 // n_envs, 1),
                     save_path=checkpoint_dir,  # Save to last_train/
                     name_prefix="ppo_checkpoint",
+                    save_replay_buffer=False,
+                    save_vecnormalize=True,
+                )
+                
+                eval_callback = EvalCallback(
+                    eval_env,
+                    best_model_save_path=checkpoint_dir,  # Save to last_train/ during training
+                    log_path=checkpoint_dir,  # evaluations.npz also in last_train/
+                    eval_freq=max(5000 // n_envs, 1),
+                    n_eval_episodes=10,
+                    deterministic=True,
+                    render=False,
+                )
+                
+                progress_callback = ProgressCallback(self.training_queue, total_timesteps)
+                stop_callback = StopTrainingCallback(lambda: not self.is_training)
+                
+                from stable_baselines3.common.callbacks import CallbackList
+                callback = CallbackList([checkpoint_callback, eval_callback, progress_callback, stop_callback])
+                
+                # Train with callback
+                try:
+                    model.learn(
+                        total_timesteps=total_timesteps,
+                        callback=callback,
+                        tb_log_name=run_name,
+                        progress_bar=False
+                    )
+                except KeyboardInterrupt:
+                    # Handle manual stop
+                    pass
+                
+                # Check if training was stopped early
+                if not self.is_training:
+                    self.training_queue.put(('stopped', {
+                        'algo': algo,
+                        'env_id': env_id
+                    }))
+                    train_env.close()
+                    eval_env.close()
+                    return
+                
+                # Copy best_model.zip from last_train/ to final location with numbered name
+                best_model_in_last_train = f"{checkpoint_dir}/best_model.zip"
+                if os.path.exists(best_model_in_last_train):
+                    import shutil
+                    shutil.copy2(best_model_in_last_train, f"{best_model_path}.zip")
+                    final_save_path = best_model_path
+                else:
+                    final_save_path = best_model_path
+                
+                train_env.close()
+                eval_env.close()
+                
+                self.training_queue.put(('complete', {
+                    'algo': algo,
+                    'env_id': env_id,
+                    'save_path': final_save_path + '.zip'
+                }))
+            
+            elif algo == "PPO_CONCEPT":  # PPO with Concept Learning
+                from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
+                from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
+                from train_ppo_concept import make_env
+                from minigrid_features_extractor import MinigridFeaturesExtractor
+                
+                n_envs = hyperparams.pop('n_envs', 4)
+                n_concepts = hyperparams.pop('n_concepts', 4)
+                lambda_1 = hyperparams.pop('lambda_1', 0.01)
+                lambda_2 = hyperparams.pop('lambda_2', 0.002)
+                lambda_3 = hyperparams.pop('lambda_3', 0.0002)
+                
+                # Create environments
+                train_env = DummyVecEnv([make_env(env_id, seed=seed+i) for i in range(n_envs)])
+                train_env = VecMonitor(train_env)
+                
+                eval_env = DummyVecEnv([make_env(env_id, seed=seed+100)])
+                eval_env = VecMonitor(eval_env)
+                
+                save_dir = f"models/{env_id}/ppo_concept"
+                os.makedirs(save_dir, exist_ok=True)
+                
+                # Checkpoint directory (cleared each training run)
+                checkpoint_dir = f"{save_dir}/last_train"
+                if os.path.exists(checkpoint_dir):
+                    import shutil
+                    shutil.rmtree(checkpoint_dir)
+                os.makedirs(checkpoint_dir, exist_ok=True)
+                
+                # Get next model number for best model naming
+                model_number = get_next_model_number(save_dir, prefix="ppo_concept_minigrid")
+                model_name = f"ppo_concept_minigrid_{model_number:03d}"
+                best_model_path = f"{save_dir}/{model_name}"
+                
+                # Create tensorboard log directory
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                tensorboard_log = f"minigrid_tensorboard/{env_id}/ppo_concept"
+                run_name = f"{model_name}_{timestamp}"
+                os.makedirs(tensorboard_log, exist_ok=True)
+                
+                policy_kwargs = dict(
+                    features_extractor_class=MinigridFeaturesExtractor,
+                    features_extractor_kwargs=dict(features_dim=128, concept_distilling=True, n_concepts=n_concepts),
+                    net_arch=dict(pi=[256, 256], vf=[256, 256]),
+                )
+                
+                # Create model
+                model = ConceptPPO(
+                    "CnnPolicy",
+                    train_env,
+                    policy_kwargs=policy_kwargs,
+                    tensorboard_log=tensorboard_log,
+                    seed=seed,
+                    device=device,
+                    lambda_1=lambda_1,
+                    lambda_2=lambda_2,
+                    lambda_3=lambda_3,
+                    **hyperparams
+                )
+                
+                # Create callbacks
+                checkpoint_callback = CheckpointCallback(
+                    save_freq=max(10000 // n_envs, 1),
+                    save_path=checkpoint_dir,  # Save to last_train/
+                    name_prefix="ppo_concept_checkpoint",
                     save_replay_buffer=False,
                     save_vecnormalize=True,
                 )

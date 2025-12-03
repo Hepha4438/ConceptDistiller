@@ -129,6 +129,89 @@ PPO_CONFIGS = {
     }
 }
 
+# PPO Concept Hyperparameters - Based on PPO with concept learning
+PPO_CONCEPT_CONFIGS = {
+    # Easy environments - 4 concepts
+    "easy": {
+        "total_timesteps": 100000,
+        "learning_rate": 7e-4,
+        "n_steps": 2048,
+        "batch_size": 256,
+        "n_epochs": 10,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": 0.2,
+        "ent_coef": 0.01,
+        "vf_coef": 0.5,
+        "max_grad_norm": 0.5,
+        "n_envs": 4,
+        "n_concepts": 4,
+        "lambda_1": 0.01,  # orthogonality regularization
+        "lambda_2": 0.002,  # sparsity regularization
+        "lambda_3": 0.0002,  # L1 regularization
+    },
+    
+    # Medium environments - 4 concepts
+    "medium": {
+        "total_timesteps": 500000,
+        "learning_rate": 7e-4,
+        "n_steps": 2048,
+        "batch_size": 256,
+        "n_epochs": 10,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": 0.2,
+        "ent_coef": 0.01,
+        "vf_coef": 0.5,
+        "max_grad_norm": 0.5,
+        "n_envs": 8,
+        "n_concepts": 4,
+        "lambda_1": 0.01,
+        "lambda_2": 0.002,
+        "lambda_3": 0.0002,
+    },
+    
+    # Hard environments - 8 concepts
+    "hard": {
+        "total_timesteps": 2500000,
+        "learning_rate": 7e-4,
+        "n_steps": 2048,
+        "batch_size": 256,
+        "n_epochs": 10,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": 0.2,
+        "ent_coef": 0.01,
+        "vf_coef": 0.5,
+        "max_grad_norm": 0.5,
+        "n_envs": 8,
+        "n_concepts": 8,
+        "lambda_1": 0.01,
+        "lambda_2": 0.002,
+        "lambda_3": 0.0002,
+    },
+
+    # Extremely hard environments - 12 concepts
+    "extreme": {
+        "total_timesteps": 10000000,
+        "learning_rate": 3e-4,
+        "n_steps": 2048,
+        "batch_size": 256,
+        "n_epochs": 10,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": 0.2,
+        "ent_coef": 0.01,
+        "vf_coef": 0.5,
+        "max_grad_norm": 0.5,
+        "n_envs": 16,
+        "n_concepts": 12,
+        "lambda_1": 0.01,
+        "lambda_2": 0.002,
+        "lambda_3": 0.0002,
+    }
+}
+
 # Environment difficulty mapping
 ENV_DIFFICULTY = {
     # Easy environments
@@ -171,12 +254,20 @@ def get_ppo_config(env_id):
     return PPO_CONFIGS[difficulty].copy()
 
 
+def get_ppo_concept_config(env_id):
+    """Get PPO Concept hyperparameters for a specific environment."""
+    difficulty = ENV_DIFFICULTY.get(env_id, "medium")
+    return PPO_CONCEPT_CONFIGS[difficulty].copy()
+
+
 def print_config(env_id, algorithm="DQN"):
     """Print the recommended configuration for an environment."""
     if algorithm.upper() == "DQN":
         config = get_dqn_config(env_id)
     elif algorithm.upper() == "PPO":
         config = get_ppo_config(env_id)
+    elif algorithm.upper() == "PPO_CONCEPT":
+        config = get_ppo_concept_config(env_id)
     else:
         raise ValueError(f"Unknown algorithm: {algorithm}")
     

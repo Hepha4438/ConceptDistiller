@@ -263,11 +263,22 @@ def train_ppo_concept(
         env_id="MiniGrid-Empty-5x5-v0",
         total_timesteps=100000,
         n_envs=4,
+        n_concepts=4,
         seed=42,
         device="cuda",
-        lambda_1=0.005,
-        lambda_2=0.0015,
-        lambda_3=0.00015
+        learning_rate=7e-4,
+        n_steps=2048,
+        batch_size=256,
+        n_epochs=10,
+        gamma=0.99,
+        gae_lambda=0.95,
+        clip_range=0.2,
+        ent_coef=0.01,
+        vf_coef=0.5,
+        max_grad_norm=0.5,
+        lambda_1=0.01,
+        lambda_2=0.002,
+        lambda_3=0.0002
 ):
 
     # Directories
@@ -296,7 +307,7 @@ def train_ppo_concept(
         features_extractor_kwargs=dict(
             features_dim=128,
             concept_distilling=True,
-            n_concepts=4
+            n_concepts=n_concepts
         ),
         net_arch=dict(pi=[256,256], vf=[256,256])
     )
@@ -306,16 +317,16 @@ def train_ppo_concept(
         "CnnPolicy",
         train_env,
         policy_kwargs=policy_kwargs,
-        learning_rate=3e-4,
-        n_steps=2048,
-        batch_size=64,
-        n_epochs=10,
-        gamma=0.99,
-        gae_lambda=0.95,
-        clip_range=0.2,
-        ent_coef=0.0,
-        vf_coef=0.5,
-        max_grad_norm=0.5,
+        learning_rate=learning_rate,
+        n_steps=n_steps,
+        batch_size=batch_size,
+        n_epochs=n_epochs,
+        gamma=gamma,
+        gae_lambda=gae_lambda,
+        clip_range=clip_range,
+        ent_coef=ent_coef,
+        vf_coef=vf_coef,
+        max_grad_norm=max_grad_norm,
         tensorboard_log=tensorboard_log,
         verbose=1,
         seed=seed,
@@ -327,9 +338,9 @@ def train_ppo_concept(
 
     # Callbacks
     concept_logging_cb = ConceptLoggingCallback()  # Log chi tiết concept losses
-    checkpoint_cb = CheckpointCallback(save_freq=5000, save_path=checkpoint_dir, name_prefix="ppo_concept_checkpoint")
+    checkpoint_cb = CheckpointCallback(save_freq=max(5000 // n_envs, 1), save_path=checkpoint_dir, name_prefix="ppo_concept_checkpoint")
     eval_cb = EvalCallback(eval_env, best_model_save_path=checkpoint_dir, log_path=checkpoint_dir,
-                           eval_freq=5000, n_eval_episodes=10, deterministic=True)
+                           eval_freq=max(5000 // n_envs, 1), n_eval_episodes=10, deterministic=True)
     callback = CallbackList([concept_logging_cb, checkpoint_cb, eval_cb])
 
     # Train
@@ -351,6 +362,11 @@ def train_ppo_concept(
     train_env.close()
     eval_env.close()
     return model
+
+# -----------------------
+# Alias for compatibility
+# -----------------------
+ConceptPPO = PPOWithConcept  # Alias for external imports
 
 # -----------------------
 # Main
