@@ -1315,7 +1315,7 @@ class ModelTesterUI:
         episodes_frame = ttk.Frame(frame)
         episodes_frame.pack(fill=tk.X, padx=5, pady=2)
         ttk.Label(episodes_frame, text="Episodes:").pack(side=tk.LEFT)
-        episodes_var = tk.IntVar(value=5)
+        episodes_var = tk.IntVar(value=100)
         episodes_spinbox = tk.Spinbox(episodes_frame, from_=1, to=100, 
                                      textvariable=episodes_var, width=10)
         episodes_spinbox.pack(side=tk.RIGHT)
