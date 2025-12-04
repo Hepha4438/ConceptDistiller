@@ -9,6 +9,7 @@ from optuna.samplers import TPESampler
 import numpy as np
 import os
 import shutil
+import json
 from train_ppo_concept import train_ppo_concept, ConceptPPO
 from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 from stable_baselines3.common.monitor import Monitor
@@ -16,6 +17,23 @@ import gymnasium as gym
 from minigrid.wrappers import ImgObsWrapper
 import torch
 from config import N_CONCEPTS_RANGES, ENV_DIFFICULTY, get_optuna_tuning_config
+import sys
+
+
+# Global callback for UI logging
+_ui_log_callback = None
+
+def set_ui_log_callback(callback):
+    """Set callback function for UI logging"""
+    global _ui_log_callback
+    _ui_log_callback = callback
+
+def log_to_ui(message):
+    """Log message to UI if callback is set"""
+    global _ui_log_callback
+    if _ui_log_callback:
+        _ui_log_callback(message)
+    print(message, end='')  # Also print to stdout
 
 
 def make_env(env_id, seed=0):
@@ -31,43 +49,41 @@ def make_env(env_id, seed=0):
 def objective(trial, env_id, total_timesteps, n_envs, seed, device, is_trial=True):
     """
     Objective function for Optuna
-    Returns: mean reward on evaluation episodes
+    Returns: combined score (reward + concept quality penalties)
+
+    Objective = alpha * reward - beta * L_ortho - gamma * L_spar - delta * L_l1
+    Where concept losses are normalized by their typical ranges
     
     Args:
         is_trial: If True, save to trials/ directory; if False, save to normal directory
     """
-    
+
     # Get difficulty and n_concepts range from config
     difficulty = ENV_DIFFICULTY.get(env_id, "medium")
     n_concepts_range = N_CONCEPTS_RANGES[difficulty]
     
     # ✅ Suggest hyperparameters
-    lambda_1 = trial.suggest_float('lambda_1', 1e-4, 0.1, log=True)
-    lambda_2 = trial.suggest_float('lambda_2', 1e-5, 0.01, log=True)
-    lambda_3 = trial.suggest_float('lambda_3', 1e-6, 0.001, log=True)
+    # Adjusted ranges to center around new defaults:
+    # lambda_1=0.05 → range [0.01, 0.2]
+    # lambda_2=0.002 → range [1e-4, 0.01] (giữ nguyên)
+    # lambda_3=0.01 → range [0.001, 0.05]
+    lambda_1 = trial.suggest_float('lambda_1', 0.01, 0.2, log=True)
+    lambda_2 = trial.suggest_float('lambda_2', 1e-4, 0.01, log=True)
+    lambda_3 = trial.suggest_float('lambda_3', 0.001, 0.05, log=True)
     n_concepts = trial.suggest_categorical('n_concepts', n_concepts_range)
     
-    print(f"\n{'='*60}")
-    print(f"Trial {trial.number} (Difficulty: {difficulty})")
-    print(f"{'='*60}")
-    print(f"  lambda_1 (orthogonality): {lambda_1:.6f}")
-    print(f"  lambda_2 (sparsity):      {lambda_2:.6f}")
-    print(f"  lambda_3 (L1):            {lambda_3:.6f}")
-    print(f"  n_concepts:               {n_concepts} (from {n_concepts_range})")
-    print(f"{'='*60}\n")
+    log_to_ui(f"\n{'='*60}\n")
+    log_to_ui(f"Trial {trial.number} (Difficulty: {difficulty})\n")
+    log_to_ui(f"{'='*60}\n")
+    log_to_ui(f"  lambda_1 (orthogonality): {lambda_1:.6f}\n")
+    log_to_ui(f"  lambda_2 (sparsity):      {lambda_2:.6f}\n")
+    log_to_ui(f"  lambda_3 (L1):            {lambda_3:.6f}\n")
+    log_to_ui(f"  n_concepts:               {n_concepts} (from {n_concepts_range})\n")
+    log_to_ui(f"{'='*60}\n\n")
     
     try:
-        # ✅ Setup directories for trials
-        if is_trial:
-            # Save trials to separate directory
-            original_save_dir = f"models/{env_id}/ppo_concept"
-            trial_save_dir = f"models/{env_id}/ppo_concept/trials"
-            os.makedirs(trial_save_dir, exist_ok=True)
-            
-            # Temporarily modify train_ppo_concept to use trials directory
-            # We'll pass this through by modifying the save path
-            
         # Train model with suggested hyperparameters
+        # ✅ Pass is_trial and trial_number to control saving behavior
         model = train_ppo_concept(
             env_id=env_id,
             total_timesteps=total_timesteps,
@@ -77,42 +93,47 @@ def objective(trial, env_id, total_timesteps, n_envs, seed, device, is_trial=Tru
             device=device,
             lambda_1=lambda_1,
             lambda_2=lambda_2,
-            lambda_3=lambda_3
+            lambda_3=lambda_3,
+            is_trial=is_trial,
+            trial_number=trial.number
         )
         
-        # ✅ Move trial results to trials directory
-        if is_trial:
-            # Move last_train directory to trials
-            last_train_src = f"models/{env_id}/ppo_concept/last_train"
-            last_train_dst = f"models/{env_id}/ppo_concept/trials/trial_{trial.number:03d}"
-            if os.path.exists(last_train_src):
-                if os.path.exists(last_train_dst):
-                    shutil.rmtree(last_train_dst)
-                shutil.move(last_train_src, last_train_dst)
-            
-            # Move tensorboard logs to trials
-            tb_base = f"minigrid_tensorboard/{env_id}/ppo_concept"
-            if os.path.exists(tb_base):
-                # Find the most recent run
-                runs = [d for d in os.listdir(tb_base) if os.path.isdir(os.path.join(tb_base, d))]
-                if runs:
-                    latest_run = max(runs, key=lambda d: os.path.getctime(os.path.join(tb_base, d)))
-                    tb_src = os.path.join(tb_base, latest_run)
-                    tb_trials_dir = f"{tb_base}/trials"
-                    os.makedirs(tb_trials_dir, exist_ok=True)
-                    tb_dst = os.path.join(tb_trials_dir, f"trial_{trial.number:03d}_{latest_run}")
-                    if os.path.exists(tb_dst):
-                        shutil.rmtree(tb_dst)
-                    shutil.move(tb_src, tb_dst)
+        # ✅ GET CONCEPT LOSSES FROM BEST MODEL (BEFORE cleanup!)
+        # Read from JSON file saved when best model was updated
+        last_train_dir = f"models/{env_id}/ppo_concept/last_train"
+        concept_losses_path = os.path.join(last_train_dir, 'best_model_concept_losses.json')
         
-        # Evaluate the trained model
+        if os.path.exists(concept_losses_path):
+            with open(concept_losses_path, 'r') as f:
+                concept_losses_data = json.load(f)
+            
+            mean_L_ortho = concept_losses_data['L_ortho']
+            mean_L_spar = concept_losses_data['L_spar']
+            mean_L_l1 = concept_losses_data['L_l1']
+            
+            log_to_ui(f"  ✓ Loaded concept losses from best model checkpoint\n")
+            log_to_ui(f"    (at timestep {concept_losses_data['timestep']}, reward={concept_losses_data['mean_reward']:.3f})\n")
+        else:
+            log_to_ui(f"  ⚠ Best model concept losses not found at {concept_losses_path}\n")
+            log_to_ui(f"  Using fallback: 0.0 for all losses\n")
+            mean_L_ortho = 0.0
+            mean_L_spar = 0.0
+            mean_L_l1 = 0.0
+        
+        # ✅ NOW clean up: Remove checkpoint files from last_train (AFTER reading!)
+        if is_trial:
+            if os.path.exists(last_train_dir):
+                shutil.rmtree(last_train_dir)
+                log_to_ui(f"  ✓ Cleaned up trial checkpoints\n")
+
+        # ✅ Evaluate reward (still need to run episodes)
         eval_env = DummyVecEnv([make_env(env_id, seed=seed + 10000 + trial.number)])
         eval_env = VecMonitor(eval_env)
         
         n_eval_episodes = 20
         episode_rewards = []
         
-        for _ in range(n_eval_episodes):
+        for episode_idx in range(n_eval_episodes):
             obs = eval_env.reset()
             done = False
             episode_reward = 0
@@ -126,21 +147,52 @@ def objective(trial, env_id, total_timesteps, n_envs, seed, device, is_trial=Tru
         
         eval_env.close()
         
+        # ✅ Compute statistics
         mean_reward = np.mean(episode_rewards)
         std_reward = np.std(episode_rewards)
         
-        print(f"\nTrial {trial.number} Results:")
-        print(f"  Mean Reward: {mean_reward:.3f} ± {std_reward:.3f}")
-        print(f"  Min: {np.min(episode_rewards):.3f}, Max: {np.max(episode_rewards):.3f}")
+        # ✅ Concept losses already extracted from training logs above
+        # (mean_L_ortho, mean_L_spar, mean_L_l1 already set)
+
+        # Validate - if losses are 0, might be error reading tensorboard
+        if mean_L_ortho == 0.0 and mean_L_spar == 0.0 and mean_L_l1 == 0.0:
+            log_to_ui(f"  ⚠ WARNING: All concept losses are 0 - check tensorboard logs!\n")
         
+        # ✅ Combined objective with normalized losses
+        # Weights for balancing: prioritize reward, but penalize bad concept quality
+        alpha = 1.0      # reward weight (maximize)
+        beta = 0.05      # orthogonality penalty (L_ortho typically 0-1)
+        gamma = 0.02     # sparsity penalty (L_spar typically 0-1)
+        delta = 0.01     # L1 penalty (L_l1 typically 0-0.1)
+
+        objective_value = (alpha * mean_reward 
+                          - beta * mean_L_ortho
+                          - gamma * mean_L_spar
+                          - delta * mean_L_l1)
+
+        # ✅ Final validation of objective value
+        if np.isnan(objective_value) or np.isinf(objective_value):
+            log_to_ui(f"⚠️  WARNING: Invalid objective value detected!\n")
+            log_to_ui(f"  Using reward-only fallback: {mean_reward:.3f}\n")
+            objective_value = mean_reward
+        
+        log_to_ui(f"\nTrial {trial.number} Results:\n")
+        log_to_ui(f"  Mean Reward:      {mean_reward:.3f} ± {std_reward:.3f}\n")
+        log_to_ui(f"  Min/Max Reward:   {np.min(episode_rewards):.3f} / {np.max(episode_rewards):.3f}\n")
+        log_to_ui(f"  Concept Losses (from training logs):\n")
+        log_to_ui(f"    - Mean L_ortho: {mean_L_ortho:.6f} (penalty: {beta * mean_L_ortho:.6f})\n")
+        log_to_ui(f"    - Mean L_spar:  {mean_L_spar:.6f} (penalty: {gamma * mean_L_spar:.6f})\n")
+        log_to_ui(f"    - Mean L_l1:    {mean_L_l1:.6f} (penalty: {delta * mean_L_l1:.6f})\n")
+        log_to_ui(f"  Combined Score:   {objective_value:.3f}\n")
+
         # Report intermediate value for pruning
-        trial.report(mean_reward, step=0)
+        trial.report(objective_value, step=0)
         
         # Check if trial should be pruned
         if trial.should_prune():
             raise optuna.TrialPruned()
         
-        return mean_reward
+        return objective_value
         
     except Exception as e:
         print(f"\n❌ Trial {trial.number} failed: {str(e)}")
@@ -181,26 +233,29 @@ def optimize_hyperparameters(
     tuning_config = get_optuna_tuning_config(env_id)
     n_startup_trials = tuning_config.get('n_startup_trials', 5)  # Default to 5 if not in config
     
-    print("="*60)
-    print("OPTUNA HYPERPARAMETER TUNING FOR PPO_CONCEPT")
-    print("="*60)
-    print(f"Environment:     {env_id}")
-    print(f"Difficulty:      {difficulty}")
-    print(f"Trials:          {n_trials}")
-    print(f"Startup trials:  {n_startup_trials} (random sampling)")
-    print(f"Timesteps/trial: {total_timesteps:,}")
-    print(f"Device:          {device}")
-    print("="*60)
-    print("\nSearching for optimal:")
-    print("  - lambda_1 (orthogonality):  1e-4 to 0.1")
-    print("  - lambda_2 (sparsity):       1e-5 to 0.01")
-    print("  - lambda_3 (L1):             1e-6 to 0.001")
-    print(f"  - n_concepts:                {n_concepts_range}")
-    print("="*60)
-    print("\n💾 Trials will be saved to:")
-    print(f"   - models/{env_id}/ppo_concept/trials/")
-    print(f"   - minigrid_tensorboard/{env_id}/ppo_concept/trials/")
-    print("="*60 + "\n")
+    log_to_ui("="*60 + "\n")
+    log_to_ui("OPTUNA HYPERPARAMETER TUNING FOR PPO_CONCEPT\n")
+    log_to_ui("="*60 + "\n")
+    log_to_ui(f"Environment:     {env_id}\n")
+    log_to_ui(f"Difficulty:      {difficulty}\n")
+    log_to_ui(f"Trials:          {n_trials}\n")
+    log_to_ui(f"Startup trials:  {n_startup_trials} (random sampling)\n")
+    log_to_ui(f"Timesteps/trial: {total_timesteps:,}\n")
+    log_to_ui(f"Device:          {device}\n")
+    log_to_ui("="*60 + "\n")
+    log_to_ui("\n🎯 Optimization Objective:\n")
+    log_to_ui("   Combined Score = 1.0*reward - 0.05*L_ortho - 0.02*L_spar - 0.01*L_l1\n")
+    log_to_ui("   (Maximize reward while minimizing concept losses)\n")
+    log_to_ui("\n🔍 Searching for optimal:\n")
+    log_to_ui("  - lambda_1 (orthogonality):  0.01 to 0.2\n")
+    log_to_ui("  - lambda_2 (sparsity):       1e-4 to 0.01\n")
+    log_to_ui("  - lambda_3 (L1):             0.001 to 0.05\n")
+    log_to_ui(f"  - n_concepts:                {n_concepts_range}\n")
+    log_to_ui("="*60 + "\n")
+    log_to_ui("\n💾 Trials will be saved to:\n")
+    log_to_ui(f"   - models/{env_id}/ppo_concept/trials/\n")
+    log_to_ui(f"   - minigrid_tensorboard/{env_id}/ppo_concept/trials/\n")
+    log_to_ui("="*60 + "\n\n")
     
     # Create study
     if study_name is None:
@@ -214,7 +269,7 @@ def optimize_hyperparameters(
         storage=storage,
         sampler=sampler,
         pruner=pruner,
-        direction='maximize',  # Maximize reward
+        direction='maximize',  # Maximize combined score (reward - concept_losses)
         load_if_exists=True
     )
     
@@ -226,22 +281,22 @@ def optimize_hyperparameters(
     )
     
     # Print results
-    print("\n" + "="*60)
-    print("OPTIMIZATION COMPLETE")
-    print("="*60)
+    log_to_ui("\n" + "="*60 + "\n")
+    log_to_ui("OPTIMIZATION COMPLETE\n")
+    log_to_ui("="*60 + "\n")
     
-    print(f"\nNumber of finished trials: {len(study.trials)}")
+    log_to_ui(f"\nNumber of finished trials: {len(study.trials)}\n")
     
-    print("\n📊 Best trial:")
+    log_to_ui("\n📊 Best trial:\n")
     trial = study.best_trial
-    print(f"  Value (mean reward): {trial.value:.3f}")
-    print(f"\n  Params:")
+    log_to_ui(f"  Value (combined score): {trial.value:.3f}\n")
+    log_to_ui(f"\n  Params:\n")
     for key, value in trial.params.items():
-        print(f"    {key}: {value}")
+        log_to_ui(f"    {key}: {value}\n")
     
     print("\n📈 All trials:")
     df = study.trials_dataframe()
-    print(df[['number', 'value', 'params_lambda_1', 'params_lambda_2', 
+    print(df[['number', 'value', 'params_lambda_1', 'params_lambda_2',
               'params_lambda_3', 'params_n_concepts']].to_string())
     
     # Save to CSV
@@ -257,12 +312,12 @@ def optimize_hyperparameters(
         fig = vis.plot_optimization_history(study)
         fig.write_html(f"optuna_history_{env_id}.html")
         print(f"📊 Optimization history: optuna_history_{env_id}.html")
-        
+
         # Parameter importances
         fig = vis.plot_param_importances(study)
         fig.write_html(f"optuna_importances_{env_id}.html")
         print(f"📊 Parameter importances: optuna_importances_{env_id}.html")
-        
+
         # Parallel coordinate plot
         fig = vis.plot_parallel_coordinate(study)
         fig.write_html(f"optuna_parallel_{env_id}.html")

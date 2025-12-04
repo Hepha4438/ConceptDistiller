@@ -2155,6 +2155,10 @@ class ModelTesterUI:
         else:
             self.optuna_log.insert(tk.END, f"Final training: No\n")
         self.optuna_log.insert(tk.END, f"{'='*60}\n\n")
+        self.optuna_log.insert(tk.END, f"🎯 Optimization Objective:\n")
+        self.optuna_log.insert(tk.END, f"   Score = 1.0*reward - 0.05*L_ortho - 0.02*L_spar - 0.01*L_l1\n")
+        self.optuna_log.insert(tk.END, f"   (Maximize reward while minimizing concept losses)\n\n")
+        self.optuna_log.insert(tk.END, f"{'='*60}\n\n")
         self.optuna_log.see(tk.END)
         
         # Update UI state
@@ -2175,13 +2179,13 @@ class ModelTesterUI:
     def _run_optuna_thread(self, env_id, n_trials, timesteps, n_envs, device, train_final, final_timesteps):
         """Run Optuna tuning in background thread"""
         try:
-            from tune_ppo_concept_optuna import optimize_hyperparameters, train_with_best_params
-            import sys
-            from io import StringIO
+            from tune_ppo_concept_optuna import optimize_hyperparameters, train_with_best_params, set_ui_log_callback
             
-            # Redirect stdout to capture print statements
-            old_stdout = sys.stdout
-            sys.stdout = StringIO()
+            # Set callback for real-time logging
+            def log_callback(message):
+                self.root.after(0, lambda: self._append_optuna_log(message))
+
+            set_ui_log_callback(log_callback)
             
             try:
                 # Run optimization
@@ -2195,32 +2199,14 @@ class ModelTesterUI:
                     storage=None
                 )
                 
-                # Get output
-                output = sys.stdout.getvalue()
-                sys.stdout = old_stdout
-                
-                # Log output
-                self.optuna_log.insert(tk.END, output)
-                self.optuna_log.see(tk.END)
-                
-                # Show best params
-                best_params = study.best_params
-                self.optuna_log.insert(tk.END, f"\n{'='*60}\n")
-                self.optuna_log.insert(tk.END, f"✅ TUNING COMPLETE!\n")
-                self.optuna_log.insert(tk.END, f"{'='*60}\n")
-                self.optuna_log.insert(tk.END, f"Best reward: {study.best_value:.3f}\n\n")
-                self.optuna_log.insert(tk.END, f"Best parameters:\n")
-                for key, value in best_params.items():
-                    self.optuna_log.insert(tk.END, f"  {key}: {value}\n")
-                self.optuna_log.insert(tk.END, f"{'='*60}\n\n")
-                self.optuna_log.see(tk.END)
+                # Show best params (already logged by optimize_hyperparameters)
+                # Just update progress
+                self.root.after(0, lambda: self.optuna_progress.config(value=n_trials))
                 
                 # Optional final training
                 if train_final:
-                    self.optuna_log.insert(tk.END, f"\n🎯 Training final model with best params...\n")
-                    self.optuna_log.see(tk.END)
-                    
-                    sys.stdout = StringIO()
+                    log_callback(f"\n🎯 Training final model with best params...\n")
+
                     train_with_best_params(
                         study=study,
                         env_id=env_id,
@@ -2229,15 +2215,11 @@ class ModelTesterUI:
                         seed=42,
                         device=device
                     )
-                    output = sys.stdout.getvalue()
-                    sys.stdout = old_stdout
                     
-                    self.optuna_log.insert(tk.END, output)
-                    self.optuna_log.insert(tk.END, f"\n✅ Final model training complete!\n\n")
-                    self.optuna_log.see(tk.END)
+                    log_callback(f"\n✅ Final model training complete!\n\n")
                 
             finally:
-                sys.stdout = old_stdout
+                set_ui_log_callback(None)  # Clear callback
             
             # Success
             self.root.after(0, self._optuna_complete)
@@ -2245,9 +2227,13 @@ class ModelTesterUI:
         except Exception as e:
             import traceback
             error_msg = f"\n❌ ERROR:\n{str(e)}\n{traceback.format_exc()}\n"
-            self.optuna_log.insert(tk.END, error_msg)
-            self.optuna_log.see(tk.END)
+            self.root.after(0, lambda: self._append_optuna_log(error_msg))
             self.root.after(0, self._optuna_error, str(e))
+
+    def _append_optuna_log(self, message):
+        """Append message to optuna log (called from main thread)"""
+        self.optuna_log.insert(tk.END, message)
+        self.optuna_log.see(tk.END)
     
     def stop_optuna_tuning(self):
         """Request to stop Optuna tuning"""

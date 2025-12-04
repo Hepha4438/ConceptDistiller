@@ -52,6 +52,8 @@ class ConceptLayer(nn.Module):
         """
         Compute 3 losses: L_otho, L_spar, L_l1
         concept_vector: [B, K]
+
+        NOTE: Requires B >= 2 for covariance computation!
         """
         B, K = concept_vector.shape
         device = concept_vector.device
@@ -60,14 +62,12 @@ class ConceptLayer(nn.Module):
         # 1) L_otho: sum off-diagonal covariance
         # --------------------------
         C_centered = concept_vector - concept_vector.mean(dim=0, keepdim=True)
-        cov = (C_centered.T @ C_centered) / (B - 1)  # [K,K]
+        cov = (C_centered.T @ C_centered) / (B - 1)  # [K,K] - requires B > 1!
         L_otho = cov.sum() - torch.diag(cov).sum()   # sum off-diagonal
 
         # --------------------------
         # 2) L_spar: Hoyer sparsity (DIFFERENTIABLE!)
         # --------------------------
-        # Sparsity = (sqrt(n) - ||x||_1/||x||_2) / (sqrt(n) - 1)
-        # Loss = 1 - sparsity (minimize to maximize sparsity)
         n = concept_vector.numel()
         l1_norm = torch.norm(concept_vector.flatten(), p=1)
         l2_norm = torch.norm(concept_vector.flatten(), p=2)

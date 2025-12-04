@@ -146,9 +146,9 @@ PPO_CONCEPT_CONFIGS = {
         "max_grad_norm": 0.5,
         "n_envs": 4,
         "n_concepts": 4,
-        "lambda_1": 0.01,  # orthogonality regularization
-        "lambda_2": 0.002,  # sparsity regularization
-        "lambda_3": 0.0002,  # L1 regularization
+        "lambda_1": 0.05,    # [Tăng] Orthogonality: Giúp concept tách biệt rõ hơn
+        "lambda_2": 0.002,   # [Giữ nguyên] Sparsity: Đang hoạt động tốt
+        "lambda_3": 0.01,    # [Tăng mạnh] L1: Để chặn đà tăng của L1 Loss
     },
     
     # Medium environments - 4 concepts
@@ -166,9 +166,9 @@ PPO_CONCEPT_CONFIGS = {
         "max_grad_norm": 0.5,
         "n_envs": 8,
         "n_concepts": 4,
-        "lambda_1": 0.01,
-        "lambda_2": 0.002,
-        "lambda_3": 0.0002,
+        "lambda_1": 0.05,    # [Tăng] Orthogonality
+        "lambda_2": 0.002,   # [Giữ nguyên] Sparsity
+        "lambda_3": 0.01,    # [Tăng mạnh] L1
     },
     
     # Hard environments - 8 concepts
@@ -186,9 +186,9 @@ PPO_CONCEPT_CONFIGS = {
         "max_grad_norm": 0.5,
         "n_envs": 8,
         "n_concepts": 8,
-        "lambda_1": 0.01,
-        "lambda_2": 0.002,
-        "lambda_3": 0.0002,
+        "lambda_1": 0.05,    # [Tăng] Orthogonality
+        "lambda_2": 0.002,   # [Giữ nguyên] Sparsity
+        "lambda_3": 0.01,    # [Tăng mạnh] L1
     },
 
     # Extremely hard environments - 12 concepts
@@ -206,9 +206,9 @@ PPO_CONCEPT_CONFIGS = {
         "max_grad_norm": 0.5,
         "n_envs": 16,
         "n_concepts": 12,
-        "lambda_1": 0.01,
-        "lambda_2": 0.002,
-        "lambda_3": 0.0002,
+        "lambda_1": 0.05,    # [Tăng] Orthogonality
+        "lambda_2": 0.002,   # [Giữ nguyên] Sparsity
+        "lambda_3": 0.01,    # [Tăng mạnh] L1
     }
 }
 

@@ -15,6 +15,53 @@ import gymnasium as gym
 from minigrid.wrappers import ImgObsWrapper
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import BaseCallback, CheckpointCallback, EvalCallback, CallbackList
+import json
+
+
+class BestModelConceptCallback(EvalCallback):
+    """
+    Custom EvalCallback that saves concept losses when best model is updated
+    """
+    def __init__(self, *args, concept_logging_callback=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.concept_logging_callback = concept_logging_callback
+        self.prev_best_mean_reward = -np.inf
+
+    def _on_step(self) -> bool:
+        result = super()._on_step()
+
+        # ✅ Check if best model was updated (best_mean_reward changed)
+        if self.best_mean_reward > self.prev_best_mean_reward:
+            # Best model was just updated!
+            self.prev_best_mean_reward = self.best_mean_reward
+
+            # ✅ Get concept losses from ConceptLoggingCallback (from training rollout)
+            if self.concept_logging_callback and self.concept_logging_callback.latest_concept_losses:
+                L_ortho, L_spar, L_l1 = self.concept_logging_callback.latest_concept_losses
+
+                # Save to file alongside best_model.zip
+                concept_losses_path = os.path.join(self.best_model_save_path, 'best_model_concept_losses.json')
+                concept_losses_data = {
+                    'L_ortho': float(L_ortho),
+                    'L_spar': float(L_spar),
+                    'L_l1': float(L_l1),
+                    'timestep': self.num_timesteps,
+                    'mean_reward': float(self.best_mean_reward)
+                }
+
+                try:
+                    with open(concept_losses_path, 'w') as f:
+                        json.dump(concept_losses_data, f, indent=2)
+                    print(f"✓ Saved concept losses to {concept_losses_path}")
+                except Exception as e:
+                    print(f"⚠ Failed to save concept losses: {e}")
+            else:
+                print(f"⚠ No concept losses available from training rollout")
+
+        return result
+
+
+
 from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 from stable_baselines3.common.monitor import Monitor
 from minigrid_features_extractor import MinigridFeaturesExtractor
@@ -58,7 +105,7 @@ class PPOWithConcept(PPO):
         """
         from gymnasium import spaces
         import torch.nn.functional as F
-        
+
         # Switch to train mode
         self.policy.set_training_mode(True)
         # Update optimizer learning rate
@@ -186,6 +233,11 @@ class ConceptLoggingCallback(BaseCallback):
     Callback để log chi tiết các thành phần của concept loss và activation statistics
     Chạy sau mỗi rollout để tránh overhead cao
     """
+    def __init__(self):
+        super().__init__()
+        self.best_concept_losses = None  # Track concept losses at best model
+        self.latest_concept_losses = None  # Track latest concept losses from rollout
+
     def _on_step(self) -> bool:
         return True
 
@@ -200,6 +252,9 @@ class ConceptLoggingCallback(BaseCallback):
             if extractor.concept_distilling and hasattr(extractor, "last_concept_losses"):
                 if extractor.last_concept_losses is not None:
                     L_otho, L_spar, L_l1 = extractor.last_concept_losses
+                    
+                    # ✅ Store latest losses (will be used by BestModelConceptCallback)
+                    self.latest_concept_losses = (L_otho.item(), L_spar.item(), L_l1.item())
                     
                     # ✅ Log chi tiết từng component loss
                     self.logger.record("concept_detail/orthogonality_loss", L_otho.item())
@@ -276,9 +331,11 @@ def train_ppo_concept(
         ent_coef=0.01,
         vf_coef=0.5,
         max_grad_norm=0.5,
-        lambda_1=0.01,
-        lambda_2=0.002,
-        lambda_3=0.0002
+        lambda_1=0.05,     # [Tăng] Orthogonality
+        lambda_2=0.002,    # [Giữ nguyên] Sparsity
+        lambda_3=0.01,     # [Tăng mạnh] L1
+        is_trial=False,
+        trial_number=None
 ):
 
     # Directories
@@ -291,8 +348,15 @@ def train_ppo_concept(
 
     model_number = get_next_model_number(save_dir)
     model_name = f"ppo_concept_minigrid_{model_number:03d}"
-    tensorboard_log = f"minigrid_tensorboard/{env_id}/ppo_concept"
-    run_name = f"{model_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    
+    # ✅ For trials: save tensorboard directly to trials directory
+    if is_trial and trial_number is not None:
+        tensorboard_log = f"minigrid_tensorboard/{env_id}/ppo_concept/trials"
+        run_name = f"trial_{trial_number:03d}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    else:
+        tensorboard_log = f"minigrid_tensorboard/{env_id}/ppo_concept"
+        run_name = f"{model_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    
     os.makedirs(tensorboard_log, exist_ok=True)
 
     # Environments
@@ -339,8 +403,17 @@ def train_ppo_concept(
     # Callbacks
     concept_logging_cb = ConceptLoggingCallback()  # Log chi tiết concept losses
     checkpoint_cb = CheckpointCallback(save_freq=max(5000 // n_envs, 1), save_path=checkpoint_dir, name_prefix="ppo_concept_checkpoint")
-    eval_cb = EvalCallback(eval_env, best_model_save_path=checkpoint_dir, log_path=checkpoint_dir,
-                           eval_freq=max(5000 // n_envs, 1), n_eval_episodes=10, deterministic=True)
+    
+    # ✅ Use custom callback that saves concept losses at best model
+    eval_cb = BestModelConceptCallback(
+        eval_env, 
+        best_model_save_path=checkpoint_dir, 
+        log_path=checkpoint_dir,
+        eval_freq=max(5000 // n_envs, 1), 
+        n_eval_episodes=10, 
+        deterministic=True,
+        concept_logging_callback=concept_logging_cb
+    )
     callback = CallbackList([concept_logging_cb, checkpoint_cb, eval_cb])
 
     # Train
@@ -351,13 +424,18 @@ def train_ppo_concept(
         tb_log_name=run_name
     )
 
-    # Save best model
-    best_model_in_last_train = f"{checkpoint_dir}/best_model.zip"
-    if os.path.exists(best_model_in_last_train):
-        shutil.copy2(best_model_in_last_train, f"{save_dir}/{model_name}.zip")
-        print(f"✓ Best model saved to {save_dir}/{model_name}.zip")
+    # ✅ Only save best model when NOT in trial mode
+    if not is_trial:
+        # Save best model
+        best_model_in_last_train = f"{checkpoint_dir}/best_model.zip"
+        if os.path.exists(best_model_in_last_train):
+            shutil.copy2(best_model_in_last_train, f"{save_dir}/{model_name}.zip")
+            print(f"✓ Best model saved to {save_dir}/{model_name}.zip")
+        else:
+            print(f"⚠ best_model.zip not found in {checkpoint_dir}/")
     else:
-        print(f"⚠ best_model.zip not found in {checkpoint_dir}/")
+        # In trial mode: don't save final model
+        print(f"ℹ Trial mode: skipping final model save (only tensorboard kept)")
 
     train_env.close()
     eval_env.close()
