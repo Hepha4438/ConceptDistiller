@@ -907,7 +907,7 @@ class ModelTesterUI:
             elif algo == "PPO_CONCEPT":  # PPO with Concept Learning
                 from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
                 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
-                from train_ppo_concept import make_env
+                from train_ppo_concept import make_env, ConceptLoggingCallback
                 from minigrid_features_extractor import MinigridFeaturesExtractor
                 
                 n_envs = hyperparams.pop('n_envs', 4)
@@ -965,6 +965,8 @@ class ModelTesterUI:
                 )
                 
                 # Create callbacks
+                concept_logging_cb = ConceptLoggingCallback()  # ✅ Log concept_detail metrics
+                
                 checkpoint_callback = CheckpointCallback(
                     save_freq=max(10000 // n_envs, 1),
                     save_path=checkpoint_dir,  # Save to last_train/
@@ -987,7 +989,7 @@ class ModelTesterUI:
                 stop_callback = StopTrainingCallback(lambda: not self.is_training)
                 
                 from stable_baselines3.common.callbacks import CallbackList
-                callback = CallbackList([checkpoint_callback, eval_callback, progress_callback, stop_callback])
+                callback = CallbackList([concept_logging_cb, checkpoint_callback, eval_callback, progress_callback, stop_callback])
                 
                 # Train with callback
                 try:
