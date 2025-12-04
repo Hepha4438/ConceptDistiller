@@ -29,23 +29,22 @@ class ConceptLayer(nn.Module):
         """
         x: [B, C, H, W]
         Returns:
-            concept_map: [B,K,H,W]
+            concept_map: [B,K,H,W] (padded to patch_pool_size multiples)
             concept_vector: [B,K] (pooled for losses)
         """
         B, _, H, W = x.shape
         concept_map = torch.sigmoid(self.conv1x1(x))  # [B,K,H,W]
 
-        # Patch-wise pooling for loss computation
+        # Pad to patch_pool_size multiples (needed for consistent architecture)
         p = self.patch_pool_size
         H_pad = (p - H % p) % p
         W_pad = (p - W % p) % p
         if H_pad > 0 or W_pad > 0:
             concept_map = F.pad(concept_map, (0, W_pad, 0, H_pad))  # pad right,bottom
 
-        B, K, H_p, W_p = concept_map.shape
-        concept_vector = concept_map.unfold(2, p, p).unfold(3, p, p)  # [B,K,H_p//p,W_p//p,p,p]
-        concept_vector = concept_vector.contiguous().view(B, K, -1, p*p)
-        concept_vector = concept_vector.mean(dim=-1).mean(dim=-2)  # [B,K]
+        # For concept_vector: use global average pooling (simpler and correct)
+        # This aggregates all spatial information into [B, K]
+        concept_vector = concept_map.mean(dim=[2, 3])  # [B,K]
 
         return concept_map, concept_vector
 

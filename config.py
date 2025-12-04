@@ -241,6 +241,41 @@ ENV_DIFFICULTY = {
     "MiniGrid-LockedRoom-v0": "extreme",
 }
 
+# N_concepts ranges for Optuna tuning (by difficulty)
+N_CONCEPTS_RANGES = {
+    "easy": [2, 3, 4, 5],
+    "medium": [3, 4, 5, 6, 7],
+    "hard": [5, 6, 7, 8, 9],
+    "extreme": [7, 8, 9, 10, 11, 12],
+}
+
+# Optuna tuning parameters by difficulty
+OPTUNA_TUNING_CONFIGS = {
+    "easy": {
+        "n_trials": 30,
+        "timesteps_per_trial": 50000,
+        "n_envs": 4,
+        "n_startup_trials": 5,
+    },
+    "medium": {
+        "n_trials": 25,
+        "timesteps_per_trial": 100000,
+        "n_envs": 8,
+        "n_startup_trials": 5,
+    },
+    "hard": {
+        "n_trials": 20,
+        "timesteps_per_trial": 300000,
+        "n_envs": 8,
+        "n_startup_trials": 5,
+    },
+    "extreme": {
+        "n_trials": 10,
+        "timesteps_per_trial": 500000,
+        "n_envs": 16,
+        "n_startup_trials": 2,
+    },
+}
 
 def get_dqn_config(env_id):
     """Get DQN hyperparameters for a specific environment."""
@@ -258,6 +293,12 @@ def get_ppo_concept_config(env_id):
     """Get PPO Concept hyperparameters for a specific environment."""
     difficulty = ENV_DIFFICULTY.get(env_id, "medium")
     return PPO_CONCEPT_CONFIGS[difficulty].copy()
+
+
+def get_optuna_tuning_config(env_id):
+    """Get Optuna tuning parameters for a specific environment."""
+    difficulty = ENV_DIFFICULTY.get(env_id, "medium")
+    return OPTUNA_TUNING_CONFIGS[difficulty].copy()
 
 
 def print_config(env_id, algorithm="DQN"):

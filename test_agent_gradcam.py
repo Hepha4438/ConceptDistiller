@@ -137,12 +137,22 @@ def compute_concept_gradcams(features_extractor, obs_tensor, device):
 
     obs_tensor = obs_tensor.float().to(device)
 
+    # DEBUG: Check input observation shape
+    print(f"DEBUG: obs_tensor shape = {obs_tensor.shape}")
+
     # CNN forward
     cnn_out = features_extractor.cnn(obs_tensor)
+    
+    # DEBUG: Check CNN output shape
+    print(f"DEBUG: cnn_out shape = {cnn_out.shape}")
 
     # concept maps + sigmoid
     concept_map, concept_vector = features_extractor.concept_layer(cnn_out)
     concept_map.retain_grad()
+
+    # DEBUG: Check concept outputs
+    print(f"DEBUG: concept_map shape = {concept_map.shape}")
+    print(f"DEBUG: concept_vector shape = {concept_vector.shape}")
 
     B, K, Hc, Wc = concept_map.shape
     cams = []
@@ -168,19 +178,31 @@ def compute_concept_gradcams(features_extractor, obs_tensor, device):
     # ---------------------------------------------------------
     # Extract concept vector values (K outputs)
     # ---------------------------------------------------------
-    # concept_vector should be [B, K] but let's verify and handle edge cases
-    concept_values = concept_vector[0].detach().cpu().numpy()  # Shape: (K,) or more?
+    # concept_vector should be [B, K] but with frame stacking it might be [B, K*n_frames]
+    # We need to aggregate across frames to get [B, K]
     
-    # DEBUG: Check if we have exactly K values
-    # If concept_values has more than K elements, it might be flattened incorrectly
-    # Take only first K values to match K concept maps
+    concept_values = concept_vector[0].detach().cpu().numpy()  # Shape: (K,) or (K*n_frames,)?
+    
+    # Check if we have more values than K (due to frame stacking)
     if len(concept_values) > K:
-        print(f"WARNING: concept_vector has {len(concept_values)} values but K={K}")
-        print(f"  concept_vector shape: {concept_vector.shape}")
-        print(f"  Taking only first {K} values")
-        concept_values = concept_values[:K]
+        print(f"INFO: concept_vector has {len(concept_values)} values, aggregating to K={K}")
+        
+        # Reshape to [n_frames, K] and aggregate (max pooling across frames)
+        n_frames = len(concept_values) // K
+        if len(concept_values) % K == 0:
+            # Perfect division - reshape and aggregate
+            concept_values_reshaped = concept_values.reshape(n_frames, K)
+            # Use max pooling to get the most active concept across frames
+            concept_values = concept_values_reshaped.max(axis=0)
+            print(f"  ✓ Aggregated {n_frames} frames using max pooling")
+            print(f"  Final concept values: {concept_values}")
+        else:
+            # Not perfect division - maybe different architecture, take first K
+            print(f"  WARNING: Cannot reshape evenly. Taking first {K} values.")
+            concept_values = concept_values[:K]
     elif len(concept_values) < K:
         print(f"ERROR: concept_vector has only {len(concept_values)} values but K={K}")
+        print(f"  All values: {concept_values}")
         # Pad with zeros if needed
         concept_values = np.pad(concept_values, (0, K - len(concept_values)))
     

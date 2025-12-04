@@ -210,6 +210,11 @@ class ModelTesterUI:
         notebook.add(self.training_frame, text="🎯 Training")
         self.create_training_tab()
         
+        # Optuna Tuning Tab (Position 2)
+        self.optuna_frame = ttk.Frame(notebook)
+        notebook.add(self.optuna_frame, text="🎛️ Optuna Tuning")
+        self.create_optuna_tab()
+        
         # Model Selection Tab
         self.model_frame = ttk.Frame(notebook)
         notebook.add(self.model_frame, text="📂 Model Selection")
@@ -1677,13 +1682,11 @@ class ModelTesterUI:
         params_frame = ttk.LabelFrame(left_panel, text="Analysis Parameters", padding=5)
         params_frame.pack(fill=tk.X, pady=5)
         
-        # Episodes
         ttk.Label(params_frame, text="Episodes to test:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=3)
         self.gradcam_episodes_var = tk.IntVar(value=10)
         episodes_spinbox = tk.Spinbox(params_frame, from_=1, to=100, textvariable=self.gradcam_episodes_var, width=10)
         episodes_spinbox.grid(row=0, column=1, sticky=tk.W, padx=5, pady=3)
         
-        # Device
         ttk.Label(params_frame, text="Device:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=3)
         self.gradcam_device_var = tk.StringVar(value="cpu")
         device_combo = ttk.Combobox(params_frame, textvariable=self.gradcam_device_var, 
@@ -1971,6 +1974,308 @@ class ModelTesterUI:
             self.gradcam_log.see(tk.END)
         except Exception as e:
             messagebox.showerror("Error", f"Could not open video:\n{str(e)}")
+
+    def create_optuna_tab(self):
+        """Create the Optuna hyperparameter tuning interface"""
+        main_container = ttk.Frame(self.optuna_frame)
+        main_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Left panel: Configuration
+        left_panel = ttk.LabelFrame(main_container, text="Optuna Configuration", padding=10)
+        left_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
+        
+        # Environment selection
+        env_frame = ttk.LabelFrame(left_panel, text="Environment", padding=5)
+        env_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Label(env_frame, text="Select Environment:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=2)
+        self.optuna_env_var = tk.StringVar(value="MiniGrid-Empty-5x5-v0")
+        
+        from config import ENV_DIFFICULTY
+        easy_envs = sorted([env for env, diff in ENV_DIFFICULTY.items() if diff == "easy"])
+        medium_envs = sorted([env for env, diff in ENV_DIFFICULTY.items() if diff == "medium"])
+        hard_envs = sorted([env for env, diff in ENV_DIFFICULTY.items() if diff == "hard"])
+        extreme_envs = sorted([env for env, diff in ENV_DIFFICULTY.items() if diff == "extreme"])
+        all_envs = easy_envs + medium_envs + hard_envs + extreme_envs
+        
+        env_combo = ttk.Combobox(env_frame, textvariable=self.optuna_env_var, values=all_envs, width=35)
+        env_combo.grid(row=0, column=1, sticky=tk.W, padx=5, pady=2)
+        env_combo.bind('<<ComboboxSelected>>', self.on_optuna_env_changed)
+        
+        # Tuning parameters
+        params_frame = ttk.LabelFrame(left_panel, text="Tuning Parameters", padding=5)
+        params_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Label(params_frame, text="Number of trials:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=3)
+        self.optuna_trials_var = tk.IntVar(value=20)
+        trials_spinbox = tk.Spinbox(params_frame, from_=5, to=200, textvariable=self.optuna_trials_var, width=10)
+        trials_spinbox.grid(row=0, column=1, sticky=tk.W, padx=5, pady=3)
+        
+        ttk.Label(params_frame, text="Timesteps per trial:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=3)
+        self.optuna_timesteps_var = tk.IntVar(value=30000)
+        timesteps_spinbox = tk.Spinbox(params_frame, from_=10000, to=200000, increment=10000,
+                                       textvariable=self.optuna_timesteps_var, width=10)
+        timesteps_spinbox.grid(row=1, column=1, sticky=tk.W, padx=5, pady=3)
+        
+        ttk.Label(params_frame, text="Parallel envs:").grid(row=2, column=0, sticky=tk.W, padx=5, pady=3)
+        self.optuna_n_envs_var = tk.IntVar(value=4)
+        n_envs_spinbox = tk.Spinbox(params_frame, from_=1, to=16, textvariable=self.optuna_n_envs_var, width=10)
+        n_envs_spinbox.grid(row=2, column=1, sticky=tk.W, padx=5, pady=3)
+        
+        ttk.Label(params_frame, text="Startup trials:").grid(row=3, column=0, sticky=tk.W, padx=5, pady=3)
+        self.optuna_startup_trials_var = tk.IntVar(value=5)
+        startup_spinbox = tk.Spinbox(params_frame, from_=0, to=50, textvariable=self.optuna_startup_trials_var, width=10)
+        startup_spinbox.grid(row=3, column=1, sticky=tk.W, padx=5, pady=3)
+        ttk.Label(params_frame, text="(random sampling)", font=('Arial', 8), foreground='gray').grid(row=3, column=2, sticky=tk.W, padx=2, pady=3)
+        
+        ttk.Label(params_frame, text="Device:").grid(row=4, column=0, sticky=tk.W, padx=5, pady=3)
+        self.optuna_device_var = tk.StringVar(value="cpu")
+        device_combo = ttk.Combobox(params_frame, textvariable=self.optuna_device_var,
+                                    values=["cpu", "cuda", "mps"], width=10, state="readonly")
+        device_combo.grid(row=4, column=1, sticky=tk.W, padx=5, pady=3)
+        
+        # Button to load defaults from config
+        ttk.Button(params_frame, text="🔄 Load Defaults from Config", 
+                  command=self.load_optuna_defaults).grid(row=5, column=0, columnspan=3, pady=5)
+        
+        # Final training option
+        final_frame = ttk.LabelFrame(left_panel, text="Final Training (Optional)", padding=5)
+        final_frame.pack(fill=tk.X, pady=5)
+        
+        self.optuna_train_final_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(final_frame, text="Train final model with best params", 
+                       variable=self.optuna_train_final_var).grid(row=0, column=0, columnspan=2, sticky=tk.W, padx=5, pady=3)
+        
+        ttk.Label(final_frame, text="Final timesteps:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=3)
+        self.optuna_final_timesteps_var = tk.IntVar(value=200000)
+        final_timesteps_spinbox = tk.Spinbox(final_frame, from_=50000, to=1000000, increment=50000,
+                                             textvariable=self.optuna_final_timesteps_var, width=10)
+        final_timesteps_spinbox.grid(row=1, column=1, sticky=tk.W, padx=5, pady=3)
+        
+        # Control buttons
+        control_frame = ttk.Frame(left_panel)
+        control_frame.pack(fill=tk.X, pady=10)
+        
+        self.optuna_run_btn = ttk.Button(control_frame, text="▶️ Start Optuna Tuning",
+                                         command=self.run_optuna_tuning)
+        self.optuna_run_btn.pack(fill=tk.X, pady=5)
+        
+        self.optuna_stop_btn = ttk.Button(control_frame, text="⏹️ Stop Tuning",
+                                          command=self.stop_optuna_tuning, state=tk.DISABLED)
+        self.optuna_stop_btn.pack(fill=tk.X, pady=5)
+        
+        # Status
+        status_frame = ttk.LabelFrame(left_panel, text="Status", padding=5)
+        status_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        
+        self.optuna_status_var = tk.StringVar(value="Ready")
+        ttk.Label(status_frame, textvariable=self.optuna_status_var, font=('Arial', 10)).pack(pady=5)
+        
+        self.optuna_progress = ttk.Progressbar(status_frame, mode='determinate')
+        self.optuna_progress.pack(fill=tk.X, padx=5, pady=5)
+        
+        # Right panel: Log and results
+        right_panel = ttk.LabelFrame(main_container, text="Tuning Log & Results", padding=10)
+        right_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(5, 0))
+        
+        self.optuna_log = scrolledtext.ScrolledText(right_panel, height=35, width=70, wrap=tk.WORD)
+        self.optuna_log.pack(fill=tk.BOTH, expand=True)
+        
+        # Initialize Optuna state
+        self.optuna_is_running = False
+        self.optuna_stop_requested = False
+        
+        # Load initial defaults
+        self.load_optuna_defaults()
+    
+    def load_optuna_defaults(self):
+        """Load tuning parameters from config based on selected environment"""
+        from config import get_optuna_tuning_config, get_ppo_concept_config
+        
+        env_id = self.optuna_env_var.get()
+        
+        # Get tuning config
+        tuning_config = get_optuna_tuning_config(env_id)
+        self.optuna_trials_var.set(tuning_config['n_trials'])
+        self.optuna_timesteps_var.set(tuning_config['timesteps_per_trial'])
+        self.optuna_n_envs_var.set(tuning_config['n_envs'])
+        self.optuna_startup_trials_var.set(tuning_config.get('n_startup_trials', 5))
+        
+        # Get final timesteps from PPO_CONCEPT config
+        ppo_concept_config = get_ppo_concept_config(env_id)
+        self.optuna_final_timesteps_var.set(ppo_concept_config['total_timesteps'])
+        
+        self.optuna_log.insert(tk.END, f"✓ Loaded defaults for {env_id}\n")
+        self.optuna_log.insert(tk.END, f"  Trials: {tuning_config['n_trials']}\n")
+        self.optuna_log.insert(tk.END, f"  Startup trials: {tuning_config.get('n_startup_trials', 5)} (random sampling)\n")
+        self.optuna_log.insert(tk.END, f"  Timesteps/trial: {tuning_config['timesteps_per_trial']:,}\n")
+        self.optuna_log.insert(tk.END, f"  Parallel envs: {tuning_config['n_envs']}\n")
+        self.optuna_log.insert(tk.END, f"  Final timesteps: {ppo_concept_config['total_timesteps']:,}\n\n")
+        self.optuna_log.see(tk.END)
+    
+    def on_optuna_env_changed(self, event):
+        """Handle environment selection change in Optuna tab"""
+        self.load_optuna_defaults()
+    
+    def run_optuna_tuning(self):
+        """Run Optuna hyperparameter tuning"""
+        if self.optuna_is_running:
+            messagebox.showwarning("Tuning Running", "Optuna tuning is already running!")
+            return
+        
+        # Get parameters
+        env_id = self.optuna_env_var.get()
+        n_trials = self.optuna_trials_var.get()
+        timesteps = self.optuna_timesteps_var.get()
+        n_envs = self.optuna_n_envs_var.get()
+        device = self.optuna_device_var.get()
+        train_final = self.optuna_train_final_var.get()
+        final_timesteps = self.optuna_final_timesteps_var.get()
+        
+        # Validation
+        if n_trials < 5:
+            messagebox.showwarning("Invalid Input", "Number of trials must be at least 5!")
+            return
+        
+        # Log start
+        from datetime import datetime
+        self.optuna_log.delete(1.0, tk.END)
+        self.optuna_log.insert(tk.END, f"{'='*60}\n")
+        self.optuna_log.insert(tk.END, f"Optuna Tuning Started at {datetime.now().strftime('%H:%M:%S')}\n")
+        self.optuna_log.insert(tk.END, f"{'='*60}\n")
+        self.optuna_log.insert(tk.END, f"Environment: {env_id}\n")
+        self.optuna_log.insert(tk.END, f"Trials: {n_trials}\n")
+        self.optuna_log.insert(tk.END, f"Timesteps/trial: {timesteps:,}\n")
+        self.optuna_log.insert(tk.END, f"Parallel envs: {n_envs}\n")
+        self.optuna_log.insert(tk.END, f"Device: {device}\n")
+        if train_final:
+            self.optuna_log.insert(tk.END, f"Final training: Yes ({final_timesteps:,} timesteps)\n")
+        else:
+            self.optuna_log.insert(tk.END, f"Final training: No\n")
+        self.optuna_log.insert(tk.END, f"{'='*60}\n\n")
+        self.optuna_log.see(tk.END)
+        
+        # Update UI state
+        self.optuna_is_running = True
+        self.optuna_stop_requested = False
+        self.optuna_run_btn.config(state=tk.DISABLED)
+        self.optuna_stop_btn.config(state=tk.NORMAL)
+        self.optuna_status_var.set("Running tuning...")
+        self.optuna_progress['maximum'] = n_trials
+        self.optuna_progress['value'] = 0
+        
+        # Run in thread
+        thread = threading.Thread(target=self._run_optuna_thread,
+                                 args=(env_id, n_trials, timesteps, n_envs, device, train_final, final_timesteps))
+        thread.daemon = True
+        thread.start()
+    
+    def _run_optuna_thread(self, env_id, n_trials, timesteps, n_envs, device, train_final, final_timesteps):
+        """Run Optuna tuning in background thread"""
+        try:
+            from tune_ppo_concept_optuna import optimize_hyperparameters, train_with_best_params
+            import sys
+            from io import StringIO
+            
+            # Redirect stdout to capture print statements
+            old_stdout = sys.stdout
+            sys.stdout = StringIO()
+            
+            try:
+                # Run optimization
+                study = optimize_hyperparameters(
+                    env_id=env_id,
+                    n_trials=n_trials,
+                    total_timesteps=timesteps,
+                    n_envs=n_envs,
+                    seed=42,
+                    device=device,
+                    storage=None
+                )
+                
+                # Get output
+                output = sys.stdout.getvalue()
+                sys.stdout = old_stdout
+                
+                # Log output
+                self.optuna_log.insert(tk.END, output)
+                self.optuna_log.see(tk.END)
+                
+                # Show best params
+                best_params = study.best_params
+                self.optuna_log.insert(tk.END, f"\n{'='*60}\n")
+                self.optuna_log.insert(tk.END, f"✅ TUNING COMPLETE!\n")
+                self.optuna_log.insert(tk.END, f"{'='*60}\n")
+                self.optuna_log.insert(tk.END, f"Best reward: {study.best_value:.3f}\n\n")
+                self.optuna_log.insert(tk.END, f"Best parameters:\n")
+                for key, value in best_params.items():
+                    self.optuna_log.insert(tk.END, f"  {key}: {value}\n")
+                self.optuna_log.insert(tk.END, f"{'='*60}\n\n")
+                self.optuna_log.see(tk.END)
+                
+                # Optional final training
+                if train_final:
+                    self.optuna_log.insert(tk.END, f"\n🎯 Training final model with best params...\n")
+                    self.optuna_log.see(tk.END)
+                    
+                    sys.stdout = StringIO()
+                    train_with_best_params(
+                        study=study,
+                        env_id=env_id,
+                        total_timesteps=final_timesteps,
+                        n_envs=n_envs,
+                        seed=42,
+                        device=device
+                    )
+                    output = sys.stdout.getvalue()
+                    sys.stdout = old_stdout
+                    
+                    self.optuna_log.insert(tk.END, output)
+                    self.optuna_log.insert(tk.END, f"\n✅ Final model training complete!\n\n")
+                    self.optuna_log.see(tk.END)
+                
+            finally:
+                sys.stdout = old_stdout
+            
+            # Success
+            self.root.after(0, self._optuna_complete)
+            
+        except Exception as e:
+            import traceback
+            error_msg = f"\n❌ ERROR:\n{str(e)}\n{traceback.format_exc()}\n"
+            self.optuna_log.insert(tk.END, error_msg)
+            self.optuna_log.see(tk.END)
+            self.root.after(0, self._optuna_error, str(e))
+    
+    def stop_optuna_tuning(self):
+        """Request to stop Optuna tuning"""
+        if not self.optuna_is_running:
+            return
+        
+        self.optuna_stop_requested = True
+        self.optuna_status_var.set("Stopping...")
+        self.optuna_log.insert(tk.END, f"\n⚠️  Stop requested by user. Finishing current trial...\n")
+        self.optuna_log.see(tk.END)
+        messagebox.showinfo("Stop Requested", "Tuning will stop after the current trial completes.")
+    
+    def _optuna_complete(self):
+        """Handle Optuna completion"""
+        self.optuna_is_running = False
+        self.optuna_run_btn.config(state=tk.NORMAL)
+        self.optuna_stop_btn.config(state=tk.DISABLED)
+        self.optuna_status_var.set("✅ Tuning complete!")
+        self.optuna_progress['value'] = self.optuna_progress['maximum']
+        
+        messagebox.showinfo("Complete", "Optuna tuning complete!\nCheck log for best parameters.")
+    
+    def _optuna_error(self, error_msg):
+        """Handle Optuna error"""
+        self.optuna_is_running = False
+        self.optuna_run_btn.config(state=tk.NORMAL)
+        self.optuna_stop_btn.config(state=tk.DISABLED)
+        self.optuna_status_var.set("❌ Error occurred")
+        
+        messagebox.showerror("Tuning Error", f"An error occurred:\n\n{error_msg}")
 
 def main():
     # Set multiprocessing start method to avoid issues on macOS
