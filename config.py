@@ -66,7 +66,7 @@ DQN_CONFIGS = {
 PPO_CONFIGS = {
     # Easy environments
     "easy": {
-        "total_timesteps": 100000,
+        "total_timesteps": 300000,
         "learning_rate": 7e-4,
         "n_steps": 2048,
         "batch_size": 256,
@@ -82,7 +82,7 @@ PPO_CONFIGS = {
     
     # Medium environments
     "medium": {
-        "total_timesteps": 500000,
+        "total_timesteps": 1000000,
         "learning_rate": 7e-4,
         "n_steps": 2048,
         "batch_size": 256,
@@ -98,7 +98,7 @@ PPO_CONFIGS = {
     
     # Hard environments
     "hard": {
-        "total_timesteps": 2500000,
+        "total_timesteps": 4000000,
         "learning_rate": 7e-4,
         "n_steps": 2048,
         "batch_size": 256,
@@ -133,7 +133,7 @@ PPO_CONFIGS = {
 PPO_CONCEPT_CONFIGS = {
     # Easy environments - 4 concepts
     "easy": {
-        "total_timesteps": 100000,
+        "total_timesteps": 300000,
         "learning_rate": 7e-4,
         "n_steps": 2048,
         "batch_size": 256,
@@ -153,7 +153,7 @@ PPO_CONCEPT_CONFIGS = {
     
     # Medium environments - 4 concepts
     "medium": {
-        "total_timesteps": 500000,
+        "total_timesteps": 1000000,
         "learning_rate": 7e-4,
         "n_steps": 2048,
         "batch_size": 256,
@@ -173,7 +173,7 @@ PPO_CONCEPT_CONFIGS = {
     
     # Hard environments - 8 concepts
     "hard": {
-        "total_timesteps": 2500000,
+        "total_timesteps": 4000000,
         "learning_rate": 7e-4,
         "n_steps": 2048,
         "batch_size": 256,
@@ -231,7 +231,6 @@ ENV_DIFFICULTY = {
     "MiniGrid-Fetch-5x5-N2-v0": "hard",
     "MiniGrid-GoToDoor-5x5-v0": "hard",
     "MiniGrid-FourRooms-v0": "hard",
-    "MiniGrid-DoorKey-7x7-v0": "hard",
     "MiniGrid-DoorKey-8x8-v0": "hard",
 
     #Extremely hard environments
