@@ -412,6 +412,7 @@ def train_ppo_concept(
         total_timesteps=100000,
         n_envs=4,
         n_concepts=4,
+        concept_mode=1,
         seed=42,
         device="cuda",
         learning_rate=7e-4,
@@ -464,7 +465,8 @@ def train_ppo_concept(
         features_extractor_kwargs=dict(
             features_dim=128,
             concept_distilling=True,
-            n_concepts=n_concepts
+            n_concepts=n_concepts,
+            concept_mode=concept_mode
         ),
         net_arch=dict(pi=[256,256], vf=[256,256])
     )

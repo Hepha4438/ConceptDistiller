@@ -78,12 +78,14 @@ Examples:
     # PPO_CONCEPT specific
     parser.add_argument("--n-concepts", type=int, default=None,
                         help="PPO_CONCEPT number of concepts (default: auto-detect based on env difficulty)")
+    parser.add_argument("--concept-mode", type=int, default=None, choices=[1, 2, 3, 4],
+                        help="PPO_CONCEPT extraction mode: 1=flatten, 2=avg pool, 3=max pool, 4=FC-bottleneck (default: 1)")
     parser.add_argument("--lambda-1", type=float, default=None,
-                        help="PPO_CONCEPT orthogonality regularization weight (default: 0.01)")
+                        help="PPO_CONCEPT orthogonality regularization weight (default: 0.05)")
     parser.add_argument("--lambda-2", type=float, default=None,
-                        help="PPO_CONCEPT sparsity regularization weight (default: 0.002)")
+                        help="PPO_CONCEPT sparsity regularization weight (default: 0.004)")
     parser.add_argument("--lambda-3", type=float, default=None,
-                        help="PPO_CONCEPT L1 regularization weight (default: 0.0002)")
+                        help="PPO_CONCEPT L1 regularization weight (default: 2.0)")
     
     # Utility
     parser.add_argument("--show-config", action="store_true",
@@ -144,6 +146,8 @@ Examples:
         if algo == "PPO_CONCEPT":
             if args.n_concepts is not None:
                 config["n_concepts"] = args.n_concepts
+            if args.concept_mode is not None:
+                config["concept_mode"] = args.concept_mode
             if args.lambda_1 is not None:
                 config["lambda_1"] = args.lambda_1
             if args.lambda_2 is not None:

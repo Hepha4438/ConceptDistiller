@@ -146,6 +146,7 @@ PPO_CONCEPT_CONFIGS = {
         "max_grad_norm": 0.5,
         "n_envs": 4,
         "n_concepts": 6,
+        "concept_mode": 1,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool; Mode 4: FC-bottleneck
         "lambda_1": 0.05,    # Orthogonality: Giúp concept tách biệt rõ hơn
         "lambda_2": 0.004,   # Sparsity: Khuyến khích sparse activation
         "lambda_3": 2.0,     # L1: Regularization mạnh cho concept weights
@@ -166,6 +167,7 @@ PPO_CONCEPT_CONFIGS = {
         "max_grad_norm": 0.5,
         "n_envs": 8,
         "n_concepts": 8,
+        "concept_mode": 1,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool
         "lambda_1": 0.05,    # Orthogonality
         "lambda_2": 0.004,   # Sparsity
         "lambda_3": 2.0,     # L1
@@ -186,6 +188,7 @@ PPO_CONCEPT_CONFIGS = {
         "max_grad_norm": 0.5,
         "n_envs": 8,
         "n_concepts": 12,
+        "concept_mode": 1,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool
         "lambda_1": 0.05,    # Orthogonality
         "lambda_2": 0.004,   # Sparsity
         "lambda_3": 2.0,     # L1
@@ -206,6 +209,7 @@ PPO_CONCEPT_CONFIGS = {
         "max_grad_norm": 0.5,
         "n_envs": 16,
         "n_concepts": 16,
+        "concept_mode": 1,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool
         "lambda_1": 0.05,    # Orthogonality
         "lambda_2": 0.004,   # Sparsity
         "lambda_3": 2.0,     # L1

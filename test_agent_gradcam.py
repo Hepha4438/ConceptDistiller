@@ -139,7 +139,13 @@ def compute_concept_gradcams(features_extractor, obs_tensor, device):
 
     # DEBUG: Check input observation shape
     print(f"DEBUG: obs_tensor shape = {obs_tensor.shape}")
-
+    
+    # Detect concept_mode
+    concept_mode = getattr(features_extractor, 'concept_mode', 1)
+    
+    # All modes 1-4 now use ConceptLayer with concept_map
+    # Mode 4 has additional concept_bottleneck, but we visualize the concept_map from ConceptLayer
+    
     # CNN forward
     cnn_out = features_extractor.cnn(obs_tensor)
     
@@ -175,12 +181,6 @@ def compute_concept_gradcams(features_extractor, obs_tensor, device):
         cam_np = normalize_to_0_1(cam_np)
         cams.append(cam_np)
 
-    # ---------------------------------------------------------
-    # Extract concept vector values (K outputs)
-    # ---------------------------------------------------------
-    # concept_vector should be [B, K] but with frame stacking it might be [B, K*n_frames]
-    # We need to aggregate across frames to get [B, K]
-    
     concept_values = concept_vector[0].detach().cpu().numpy()  # Shape: (K,) or (K*n_frames,)?
     
     # Check if we have more values than K (due to frame stacking)
@@ -195,19 +195,23 @@ def compute_concept_gradcams(features_extractor, obs_tensor, device):
             # Use max pooling to get the most active concept across frames
             concept_values = concept_values_reshaped.max(axis=0)
             print(f"  ✓ Aggregated {n_frames} frames using max pooling")
-            print(f"  Final concept values: {concept_values}")
         else:
             # Not perfect division - maybe different architecture, take first K
             print(f"  WARNING: Cannot reshape evenly. Taking first {K} values.")
             concept_values = concept_values[:K]
     elif len(concept_values) < K:
-        print(f"ERROR: concept_vector has only {len(concept_values)} values but K={K}")
-        print(f"  All values: {concept_values}")
+        print(f"WARNING: concept_vector has only {len(concept_values)} values but K={K}")
         # Pad with zeros if needed
         concept_values = np.pad(concept_values, (0, K - len(concept_values)))
     
     # Ensure concept_values is 1D array of length K
     concept_values = concept_values.flatten()[:K]
+    
+    # Detect concept_mode for logging
+    concept_mode = getattr(features_extractor, 'concept_mode', 1)
+    mode_names = {1: 'flatten', 2: 'avg pool', 3: 'max pool', 4: 'FC-bottleneck'}
+    mode_name = mode_names.get(concept_mode, 'unknown')
+    print(f"DEBUG: concept_mode = {concept_mode} ({mode_name})")
 
     # ---------------------------------------------------------
     # Build original RGB image (from obs_tensor)

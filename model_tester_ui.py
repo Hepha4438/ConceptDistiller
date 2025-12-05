@@ -545,21 +545,35 @@ class ModelTesterUI:
             label = ttk.Label(self.hyperparam_frame, text=f"{param_name}:")
             label.grid(row=row, column=0, sticky=tk.W, padx=5, pady=3)
             
-            # Entry
-            if isinstance(param_value, bool):
+            # Entry - special handling for certain parameters
+            if param_name == "concept_mode":
+                # Dropdown for concept_mode: 1-4
+                var = tk.IntVar(value=param_value)
+                widget = ttk.Combobox(self.hyperparam_frame, textvariable=var, 
+                                     values=[1, 2, 3, 4], width=18, state="readonly")
+                widget.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
+                # Add tooltip
+                tooltip_label = ttk.Label(self.hyperparam_frame, 
+                                         text="(1:flatten, 2:avg, 3:max, 4:FC)", 
+                                         foreground="gray", font=('Arial', 8))
+                tooltip_label.grid(row=row, column=2, sticky=tk.W, padx=5, pady=3)
+            elif isinstance(param_value, bool):
                 var = tk.BooleanVar(value=param_value)
                 widget = ttk.Checkbutton(self.hyperparam_frame, variable=var)
+                widget.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
             elif isinstance(param_value, int):
                 var = tk.IntVar(value=param_value)
                 widget = ttk.Entry(self.hyperparam_frame, textvariable=var, width=20)
+                widget.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
             elif isinstance(param_value, float):
                 var = tk.StringVar(value=str(param_value))
                 widget = ttk.Entry(self.hyperparam_frame, textvariable=var, width=20)
+                widget.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
             else:
                 var = tk.StringVar(value=str(param_value))
                 widget = ttk.Entry(self.hyperparam_frame, textvariable=var, width=20)
+                widget.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
             
-            widget.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
             self.hyperparam_vars[param_name] = var
             
             row += 1
@@ -912,6 +926,7 @@ class ModelTesterUI:
                 
                 n_envs = hyperparams.pop('n_envs', 4)
                 n_concepts = hyperparams.pop('n_concepts', 4)
+                concept_mode = hyperparams.pop('concept_mode', 1)
                 lambda_1 = hyperparams.pop('lambda_1', 0.05)
                 lambda_2 = hyperparams.pop('lambda_2', 0.004)
                 lambda_3 = hyperparams.pop('lambda_3', 2.0)
@@ -946,7 +961,12 @@ class ModelTesterUI:
                 
                 policy_kwargs = dict(
                     features_extractor_class=MinigridFeaturesExtractor,
-                    features_extractor_kwargs=dict(features_dim=128, concept_distilling=True, n_concepts=n_concepts),
+                    features_extractor_kwargs=dict(
+                        features_dim=128, 
+                        concept_distilling=True, 
+                        n_concepts=n_concepts,
+                        concept_mode=concept_mode
+                    ),
                     net_arch=dict(pi=[256, 256], vf=[256, 256]),
                 )
                 
