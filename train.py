@@ -39,7 +39,7 @@ Examples:
     # Optional arguments
     parser.add_argument("--timesteps", type=int, default=None,
                         help="Total timesteps for training (default: auto-detect based on env)")
-    parser.add_argument("--lr", type=float, default=None,
+    parser.add_argument("--lr", "--learning-rate", type=float, default=None, dest="lr",
                         help="Learning rate (default: auto-detect based on env)")
     parser.add_argument("--seed", type=int, default=42,
                         help="Random seed (default: 42)")
@@ -58,6 +58,22 @@ Examples:
                         help="PPO number of parallel environments (default: auto-detect)")
     parser.add_argument("--n-steps", type=int, default=None,
                         help="PPO steps per update (default: auto-detect)")
+    parser.add_argument("--batch-size", type=int, default=None,
+                        help="PPO batch size (default: auto-detect)")
+    parser.add_argument("--n-epochs", type=int, default=None,
+                        help="PPO number of epochs (default: auto-detect)")
+    parser.add_argument("--gamma", type=float, default=None,
+                        help="PPO discount factor (default: auto-detect)")
+    parser.add_argument("--gae-lambda", type=float, default=None,
+                        help="PPO GAE lambda (default: auto-detect)")
+    parser.add_argument("--clip-range", type=float, default=None,
+                        help="PPO clip range (default: auto-detect)")
+    parser.add_argument("--ent-coef", type=float, default=None,
+                        help="PPO entropy coefficient (default: auto-detect)")
+    parser.add_argument("--vf-coef", type=float, default=None,
+                        help="PPO value function coefficient (default: auto-detect)")
+    parser.add_argument("--max-grad-norm", type=float, default=None,
+                        help="PPO max gradient norm (default: auto-detect)")
     
     # PPO_CONCEPT specific
     parser.add_argument("--n-concepts", type=int, default=None,
@@ -107,6 +123,22 @@ Examples:
             config["n_envs"] = args.n_envs
         if args.n_steps is not None:
             config["n_steps"] = args.n_steps
+        if args.batch_size is not None:
+            config["batch_size"] = args.batch_size
+        if args.n_epochs is not None:
+            config["n_epochs"] = args.n_epochs
+        if args.gamma is not None:
+            config["gamma"] = args.gamma
+        if args.gae_lambda is not None:
+            config["gae_lambda"] = args.gae_lambda
+        if args.clip_range is not None:
+            config["clip_range"] = args.clip_range
+        if args.ent_coef is not None:
+            config["ent_coef"] = args.ent_coef
+        if args.vf_coef is not None:
+            config["vf_coef"] = args.vf_coef
+        if args.max_grad_norm is not None:
+            config["max_grad_norm"] = args.max_grad_norm
         
         # PPO_CONCEPT specific
         if algo == "PPO_CONCEPT":
