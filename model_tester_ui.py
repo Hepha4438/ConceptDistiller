@@ -912,9 +912,9 @@ class ModelTesterUI:
                 
                 n_envs = hyperparams.pop('n_envs', 4)
                 n_concepts = hyperparams.pop('n_concepts', 4)
-                lambda_1 = hyperparams.pop('lambda_1', 0.01)
-                lambda_2 = hyperparams.pop('lambda_2', 0.002)
-                lambda_3 = hyperparams.pop('lambda_3', 0.0002)
+                lambda_1 = hyperparams.pop('lambda_1', 0.05)
+                lambda_2 = hyperparams.pop('lambda_2', 0.004)
+                lambda_3 = hyperparams.pop('lambda_3', 2.0)
                 
                 # Create environments
                 train_env = DummyVecEnv([make_env(env_id, seed=seed+i) for i in range(n_envs)])

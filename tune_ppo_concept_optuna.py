@@ -65,11 +65,11 @@ def objective(trial, env_id, total_timesteps, n_envs, seed, device, is_trial=Tru
     # ✅ Suggest hyperparameters
     # Adjusted ranges to center around new defaults:
     # lambda_1=0.05 → range [0.01, 0.2]
-    # lambda_2=0.002 → range [1e-4, 0.01] (giữ nguyên)
-    # lambda_3=0.01 → range [0.001, 0.05]
+    # lambda_2=0.004 → range [0.0005, 0.02]
+    # lambda_3=2.0 → range [0.5, 5.0]
     lambda_1 = trial.suggest_float('lambda_1', 0.01, 0.2, log=True)
-    lambda_2 = trial.suggest_float('lambda_2', 1e-4, 0.01, log=True)
-    lambda_3 = trial.suggest_float('lambda_3', 0.001, 0.05, log=True)
+    lambda_2 = trial.suggest_float('lambda_2', 0.0005, 0.02, log=True)
+    lambda_3 = trial.suggest_float('lambda_3', 0.5, 5.0, log=True)
     n_concepts = trial.suggest_categorical('n_concepts', n_concepts_range)
     
     log_to_ui(f"\n{'='*60}\n")
@@ -98,27 +98,49 @@ def objective(trial, env_id, total_timesteps, n_envs, seed, device, is_trial=Tru
             trial_number=trial.number
         )
         
-        # ✅ GET CONCEPT LOSSES FROM BEST MODEL (BEFORE cleanup!)
-        # Read from JSON file saved when best model was updated
+        # ✅ GET CONCEPT LOSSES FROM TOP-30 AGGREGATED (BEFORE cleanup!)
         last_train_dir = f"models/{env_id}/ppo_concept/last_train"
-        concept_losses_path = os.path.join(last_train_dir, 'best_model_concept_losses.json')
         
-        if os.path.exists(concept_losses_path):
-            with open(concept_losses_path, 'r') as f:
+        # Priority 1: Try top-30 aggregated (most robust!)
+        aggregated_path = os.path.join(last_train_dir, 'top30_aggregated_concept_losses.json')
+        # Priority 2: Fallback to single best checkpoint
+        fallback_path = os.path.join(last_train_dir, 'best_model_concept_losses.json')
+        
+        if os.path.exists(aggregated_path):
+            # Use aggregated top-30 checkpoints (most robust!)
+            with open(aggregated_path, 'r') as f:
+                aggregated_data = json.load(f)
+            
+            mean_L_ortho = aggregated_data['mean_L_ortho']
+            mean_L_spar = aggregated_data['mean_L_spar']
+            mean_L_l1 = aggregated_data['mean_L_l1']
+            n_checkpoints = aggregated_data['n_checkpoints']
+            
+            log_to_ui(f"  ✓ Loaded aggregated concept losses from top-{n_checkpoints} checkpoints\n")
+            
+        elif os.path.exists(fallback_path):
+            # Fallback: use single best checkpoint
+            with open(fallback_path, 'r') as f:
                 concept_losses_data = json.load(f)
             
             mean_L_ortho = concept_losses_data['L_ortho']
             mean_L_spar = concept_losses_data['L_spar']
             mean_L_l1 = concept_losses_data['L_l1']
             
-            log_to_ui(f"  ✓ Loaded concept losses from best model checkpoint\n")
+            log_to_ui(f"  ⚠ Using fallback: single best checkpoint\n")
             log_to_ui(f"    (at timestep {concept_losses_data['timestep']}, reward={concept_losses_data['mean_reward']:.3f})\n")
+            
         else:
-            log_to_ui(f"  ⚠ Best model concept losses not found at {concept_losses_path}\n")
+            # No data found - use zeros
+            log_to_ui(f"  ⚠ No concept losses found!\n")
             log_to_ui(f"  Using fallback: 0.0 for all losses\n")
             mean_L_ortho = 0.0
             mean_L_spar = 0.0
             mean_L_l1 = 0.0
+        
+        # ✅ Store which source was used (before cleanup!)
+        used_aggregated = os.path.exists(aggregated_path)
+        used_fallback = os.path.exists(fallback_path) and not used_aggregated
         
         # ✅ NOW clean up: Remove checkpoint files from last_train (AFTER reading!)
         if is_trial:
@@ -160,13 +182,17 @@ def objective(trial, env_id, total_timesteps, n_envs, seed, device, is_trial=Tru
         
         # ✅ Combined objective with normalized losses
         # Weights for balancing: prioritize reward, but penalize bad concept quality
+        # Adjusted for new lambda scales:
+        #   - lambda_1: 0.05 (same) → beta stays at 0.05
+        #   - lambda_2: 0.004 (2x larger) → gamma stays at 0.02
+        #   - lambda_3: 2.0 (200x larger!) → delta reduced to 0.0001
         alpha = 1.0      # reward weight (maximize)
-        beta = 0.05      # orthogonality penalty (L_ortho typically 0-1)
+        beta = 0.05      # orthogonality penalty (L_ortho typically -0.01 to 0.01)
         gamma = 0.02     # sparsity penalty (L_spar typically 0-1)
-        delta = 0.01     # L1 penalty (L_l1 typically 0-0.1)
+        delta = 0.0001   # L1 penalty (L_l1 will be much larger now due to lambda_3=2.0)
 
         objective_value = (alpha * mean_reward 
-                          - beta * mean_L_ortho
+                          - beta * abs(mean_L_ortho)  # ✅ Use abs() since ortho can be negative
                           - gamma * mean_L_spar
                           - delta * mean_L_l1)
 
@@ -179,14 +205,26 @@ def objective(trial, env_id, total_timesteps, n_envs, seed, device, is_trial=Tru
         log_to_ui(f"\nTrial {trial.number} Results:\n")
         log_to_ui(f"  Mean Reward:      {mean_reward:.3f} ± {std_reward:.3f}\n")
         log_to_ui(f"  Min/Max Reward:   {np.min(episode_rewards):.3f} / {np.max(episode_rewards):.3f}\n")
-        log_to_ui(f"  Concept Losses (from training logs):\n")
-        log_to_ui(f"    - Mean L_ortho: {mean_L_ortho:.6f} (penalty: {beta * mean_L_ortho:.6f})\n")
-        log_to_ui(f"    - Mean L_spar:  {mean_L_spar:.6f} (penalty: {gamma * mean_L_spar:.6f})\n")
-        log_to_ui(f"    - Mean L_l1:    {mean_L_l1:.6f} (penalty: {delta * mean_L_l1:.6f})\n")
-        log_to_ui(f"  Combined Score:   {objective_value:.3f}\n")
-
-        # Report intermediate value for pruning
-        trial.report(objective_value, step=0)
+        
+        # ✅ Always show concept losses and penalties
+        log_to_ui(f"  Concept Losses:\n")
+        log_to_ui(f"    L_ortho: {mean_L_ortho:+.6f} → penalty: {beta * abs(mean_L_ortho):.6f}\n")
+        log_to_ui(f"    L_spar:  {mean_L_spar:.6f} → penalty: {gamma * mean_L_spar:.6f}\n")
+        log_to_ui(f"    L_l1:    {mean_L_l1:.6f} → penalty: {delta * mean_L_l1:.6f}\n")
+        
+        # ✅ Show combined score prominently
+        total_penalty = beta * abs(mean_L_ortho) + gamma * mean_L_spar + delta * mean_L_l1
+        log_to_ui(f"  Combined Score:   {objective_value:.6f}\n")
+        log_to_ui(f"    = {mean_reward:.3f} (reward) - {total_penalty:.6f} (penalties)\n")
+        
+        # Check which source was used for concept losses (use stored flags)
+        if used_aggregated:
+            log_to_ui(f"  Source: top-30 aggregated checkpoints ✓\n")
+        elif used_fallback:
+            log_to_ui(f"  Source: single best checkpoint (fallback)\n")
+        else:
+            log_to_ui(f"  Source: all zeros (no data found!)\n")
+        log_to_ui("\n")
         
         # Check if trial should be pruned
         if trial.should_prune():
@@ -243,18 +281,20 @@ def optimize_hyperparameters(
     log_to_ui(f"Timesteps/trial: {total_timesteps:,}\n")
     log_to_ui(f"Device:          {device}\n")
     log_to_ui("="*60 + "\n")
-    log_to_ui("\n🎯 Optimization Objective:\n")
-    log_to_ui("   Combined Score = 1.0*reward - 0.05*L_ortho - 0.02*L_spar - 0.01*L_l1\n")
-    log_to_ui("   (Maximize reward while minimizing concept losses)\n")
+    log_to_ui("\n🎯 Optimization Goal:\n")
+    log_to_ui("  Maximize: Combined Score = Reward - Concept Loss Penalties\n")
+    log_to_ui("  Formula: 1.0*reward - 0.05*|L_ortho| - 0.02*L_spar - 0.0001*L_l1\n")
+    log_to_ui("  Concept losses from: TOP-30 checkpoints aggregated (robust!)\n")
     log_to_ui("\n🔍 Searching for optimal:\n")
     log_to_ui("  - lambda_1 (orthogonality):  0.01 to 0.2\n")
-    log_to_ui("  - lambda_2 (sparsity):       1e-4 to 0.01\n")
-    log_to_ui("  - lambda_3 (L1):             0.001 to 0.05\n")
+    log_to_ui("  - lambda_2 (sparsity):       0.0005 to 0.02\n")
+    log_to_ui("  - lambda_3 (L1):             0.5 to 5.0\n")
     log_to_ui(f"  - n_concepts:                {n_concepts_range}\n")
     log_to_ui("="*60 + "\n")
-    log_to_ui("\n💾 Trials will be saved to:\n")
-    log_to_ui(f"   - models/{env_id}/ppo_concept/trials/\n")
-    log_to_ui(f"   - minigrid_tensorboard/{env_id}/ppo_concept/trials/\n")
+    log_to_ui("\n💾 Trial data saved to:\n")
+    log_to_ui(f"   - TensorBoard only (in trials/)\n")
+    log_to_ui(f"   - No model checkpoints saved during trials\n")
+    log_to_ui(f"   - Concept losses aggregated from top-30 checkpoints\n")
     log_to_ui("="*60 + "\n\n")
     
     # Create study

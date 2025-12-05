@@ -20,26 +20,68 @@ import json
 
 class BestModelConceptCallback(EvalCallback):
     """
-    Custom EvalCallback that saves concept losses when best model is updated
+    Custom EvalCallback that tracks top-30 checkpoints by objective
+    and saves aggregated concept losses at training end
     """
-    def __init__(self, *args, concept_logging_callback=None, **kwargs):
+    def __init__(self, *args, concept_logging_callback=None, lambda_1=0.05, lambda_2=0.004, lambda_3=2.0, **kwargs):
         super().__init__(*args, **kwargs)
         self.concept_logging_callback = concept_logging_callback
+        self.lambda_1 = lambda_1
+        self.lambda_2 = lambda_2
+        self.lambda_3 = lambda_3
+        
+        # Track top 30 checkpoints with highest objective
+        self.top_checkpoints = []
+        self.max_checkpoints = 30
+        
+        # Objective weights (same as optuna)
+        self.alpha = 1.0
+        self.beta = 0.05
+        self.gamma = 0.02
+        self.delta = 0.01
+        
         self.prev_best_mean_reward = -np.inf
 
     def _on_step(self) -> bool:
         result = super()._on_step()
 
-        # ✅ Check if best model was updated (best_mean_reward changed)
+        # After eval, add to top checkpoints if we have concept losses
+        if self.concept_logging_callback and self.concept_logging_callback.latest_concept_losses:
+            L_ortho, L_spar, L_l1 = self.concept_logging_callback.latest_concept_losses
+            current_reward = self.last_mean_reward
+            
+            # Compute objective (same formula as Optuna)
+            objective = (self.alpha * current_reward
+                        - self.beta * abs(L_ortho)
+                        - self.gamma * L_spar
+                        - self.delta * L_l1)
+            
+            # Add to top checkpoints
+            checkpoint = (objective, L_ortho, L_spar, L_l1, self.num_timesteps, current_reward)
+            self.top_checkpoints.append(checkpoint)
+            
+            # Keep only top 30 by objective
+            self.top_checkpoints.sort(key=lambda x: x[0], reverse=True)
+            if len(self.top_checkpoints) > self.max_checkpoints:
+                self.top_checkpoints = self.top_checkpoints[:self.max_checkpoints]
+            
+            # Debug: show tracking progress occasionally
+            if len(self.top_checkpoints) % 5 == 0 or len(self.top_checkpoints) <= 3:
+                print(f"  [Tracking] {len(self.top_checkpoints)} checkpoints, latest objective: {objective:.4f}")
+        else:
+            # Debug: show why not tracking
+            if not self.concept_logging_callback:
+                print(f"  [Warning] No concept_logging_callback - cannot track checkpoints!")
+            elif not self.concept_logging_callback.latest_concept_losses:
+                print(f"  [Warning] latest_concept_losses is None - skipping checkpoint")
+        
+        # Also save single best for backward compatibility
         if self.best_mean_reward > self.prev_best_mean_reward:
-            # Best model was just updated!
             self.prev_best_mean_reward = self.best_mean_reward
-
-            # ✅ Get concept losses from ConceptLoggingCallback (from training rollout)
+            
             if self.concept_logging_callback and self.concept_logging_callback.latest_concept_losses:
                 L_ortho, L_spar, L_l1 = self.concept_logging_callback.latest_concept_losses
-
-                # Save to file alongside best_model.zip
+                
                 concept_losses_path = os.path.join(self.best_model_save_path, 'best_model_concept_losses.json')
                 concept_losses_data = {
                     'L_ortho': float(L_ortho),
@@ -48,17 +90,68 @@ class BestModelConceptCallback(EvalCallback):
                     'timestep': self.num_timesteps,
                     'mean_reward': float(self.best_mean_reward)
                 }
-
+                
                 try:
                     with open(concept_losses_path, 'w') as f:
                         json.dump(concept_losses_data, f, indent=2)
-                    print(f"✓ Saved concept losses to {concept_losses_path}")
                 except Exception as e:
                     print(f"⚠ Failed to save concept losses: {e}")
-            else:
-                print(f"⚠ No concept losses available from training rollout")
-
+        
         return result
+    
+    def _on_training_end(self) -> None:
+        """Save aggregated top-30 concept losses at end of training"""
+        super()._on_training_end()
+        
+        print(f"\n[BestModelConceptCallback] Training ended, processing top checkpoints...")
+        print(f"  Total checkpoints tracked: {len(self.top_checkpoints)}")
+        
+        if len(self.top_checkpoints) > 0:
+            # Compute mean from top checkpoints
+            mean_L_ortho = np.mean([cp[1] for cp in self.top_checkpoints])
+            mean_L_spar = np.mean([cp[2] for cp in self.top_checkpoints])
+            mean_L_l1 = np.mean([cp[3] for cp in self.top_checkpoints])
+            
+            print(f"  Aggregated from top-{len(self.top_checkpoints)} checkpoints:")
+            print(f"    mean_L_ortho: {mean_L_ortho:.6f}")
+            print(f"    mean_L_spar:  {mean_L_spar:.6f}")
+            print(f"    mean_L_l1:    {mean_L_l1:.6f}")
+            
+            # Save aggregated losses
+            aggregated_path = os.path.join(self.best_model_save_path, 'top30_aggregated_concept_losses.json')
+            aggregated_data = {
+                'mean_L_ortho': float(mean_L_ortho),
+                'mean_L_spar': float(mean_L_spar),
+                'mean_L_l1': float(mean_L_l1),
+                'n_checkpoints': len(self.top_checkpoints),
+                'top_checkpoints': [
+                    {
+                        'objective': float(cp[0]),
+                        'L_ortho': float(cp[1]),
+                        'L_spar': float(cp[2]),
+                        'L_l1': float(cp[3]),
+                        'timestep': int(cp[4]),
+                        'reward': float(cp[5])
+                    }
+                    for cp in self.top_checkpoints
+                ]
+            }
+            
+            try:
+                with open(aggregated_path, 'w') as f:
+                    json.dump(aggregated_data, f, indent=2)
+                print(f"✓ Saved top-{len(self.top_checkpoints)} aggregated concept losses")
+                print(f"  → {aggregated_path}")
+            except Exception as e:
+                print(f"⚠ Failed to save aggregated concept losses: {e}")
+                import traceback
+                traceback.print_exc()
+        else:
+            print(f"  ⚠ No checkpoints tracked! Cannot create aggregated file.")
+            print(f"  This may happen if:")
+            print(f"    - Training was too short (no evals)")
+            print(f"    - concept_logging_callback is None")
+            print(f"    - latest_concept_losses was always None")
 
 
 
@@ -93,7 +186,7 @@ class PPOWithConcept(PPO):
     """
     PPO that adds concept layer losses to total loss
     """
-    def __init__(self, *args, lambda_1=0.005, lambda_2=0.0015, lambda_3=0.00015, **kwargs):
+    def __init__(self, *args, lambda_1=0.05, lambda_2=0.004, lambda_3=2.0, **kwargs):
         super().__init__(*args, **kwargs)
         self.lambda_1 = lambda_1
         self.lambda_2 = lambda_2
@@ -331,9 +424,9 @@ def train_ppo_concept(
         ent_coef=0.01,
         vf_coef=0.5,
         max_grad_norm=0.5,
-        lambda_1=0.05,     # [Tăng] Orthogonality
-        lambda_2=0.002,    # [Giữ nguyên] Sparsity
-        lambda_3=0.01,     # [Tăng mạnh] L1
+        lambda_1=0.05,     # Orthogonality
+        lambda_2=0.004,    # Sparsity
+        lambda_3=2.0,      # L1
         is_trial=False,
         trial_number=None
 ):
@@ -412,7 +505,10 @@ def train_ppo_concept(
         eval_freq=max(5000 // n_envs, 1), 
         n_eval_episodes=10, 
         deterministic=True,
-        concept_logging_callback=concept_logging_cb
+        concept_logging_callback=concept_logging_cb,
+        lambda_1=lambda_1,
+        lambda_2=lambda_2,
+        lambda_3=lambda_3
     )
     callback = CallbackList([concept_logging_cb, checkpoint_cb, eval_cb])
 
@@ -424,7 +520,45 @@ def train_ppo_concept(
         tb_log_name=run_name
     )
 
-    # ✅ Only save best model when NOT in trial mode
+    # ✅ FORCE save aggregated losses immediately after training
+    # (Don't wait for _on_training_end() - may not be called in trials!)
+    if len(eval_cb.top_checkpoints) > 0:
+        print(f"\n[Post-training] Saving aggregated concept losses...")
+        print(f"  Total checkpoints: {len(eval_cb.top_checkpoints)}")
+        
+        mean_L_ortho = np.mean([cp[1] for cp in eval_cb.top_checkpoints])
+        mean_L_spar = np.mean([cp[2] for cp in eval_cb.top_checkpoints])
+        mean_L_l1 = np.mean([cp[3] for cp in eval_cb.top_checkpoints])
+        
+        aggregated_path = os.path.join(checkpoint_dir, 'top30_aggregated_concept_losses.json')
+        aggregated_data = {
+            'mean_L_ortho': float(mean_L_ortho),
+            'mean_L_spar': float(mean_L_spar),
+            'mean_L_l1': float(mean_L_l1),
+            'n_checkpoints': len(eval_cb.top_checkpoints),
+            'top_checkpoints': [
+                {
+                    'objective': float(cp[0]),
+                    'L_ortho': float(cp[1]),
+                    'L_spar': float(cp[2]),
+                    'L_l1': float(cp[3]),
+                    'timestep': int(cp[4]),
+                    'reward': float(cp[5])
+                }
+                for cp in eval_cb.top_checkpoints
+            ]
+        }
+        
+        try:
+            with open(aggregated_path, 'w') as f:
+                json.dump(aggregated_data, f, indent=2)
+            print(f"✓ Saved: {aggregated_path}")
+        except Exception as e:
+            print(f"⚠ Failed to save: {e}")
+            import traceback
+            traceback.print_exc()
+
+    # ✅ Save best model (skip if is_trial=True)
     if not is_trial:
         # Save best model
         best_model_in_last_train = f"{checkpoint_dir}/best_model.zip"
@@ -456,7 +590,7 @@ if __name__ == "__main__":
         n_envs=4,
         seed=42,
         device="cuda",
-        lambda_1=0.01,   # ví dụ tùy chỉnh khi gọi
-        lambda_2=0.002,
-        lambda_3=0.0002
+        lambda_1=0.05,   # Orthogonality
+        lambda_2=0.004,  # Sparsity
+        lambda_3=2.0     # L1
     )

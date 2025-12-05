@@ -146,9 +146,9 @@ PPO_CONCEPT_CONFIGS = {
         "max_grad_norm": 0.5,
         "n_envs": 4,
         "n_concepts": 4,
-        "lambda_1": 0.05,    # [Tăng] Orthogonality: Giúp concept tách biệt rõ hơn
-        "lambda_2": 0.002,   # [Giữ nguyên] Sparsity: Đang hoạt động tốt
-        "lambda_3": 0.01,    # [Tăng mạnh] L1: Để chặn đà tăng của L1 Loss
+        "lambda_1": 0.05,    # Orthogonality: Giúp concept tách biệt rõ hơn
+        "lambda_2": 0.004,   # Sparsity: Khuyến khích sparse activation
+        "lambda_3": 2.0,     # L1: Regularization mạnh cho concept weights
     },
     
     # Medium environments - 4 concepts
@@ -166,9 +166,9 @@ PPO_CONCEPT_CONFIGS = {
         "max_grad_norm": 0.5,
         "n_envs": 8,
         "n_concepts": 4,
-        "lambda_1": 0.05,    # [Tăng] Orthogonality
-        "lambda_2": 0.002,   # [Giữ nguyên] Sparsity
-        "lambda_3": 0.01,    # [Tăng mạnh] L1
+        "lambda_1": 0.05,    # Orthogonality
+        "lambda_2": 0.004,   # Sparsity
+        "lambda_3": 2.0,     # L1
     },
     
     # Hard environments - 8 concepts
@@ -186,9 +186,9 @@ PPO_CONCEPT_CONFIGS = {
         "max_grad_norm": 0.5,
         "n_envs": 8,
         "n_concepts": 8,
-        "lambda_1": 0.05,    # [Tăng] Orthogonality
-        "lambda_2": 0.002,   # [Giữ nguyên] Sparsity
-        "lambda_3": 0.01,    # [Tăng mạnh] L1
+        "lambda_1": 0.05,    # Orthogonality
+        "lambda_2": 0.004,   # Sparsity
+        "lambda_3": 2.0,     # L1
     },
 
     # Extremely hard environments - 12 concepts
@@ -206,9 +206,9 @@ PPO_CONCEPT_CONFIGS = {
         "max_grad_norm": 0.5,
         "n_envs": 16,
         "n_concepts": 12,
-        "lambda_1": 0.05,    # [Tăng] Orthogonality
-        "lambda_2": 0.002,   # [Giữ nguyên] Sparsity
-        "lambda_3": 0.01,    # [Tăng mạnh] L1
+        "lambda_1": 0.05,    # Orthogonality
+        "lambda_2": 0.004,   # Sparsity
+        "lambda_3": 2.0,     # L1
     }
 }
 
@@ -231,6 +231,7 @@ ENV_DIFFICULTY = {
     "MiniGrid-Fetch-5x5-N2-v0": "hard",
     "MiniGrid-GoToDoor-5x5-v0": "hard",
     "MiniGrid-FourRooms-v0": "hard",
+    "MiniGrid-DoorKey-7x7-v0": "hard"
     "MiniGrid-DoorKey-8x8-v0": "hard",
 
     #Extremely hard environments
