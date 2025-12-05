@@ -145,7 +145,7 @@ PPO_CONCEPT_CONFIGS = {
         "vf_coef": 0.5,
         "max_grad_norm": 0.5,
         "n_envs": 4,
-        "n_concepts": 4,
+        "n_concepts": 6,
         "lambda_1": 0.05,    # Orthogonality: Giúp concept tách biệt rõ hơn
         "lambda_2": 0.004,   # Sparsity: Khuyến khích sparse activation
         "lambda_3": 2.0,     # L1: Regularization mạnh cho concept weights
@@ -165,7 +165,7 @@ PPO_CONCEPT_CONFIGS = {
         "vf_coef": 0.5,
         "max_grad_norm": 0.5,
         "n_envs": 8,
-        "n_concepts": 4,
+        "n_concepts": 8,
         "lambda_1": 0.05,    # Orthogonality
         "lambda_2": 0.004,   # Sparsity
         "lambda_3": 2.0,     # L1
@@ -185,7 +185,7 @@ PPO_CONCEPT_CONFIGS = {
         "vf_coef": 0.5,
         "max_grad_norm": 0.5,
         "n_envs": 8,
-        "n_concepts": 8,
+        "n_concepts": 12,
         "lambda_1": 0.05,    # Orthogonality
         "lambda_2": 0.004,   # Sparsity
         "lambda_3": 2.0,     # L1
@@ -205,7 +205,7 @@ PPO_CONCEPT_CONFIGS = {
         "vf_coef": 0.5,
         "max_grad_norm": 0.5,
         "n_envs": 16,
-        "n_concepts": 12,
+        "n_concepts": 16,
         "lambda_1": 0.05,    # Orthogonality
         "lambda_2": 0.004,   # Sparsity
         "lambda_3": 2.0,     # L1
@@ -231,7 +231,7 @@ ENV_DIFFICULTY = {
     "MiniGrid-Fetch-5x5-N2-v0": "hard",
     "MiniGrid-GoToDoor-5x5-v0": "hard",
     "MiniGrid-FourRooms-v0": "hard",
-    "MiniGrid-DoorKey-7x7-v0": "hard"
+    "MiniGrid-DoorKey-7x7-v0": "hard",
     "MiniGrid-DoorKey-8x8-v0": "hard",
 
     #Extremely hard environments
@@ -244,10 +244,10 @@ ENV_DIFFICULTY = {
 
 # N_concepts ranges for Optuna tuning (by difficulty)
 N_CONCEPTS_RANGES = {
-    "easy": [2, 3, 4, 5],
-    "medium": [3, 4, 5, 6, 7],
-    "hard": [5, 6, 7, 8, 9],
-    "extreme": [7, 8, 9, 10, 11, 12],
+    "easy": [4, 5, 6, 7],
+    "medium": [6, 7, 8, 9, 10],
+    "hard": [8, 9, 10, 11, 12, 13],
+    "extreme": [10, 11, 12, 13, 14, 15],
 }
 
 # Optuna tuning parameters by difficulty
