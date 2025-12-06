@@ -46,7 +46,7 @@ def make_env(env_id, seed=0):
     return _init
 
 
-def objective(trial, env_id, total_timesteps, n_envs, seed, device, is_trial=True):
+def objective(trial, env_id, total_timesteps, n_envs, seed, device, concept_mode=1, is_trial=True):
     """
     Objective function for Optuna
     Returns: combined score (reward + concept quality penalties)
@@ -67,10 +67,14 @@ def objective(trial, env_id, total_timesteps, n_envs, seed, device, is_trial=Tru
     # lambda_1=0.05 → range [0.01, 0.2]
     # lambda_2=0.004 → range [0.0005, 0.02]
     # lambda_3=2.0 → range [0.5, 5.0]
+    # concept_mode: Fixed by user (not tuned by Optuna)
     lambda_1 = trial.suggest_float('lambda_1', 0.01, 0.2, log=True)
     lambda_2 = trial.suggest_float('lambda_2', 0.0005, 0.02, log=True)
     lambda_3 = trial.suggest_float('lambda_3', 0.5, 5.0, log=True)
     n_concepts = trial.suggest_categorical('n_concepts', n_concepts_range)
+    
+    # Use fixed concept_mode from function parameter
+    mode_names = {1: 'flatten', 2: 'avg pool', 3: 'max pool', 4: 'FC-bottleneck'}
     
     log_to_ui(f"\n{'='*60}\n")
     log_to_ui(f"Trial {trial.number} (Difficulty: {difficulty})\n")
@@ -79,6 +83,7 @@ def objective(trial, env_id, total_timesteps, n_envs, seed, device, is_trial=Tru
     log_to_ui(f"  lambda_2 (sparsity):      {lambda_2:.6f}\n")
     log_to_ui(f"  lambda_3 (L1):            {lambda_3:.6f}\n")
     log_to_ui(f"  n_concepts:               {n_concepts} (from {n_concepts_range})\n")
+    log_to_ui(f"  concept_mode (fixed):     {concept_mode} ({mode_names[concept_mode]})\n")
     log_to_ui(f"{'='*60}\n\n")
     
     try:
@@ -89,6 +94,7 @@ def objective(trial, env_id, total_timesteps, n_envs, seed, device, is_trial=Tru
             total_timesteps=total_timesteps,
             n_envs=n_envs,
             n_concepts=n_concepts,
+            concept_mode=concept_mode,
             seed=seed + trial.number,  # Different seed per trial
             device=device,
             lambda_1=lambda_1,
@@ -247,6 +253,7 @@ def optimize_hyperparameters(
     n_envs=4,
     seed=42,
     device="cuda",
+    concept_mode=1,  # Fixed mode chosen by user
     study_name=None,
     storage=None
 ):
@@ -260,6 +267,7 @@ def optimize_hyperparameters(
         n_envs: Number of parallel environments
         seed: Random seed
         device: Device (cuda/cpu/mps)
+        concept_mode: Concept extraction mode (1-4) - fixed for all trials
         study_name: Name for the study (for resuming)
         storage: Storage URL (e.g., 'sqlite:///optuna_study.db')
     """
@@ -271,6 +279,8 @@ def optimize_hyperparameters(
     tuning_config = get_optuna_tuning_config(env_id)
     n_startup_trials = tuning_config.get('n_startup_trials', 5)  # Default to 5 if not in config
     
+    mode_names = {1: 'flatten', 2: 'avg pool', 3: 'max pool', 4: 'FC-bottleneck'}
+    
     log_to_ui("="*60 + "\n")
     log_to_ui("OPTUNA HYPERPARAMETER TUNING FOR PPO_CONCEPT\n")
     log_to_ui("="*60 + "\n")
@@ -280,6 +290,7 @@ def optimize_hyperparameters(
     log_to_ui(f"Startup trials:  {n_startup_trials} (random sampling)\n")
     log_to_ui(f"Timesteps/trial: {total_timesteps:,}\n")
     log_to_ui(f"Device:          {device}\n")
+    log_to_ui(f"Concept mode:    {concept_mode} ({mode_names[concept_mode]}) - FIXED\n")
     log_to_ui("="*60 + "\n")
     log_to_ui("\n🎯 Optimization Goal:\n")
     log_to_ui("  Maximize: Combined Score = Reward - Concept Loss Penalties\n")
@@ -315,7 +326,7 @@ def optimize_hyperparameters(
     
     # Optimize
     study.optimize(
-        lambda trial: objective(trial, env_id, total_timesteps, n_envs, seed, device),
+        lambda trial: objective(trial, env_id, total_timesteps, n_envs, seed, device, concept_mode),
         n_trials=n_trials,
         show_progress_bar=True
     )
@@ -369,11 +380,13 @@ def optimize_hyperparameters(
     return study
 
 
-def train_with_best_params(study, env_id, total_timesteps, n_envs, seed, device):
+def train_with_best_params(study, env_id, total_timesteps, n_envs, seed, device, concept_mode=1):
     """
     Train a final model with best parameters found by Optuna
     """
     best_params = study.best_params
+    
+    mode_names = {1: 'flatten', 2: 'avg pool', 3: 'max pool', 4: 'FC-bottleneck'}
     
     print("\n" + "="*60)
     print("TRAINING FINAL MODEL WITH BEST PARAMS")
@@ -382,6 +395,7 @@ def train_with_best_params(study, env_id, total_timesteps, n_envs, seed, device)
     print(f"  lambda_2: {best_params['lambda_2']:.6f}")
     print(f"  lambda_3: {best_params['lambda_3']:.6f}")
     print(f"  n_concepts: {best_params['n_concepts']}")
+    print(f"  concept_mode: {concept_mode} ({mode_names[concept_mode]}) - FIXED")
     print("="*60 + "\n")
     
     model = train_ppo_concept(
@@ -389,6 +403,7 @@ def train_with_best_params(study, env_id, total_timesteps, n_envs, seed, device)
         total_timesteps=total_timesteps,
         n_envs=n_envs,
         n_concepts=best_params['n_concepts'],
+        concept_mode=concept_mode,
         seed=seed,
         device=device,
         lambda_1=best_params['lambda_1'],

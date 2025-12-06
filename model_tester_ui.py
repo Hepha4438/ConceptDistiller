@@ -1721,6 +1721,18 @@ class ModelTesterUI:
         fps_spinbox = tk.Spinbox(params_frame, from_=1, to=30, textvariable=self.gradcam_fps_var, width=10)
         fps_spinbox.grid(row=2, column=1, sticky=tk.W, padx=5, pady=3)
         
+        # Save mode (best or all episodes)
+        ttk.Label(params_frame, text="Save mode:").grid(row=3, column=0, sticky=tk.W, padx=5, pady=3)
+        self.gradcam_save_mode_var = tk.StringVar(value="best")
+        save_mode_combo = ttk.Combobox(params_frame, textvariable=self.gradcam_save_mode_var,
+                                       values=["best", "all"], width=10, state="readonly")
+        save_mode_combo.grid(row=3, column=1, sticky=tk.W, padx=5, pady=3)
+        
+        # Tooltip for save mode
+        tooltip_label = ttk.Label(params_frame, text="(best: only best episode, all: all episodes)",
+                                 foreground="gray", font=('Arial', 8))
+        tooltip_label.grid(row=4, column=0, columnspan=2, sticky=tk.W, padx=5, pady=2)
+        
         # Run button
         run_frame = ttk.Frame(left_panel)
         run_frame.pack(fill=tk.X, pady=10)
@@ -1833,6 +1845,7 @@ class ModelTesterUI:
         episodes = self.gradcam_episodes_var.get()
         device = self.gradcam_device_var.get()
         fps = self.gradcam_fps_var.get()
+        save_mode = self.gradcam_save_mode_var.get()
         
         # Output directory
         model_name = model_file.replace('.zip', '')
@@ -1846,6 +1859,7 @@ class ModelTesterUI:
         self.gradcam_log.insert(tk.END, f"Model: {model_file}\n")
         self.gradcam_log.insert(tk.END, f"Episodes: {episodes}\n")
         self.gradcam_log.insert(tk.END, f"Device: {device}\n")
+        self.gradcam_log.insert(tk.END, f"Save mode: {save_mode}\n")
         self.gradcam_log.insert(tk.END, f"Output: {out_dir}\n")
         self.gradcam_log.insert(tk.END, f"{'='*60}\n")
         self.gradcam_log.see(tk.END)
@@ -1857,46 +1871,72 @@ class ModelTesterUI:
         
         # Run in thread
         thread = threading.Thread(target=self._run_gradcam_thread, 
-                                 args=(model_path, env_id, episodes, device, out_dir, fps))
+                                 args=(model_path, env_id, episodes, device, out_dir, fps, save_mode))
         thread.daemon = True
         thread.start()
     
-    def _run_gradcam_thread(self, model_path, env_id, episodes, device, out_dir, fps):
+    def _run_gradcam_thread(self, model_path, env_id, episodes, device, out_dir, fps, save_mode):
         """Run GradCAM analysis in background thread"""
         try:
-            from test_agent_gradcam import run_and_collect_best_episode, generate_gradcam_for_best
-            
-            # Run episodes and collect best
-            self.gradcam_log.insert(tk.END, "\n🎮 Running episodes to find best...\n")
-            self.gradcam_log.see(tk.END)
-            
-            model, best_obs, frames, best_reward, _ = run_and_collect_best_episode(
-                model_path=model_path,
-                env_id=env_id,
-                algorithm="PPO_CONCEPT",
-                num_episodes=episodes,
-                deterministic=True,
-                device=device,
-                out_dir=out_dir,
-                max_steps=1000
-            )
-            
-            self.gradcam_log.insert(tk.END, f"✓ Best episode reward: {best_reward}\n")
-            self.gradcam_log.insert(tk.END, f"✓ Total frames: {len(best_obs)}\n")
-            self.gradcam_log.see(tk.END)
-            
-            # Generate GradCAM
-            self.gradcam_log.insert(tk.END, "\n🔍 Generating GradCAM visualizations...\n")
-            self.gradcam_log.see(tk.END)
-            
-            result_dir = generate_gradcam_for_best(
-                model=model,
-                best_obs=best_obs,
-                frames=frames,
-                out_dir=out_dir,
-                device=device,
-                fps=fps
-            )
+            if save_mode == "best":
+                # Original behavior: save only best episode
+                from test_agent_gradcam import run_and_collect_best_episode, generate_gradcam_for_best
+                
+                # Run episodes and collect best
+                self.gradcam_log.insert(tk.END, "\n🎮 Running episodes to find best...\n")
+                self.gradcam_log.see(tk.END)
+                
+                model, best_obs, frames, best_reward, _ = run_and_collect_best_episode(
+                    model_path=model_path,
+                    env_id=env_id,
+                    algorithm="PPO_CONCEPT",
+                    num_episodes=episodes,
+                    deterministic=True,
+                    device=device,
+                    out_dir=out_dir,
+                    max_steps=1000
+                )
+                
+                self.gradcam_log.insert(tk.END, f"✓ Best episode reward: {best_reward}\n")
+                self.gradcam_log.insert(tk.END, f"✓ Total frames: {len(best_obs)}\n")
+                self.gradcam_log.see(tk.END)
+                
+                # Generate GradCAM
+                self.gradcam_log.insert(tk.END, "\n🔍 Generating GradCAM visualizations...\n")
+                self.gradcam_log.see(tk.END)
+                
+                result_dir = generate_gradcam_for_best(
+                    model=model,
+                    best_obs=best_obs,
+                    frames=frames,
+                    out_dir=out_dir,
+                    device=device,
+                    fps=fps
+                )
+                
+            else:  # save_mode == "all"
+                # New behavior: save all episodes
+                from test_agent_gradcam import run_and_save_all_episodes
+                
+                self.gradcam_log.insert(tk.END, f"\n🎮 Running and saving ALL {episodes} episodes...\n")
+                self.gradcam_log.see(tk.END)
+                
+                run_dirs = run_and_save_all_episodes(
+                    model_path=model_path,
+                    env_id=env_id,
+                    algorithm="PPO_CONCEPT",
+                    num_episodes=episodes,
+                    deterministic=True,
+                    device=device,
+                    out_dir=out_dir,
+                    fps=fps,
+                    max_steps=1000
+                )
+                
+                result_dir = out_dir  # Parent directory containing all episodes
+                
+                self.gradcam_log.insert(tk.END, f"✓ Saved {len(run_dirs)} episodes\n")
+                self.gradcam_log.see(tk.END)
             
             self.gradcam_log.insert(tk.END, f"\n{'='*60}\n")
             self.gradcam_log.insert(tk.END, f"✅ Analysis Complete!\n")
@@ -1906,7 +1946,7 @@ class ModelTesterUI:
             self.gradcam_log.see(tk.END)
             
             # Success
-            self.root.after(0, self._gradcam_complete, result_dir)
+            self.root.after(0, self._gradcam_complete, result_dir, save_mode)
             
         except Exception as e:
             import traceback
@@ -1915,20 +1955,24 @@ class ModelTesterUI:
             self.gradcam_log.see(tk.END)
             self.root.after(0, self._gradcam_error, str(e))
     
-    def _gradcam_complete(self, result_dir):
+    def _gradcam_complete(self, result_dir, save_mode="best"):
         """Handle GradCAM completion"""
         self.gradcam_progress.stop()
         self.gradcam_run_btn.config(state=tk.NORMAL)
-        self.gradcam_status_var.set("✅ Analysis complete!")
+        
+        if save_mode == "best":
+            self.gradcam_status_var.set("✅ Analysis complete! (best episode)")
+        else:
+            self.gradcam_status_var.set("✅ Analysis complete! (all episodes)")
         
         # Store paths
         self.last_gradcam_dir = result_dir
         
-        # Find video file
+        # Find video file(s)
         import glob
-        video_files = glob.glob(f"{result_dir}/*.mp4")
+        video_files = glob.glob(f"{result_dir}/**/*.mp4", recursive=True)
         if video_files:
-            self.last_gradcam_video = video_files[0]
+            self.last_gradcam_video = video_files[0]  # First video
             self.gradcam_open_video_btn.config(state=tk.NORMAL)
         else:
             self.last_gradcam_video = None
@@ -2056,9 +2100,18 @@ class ModelTesterUI:
                                     values=["cpu", "cuda", "mps"], width=10, state="readonly")
         device_combo.grid(row=4, column=1, sticky=tk.W, padx=5, pady=3)
         
+        # Concept mode selection (fixed for all trials)
+        ttk.Label(params_frame, text="Concept mode:").grid(row=5, column=0, sticky=tk.W, padx=5, pady=3)
+        self.optuna_concept_mode_var = tk.IntVar(value=1)
+        concept_mode_combo = ttk.Combobox(params_frame, textvariable=self.optuna_concept_mode_var,
+                                         values=[1, 2, 3, 4], width=10, state="readonly")
+        concept_mode_combo.grid(row=5, column=1, sticky=tk.W, padx=5, pady=3)
+        ttk.Label(params_frame, text="(1:flatten, 2:avg, 3:max, 4:FC)", 
+                 font=('Arial', 8), foreground='gray').grid(row=5, column=2, sticky=tk.W, padx=2, pady=3)
+        
         # Button to load defaults from config
         ttk.Button(params_frame, text="🔄 Load Defaults from Config", 
-                  command=self.load_optuna_defaults).grid(row=5, column=0, columnspan=3, pady=5)
+                  command=self.load_optuna_defaults).grid(row=6, column=0, columnspan=3, pady=5)
         
         # Final training option
         final_frame = ttk.LabelFrame(left_panel, text="Final Training (Optional)", padding=5)
@@ -2151,6 +2204,7 @@ class ModelTesterUI:
         timesteps = self.optuna_timesteps_var.get()
         n_envs = self.optuna_n_envs_var.get()
         device = self.optuna_device_var.get()
+        concept_mode = self.optuna_concept_mode_var.get()
         train_final = self.optuna_train_final_var.get()
         final_timesteps = self.optuna_final_timesteps_var.get()
         
@@ -2158,6 +2212,9 @@ class ModelTesterUI:
         if n_trials < 5:
             messagebox.showwarning("Invalid Input", "Number of trials must be at least 5!")
             return
+        
+        # Mode names for display
+        mode_names = {1: 'flatten', 2: 'avg pool', 3: 'max pool', 4: 'FC-bottleneck'}
         
         # Log start
         from datetime import datetime
@@ -2170,6 +2227,7 @@ class ModelTesterUI:
         self.optuna_log.insert(tk.END, f"Timesteps/trial: {timesteps:,}\n")
         self.optuna_log.insert(tk.END, f"Parallel envs: {n_envs}\n")
         self.optuna_log.insert(tk.END, f"Device: {device}\n")
+        self.optuna_log.insert(tk.END, f"Concept mode: {concept_mode} ({mode_names[concept_mode]}) - FIXED\n")
         if train_final:
             self.optuna_log.insert(tk.END, f"Final training: Yes ({final_timesteps:,} timesteps)\n")
         else:
@@ -2192,11 +2250,11 @@ class ModelTesterUI:
         
         # Run in thread
         thread = threading.Thread(target=self._run_optuna_thread,
-                                 args=(env_id, n_trials, timesteps, n_envs, device, train_final, final_timesteps))
+                                 args=(env_id, n_trials, timesteps, n_envs, device, concept_mode, train_final, final_timesteps))
         thread.daemon = True
         thread.start()
     
-    def _run_optuna_thread(self, env_id, n_trials, timesteps, n_envs, device, train_final, final_timesteps):
+    def _run_optuna_thread(self, env_id, n_trials, timesteps, n_envs, device, concept_mode, train_final, final_timesteps):
         """Run Optuna tuning in background thread"""
         try:
             from tune_ppo_concept_optuna import optimize_hyperparameters, train_with_best_params, set_ui_log_callback
@@ -2216,6 +2274,7 @@ class ModelTesterUI:
                     n_envs=n_envs,
                     seed=42,
                     device=device,
+                    concept_mode=concept_mode,
                     storage=None
                 )
                 
@@ -2233,7 +2292,8 @@ class ModelTesterUI:
                         total_timesteps=final_timesteps,
                         n_envs=n_envs,
                         seed=42,
-                        device=device
+                        device=device,
+                        concept_mode=concept_mode
                     )
                     
                     log_callback(f"\n✅ Final model training complete!\n\n")

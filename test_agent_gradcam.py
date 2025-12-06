@@ -427,6 +427,122 @@ def generate_gradcam_for_best(model, best_obs, frames, out_dir, device="cpu", fp
 
 
 # ============================================================
+# Save ALL episodes (not just best)
+# ============================================================
+
+def run_and_save_all_episodes(model_path,
+                              env_id="MiniGrid-Empty-5x5-v0",
+                              algorithm="PPO_CONCEPT",
+                              num_episodes=10,
+                              deterministic=True,
+                              device="cpu",
+                              out_dir="gradcam_out",
+                              fps=6,
+                              max_steps=1000):
+    """
+    Run multiple episodes and save GradCAM visualization for ALL episodes.
+    
+    Returns:
+        List of directories where each episode was saved
+    """
+    env = gym.make(env_id, render_mode="rgb_array")
+    env = ImgObsWrapper(env)
+
+    if algorithm.upper() == "PPO_CONCEPT":
+        model = ConceptPPO.load(model_path, env=env, device=device)
+    elif algorithm.upper().startswith("PPO"):
+        model = PPO.load(model_path, env=env, device=device)
+    elif algorithm.upper() == "DQN":
+        model = DQN.load(model_path, env=env, device=device)
+    else:
+        raise ValueError(f"Unknown algorithm: {algorithm}")
+
+    fx = model.policy.features_extractor
+    fx.to(device)
+    fx.eval()
+
+    os.makedirs(out_dir, exist_ok=True)
+    run_dirs = []
+
+    print(f"\n{'='*60}")
+    print(f"Saving GradCAM for ALL {num_episodes} episodes")
+    print(f"{'='*60}\n")
+
+    for ep in range(num_episodes):
+        obs, _ = env.reset()
+        done = False
+        ep_reward = 0
+        obs_list = []
+        frame_list = []
+        steps = 0
+
+        # Capture initial state
+        obs_list.append(np.array(obs))
+        frame_list.append(env.unwrapped.get_frame())
+
+        while not done and steps < max_steps:
+            action, _ = model.predict(obs, deterministic=deterministic)
+            obs, reward, terminated, truncated, _ = env.step(action)
+
+            obs_list.append(np.array(obs))
+            frame_list.append(env.unwrapped.get_frame())
+
+            ep_reward += reward
+            done = terminated or truncated
+            steps += 1
+
+        print(f"Episode {ep+1}/{num_episodes}: reward={ep_reward:.3f}, steps={steps}, frames={len(frame_list)}")
+
+        # Generate GradCAM for this episode
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        episode_dir = os.path.join(out_dir, f"episode_{ep+1:03d}_reward_{ep_reward:.2f}_{timestamp}")
+        png_dir = os.path.join(episode_dir, "frames")
+        os.makedirs(png_dir, exist_ok=True)
+
+        saved = []
+        for i, obs_raw in enumerate(obs_list):
+            obs_np = np.array(obs_raw)
+
+            if obs_np.ndim == 3 and obs_np.shape[-1] == 3:
+                obs_np = np.transpose(obs_np, (2, 0, 1))
+
+            obs_t = torch.from_numpy(obs_np).float().unsqueeze(0)
+
+            try:
+                img_input, cams, concept_vals = compute_concept_gradcams(fx, obs_t, device)
+            except Exception as e:
+                print(f"  GradCAM error at frame {i}: {e}")
+                continue
+
+            orig = frame_list[i]
+            out_file = os.path.join(png_dir, f"frame_{i:04d}.png")
+            composite_and_save(orig, cams, concept_vals, out_file)
+            saved.append(out_file)
+
+        print(f"  ✓ Saved {len(saved)} frames")
+
+        # Make video for this episode
+        try:
+            from moviepy import ImageSequenceClip
+            clip = ImageSequenceClip(saved, fps=fps)
+            vid_path = os.path.join(episode_dir, "gradcam_episode.mp4")
+            clip.write_videofile(vid_path, codec="libx264", audio=False, logger=None)
+            print(f"  ✓ Video saved: {vid_path}")
+        except Exception as e:
+            print(f"  ⚠ Warning: Could not create video: {e}")
+
+        run_dirs.append(episode_dir)
+
+    env.close()
+    
+    print(f"\n{'='*60}")
+    print(f"✓ All {len(run_dirs)} episodes saved!")
+    print(f"{'='*60}")
+    
+    return run_dirs
+
+
+# ============================================================
 # CLI
 # ============================================================
 
@@ -439,22 +555,34 @@ def main():
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--outdir", default="gradcam_out")
     parser.add_argument("--fps", type=int, default=6)
+    parser.add_argument("--save-mode", type=str, default="best", choices=["best", "all"],
+                        help="Save 'best' episode only or 'all' episodes (default: best)")
 
     args = parser.parse_args()
 
-    model, best_obs, frames, best_reward, out_dir = run_and_collect_best_episode(
-        args.model, args.env, args.algo,
-        args.episodes, True, args.device, args.outdir
-    )
+    if args.save_mode == "best":
+        # Original behavior: save only best episode
+        model, best_obs, frames, best_reward, out_dir = run_and_collect_best_episode(
+            args.model, args.env, args.algo,
+            args.episodes, True, args.device, args.outdir
+        )
 
-    print(f"\nBest reward = {best_reward}. Running Grad-CAM...")
+        print(f"\nBest reward = {best_reward}. Running Grad-CAM...")
 
-    run_dir = generate_gradcam_for_best(
-        model, best_obs, frames, out_dir,
-        device=args.device, fps=args.fps
-    )
+        run_dir = generate_gradcam_for_best(
+            model, best_obs, frames, out_dir,
+            device=args.device, fps=args.fps
+        )
 
-    print("\nDONE. Results saved in:", run_dir)
+        print("\nDONE. Results saved in:", run_dir)
+    else:
+        # New behavior: save all episodes
+        run_dirs = run_and_save_all_episodes(
+            args.model, args.env, args.algo,
+            args.episodes, True, args.device, args.outdir, args.fps
+        )
+        
+        print(f"\nDONE. Saved {len(run_dirs)} episodes in: {args.outdir}")
 
 
 if __name__ == "__main__":
