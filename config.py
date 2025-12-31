@@ -131,7 +131,7 @@ PPO_CONFIGS = {
 
 # PPO Concept Hyperparameters - Based on PPO with concept learning
 PPO_CONCEPT_CONFIGS = {
-    # Easy environments - 4 concepts
+    # Easy environments - 3 concepts
     "easy": {
         "total_timesteps": 300000,
         "learning_rate": 7e-4,
@@ -145,14 +145,15 @@ PPO_CONCEPT_CONFIGS = {
         "vf_coef": 0.5,
         "max_grad_norm": 0.5,
         "n_envs": 4,
-        "n_concepts": 6,
-        "concept_mode": 4,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool; Mode 4: FC-bottleneck
+        "n_concepts": 3,  # Updated: 6 → 3
+        "concept_mode": 4,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool; Mode 4: FC-bottleneck; Mode 5: FC-bottleneck with STE
         "lambda_1": 0.05,    # Orthogonality: Giúp concept tách biệt rõ hơn
         "lambda_2": 0.004,   # Sparsity: Khuyến khích sparse activation
         "lambda_3": 2.0,     # L1: Regularization mạnh cho concept weights
+        "constraint_lambda": 1.0,  # Mode 5 constraint: Ensure 1-67% concepts active per state
     },
     
-    # Medium environments - 4 concepts
+    # Medium environments - 5 concepts
     "medium": {
         "total_timesteps": 1000000,
         "learning_rate": 7e-4,
@@ -166,14 +167,15 @@ PPO_CONCEPT_CONFIGS = {
         "vf_coef": 0.5,
         "max_grad_norm": 0.5,
         "n_envs": 8,
-        "n_concepts": 8,
-        "concept_mode": 4,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool
+        "n_concepts": 5,  # Updated: 8 → 5
+        "concept_mode": 4,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool; Mode 4: FC-bottleneck; Mode 5: FC-bottleneck with STE
         "lambda_1": 0.05,    # Orthogonality
         "lambda_2": 0.004,   # Sparsity
         "lambda_3": 2.0,     # L1
+        "constraint_lambda": 1.0,  # Mode 5 constraint
     },
     
-    # Hard environments - 8 concepts
+    # Hard environments - 6 concepts
     "hard": {
         "total_timesteps": 4000000,
         "learning_rate": 7e-4,
@@ -187,14 +189,15 @@ PPO_CONCEPT_CONFIGS = {
         "vf_coef": 0.5,
         "max_grad_norm": 0.5,
         "n_envs": 8,
-        "n_concepts": 12,
-        "concept_mode": 4,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool
+        "n_concepts": 6,  # Updated: 12 → 6
+        "concept_mode": 4,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool; Mode 4: FC-bottleneck; Mode 5: FC-bottleneck with STE
         "lambda_1": 0.05,    # Orthogonality
         "lambda_2": 0.004,   # Sparsity
         "lambda_3": 2.0,     # L1
+        "constraint_lambda": 1.0,  # Mode 5 constraint
     },
 
-    # Extremely hard environments - 12 concepts
+    # Extremely hard environments - 8 concepts
     "extreme": {
         "total_timesteps": 10000000,
         "learning_rate": 3e-4,
@@ -208,11 +211,12 @@ PPO_CONCEPT_CONFIGS = {
         "vf_coef": 0.5,
         "max_grad_norm": 0.5,
         "n_envs": 16,
-        "n_concepts": 16,
-        "concept_mode": 4,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool
+        "n_concepts": 8,  # Updated: 16 → 8
+        "concept_mode": 4,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool; Mode 4: FC-bottleneck; Mode 5: FC-bottleneck with STE
         "lambda_1": 0.05,    # Orthogonality
         "lambda_2": 0.004,   # Sparsity
         "lambda_3": 2.0,     # L1
+        "constraint_lambda": 1.0,  # Mode 5 constraint
     }
 }
 
@@ -246,11 +250,12 @@ ENV_DIFFICULTY = {
 }
 
 # N_concepts ranges for Optuna tuning (by difficulty)
+# Centered around: easy=3, medium=5, hard=6, extreme=8
 N_CONCEPTS_RANGES = {
-    "easy": [4, 5, 6, 7],
-    "medium": [6, 7, 8, 9, 10],
-    "hard": [8, 9, 10, 11, 12, 13],
-    "extreme": [10, 11, 12, 13, 14, 15],
+    "easy": [2, 3, 4, 5],        # Range around 3
+    "medium": [4, 5, 6, 7],      # Range around 5
+    "hard": [5, 6, 7, 8],        # Range around 6
+    "extreme": [7, 8, 9, 10],    # Range around 8
 }
 
 # Optuna tuning parameters by difficulty

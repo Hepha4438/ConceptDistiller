@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import subprocess
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
 import pandas as pd
@@ -234,6 +235,16 @@ class ModelTesterUI:
         self.gradcam_frame = ttk.Frame(notebook)
         notebook.add(self.gradcam_frame, text="🔍 GradCAM Analysis")
         self.create_gradcam_tab()
+        
+        # Integrated Gradients Tab
+        self.ig_frame = ttk.Frame(notebook)
+        notebook.add(self.ig_frame, text="🎯 IG Analysis")
+        self.create_ig_tab()
+        
+        # LIME Tab
+        self.lime_frame = ttk.Frame(notebook)
+        notebook.add(self.lime_frame, text="🔬 LIME Analysis")
+        self.create_lime_tab()
     
     def create_training_tab(self):
         """Create the training interface"""
@@ -547,14 +558,14 @@ class ModelTesterUI:
             
             # Entry - special handling for certain parameters
             if param_name == "concept_mode":
-                # Dropdown for concept_mode: 1-4
+                # Dropdown for concept_mode: 1-5
                 var = tk.IntVar(value=param_value)
                 widget = ttk.Combobox(self.hyperparam_frame, textvariable=var, 
-                                     values=[1, 2, 3, 4], width=18, state="readonly")
+                                     values=[1, 2, 3, 4, 5], width=18, state="readonly")
                 widget.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
                 # Add tooltip
                 tooltip_label = ttk.Label(self.hyperparam_frame, 
-                                         text="(1:flatten, 2:avg, 3:max, 4:FC)", 
+                                         text="(1:flatten, 2:avg, 3:max, 4:FC, 5:FC+STE)", 
                                          foreground="gray", font=('Arial', 8))
                 tooltip_label.grid(row=row, column=2, sticky=tk.W, padx=5, pady=3)
             elif isinstance(param_value, bool):
@@ -930,6 +941,7 @@ class ModelTesterUI:
                 lambda_1 = hyperparams.pop('lambda_1', 0.05)
                 lambda_2 = hyperparams.pop('lambda_2', 0.004)
                 lambda_3 = hyperparams.pop('lambda_3', 2.0)
+                constraint_lambda = hyperparams.pop('constraint_lambda', 1.0)  # Mode 5 constraint
                 
                 # Create environments
                 train_env = DummyVecEnv([make_env(env_id, seed=seed+i) for i in range(n_envs)])
@@ -965,7 +977,8 @@ class ModelTesterUI:
                         features_dim=128, 
                         concept_distilling=True, 
                         n_concepts=n_concepts,
-                        concept_mode=concept_mode
+                        concept_mode=concept_mode,
+                        constraint_lambda=constraint_lambda  # Mode 5 constraint
                     ),
                     net_arch=dict(pi=[256, 256], vf=[256, 256]),
                 )
@@ -1886,7 +1899,7 @@ class ModelTesterUI:
                 self.gradcam_log.insert(tk.END, "\n🎮 Running episodes to find best...\n")
                 self.gradcam_log.see(tk.END)
                 
-                model, best_obs, frames, best_reward, _ = run_and_collect_best_episode(
+                model, best_obs, frames, agent_dirs, best_reward, _ = run_and_collect_best_episode(
                     model_path=model_path,
                     env_id=env_id,
                     algorithm="PPO_CONCEPT",
@@ -1909,6 +1922,7 @@ class ModelTesterUI:
                     model=model,
                     best_obs=best_obs,
                     frames=frames,
+                    agent_dirs=agent_dirs,
                     out_dir=out_dir,
                     device=device,
                     fps=fps
@@ -1939,7 +1953,7 @@ class ModelTesterUI:
                 self.gradcam_log.see(tk.END)
             
             self.gradcam_log.insert(tk.END, f"\n{'='*60}\n")
-            self.gradcam_log.insert(tk.END, f"✅ Analysis Complete!\n")
+            self.gradcam_log.insert(tk.END, "✅ Analysis Complete!\n")
             self.gradcam_log.insert(tk.END, f"{'='*60}\n")
             self.gradcam_log.insert(tk.END, f"Results saved to:\n{result_dir}\n")
             self.gradcam_log.insert(tk.END, f"{'='*60}\n\n")
@@ -2048,7 +2062,7 @@ class ModelTesterUI:
         
         # Left panel: Configuration
         left_panel = ttk.LabelFrame(main_container, text="Optuna Configuration", padding=10)
-        left_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
+        left_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=False, padx=(0, 5))
         
         # Environment selection
         env_frame = ttk.LabelFrame(left_panel, text="Environment", padding=5)
@@ -2104,9 +2118,9 @@ class ModelTesterUI:
         ttk.Label(params_frame, text="Concept mode:").grid(row=5, column=0, sticky=tk.W, padx=5, pady=3)
         self.optuna_concept_mode_var = tk.IntVar(value=1)
         concept_mode_combo = ttk.Combobox(params_frame, textvariable=self.optuna_concept_mode_var,
-                                         values=[1, 2, 3, 4], width=10, state="readonly")
+                                         values=[1, 2, 3, 4, 5], width=10, state="readonly")
         concept_mode_combo.grid(row=5, column=1, sticky=tk.W, padx=5, pady=3)
-        ttk.Label(params_frame, text="(1:flatten, 2:avg, 3:max, 4:FC)", 
+        ttk.Label(params_frame, text="(1:flatten, 2:avg, 3:max, 4:FC, 5:FC+STE)", 
                  font=('Arial', 8), foreground='gray').grid(row=5, column=2, sticky=tk.W, padx=2, pady=3)
         
         # Button to load defaults from config
@@ -2227,7 +2241,8 @@ class ModelTesterUI:
         self.optuna_log.insert(tk.END, f"Timesteps/trial: {timesteps:,}\n")
         self.optuna_log.insert(tk.END, f"Parallel envs: {n_envs}\n")
         self.optuna_log.insert(tk.END, f"Device: {device}\n")
-        self.optuna_log.insert(tk.END, f"Concept mode: {concept_mode} ({mode_names[concept_mode]}) - FIXED\n")
+        mode_names_full = {1: "flatten", 2: "avg pool", 3: "max pool", 4: "FC bottleneck", 5: "FC+STE"}
+        self.optuna_log.insert(tk.END, f"Concept mode: {concept_mode} ({mode_names_full.get(concept_mode, 'unknown')}) - FIXED\n")
         if train_final:
             self.optuna_log.insert(tk.END, f"Final training: Yes ({final_timesteps:,} timesteps)\n")
         else:
@@ -2345,16 +2360,653 @@ class ModelTesterUI:
         
         messagebox.showerror("Tuning Error", f"An error occurred:\n\n{error_msg}")
 
-def main():
-    # Set multiprocessing start method to avoid issues on macOS
-    try:
-        multiprocessing.set_start_method('spawn')
-    except RuntimeError:
-        pass  # Already set
+    def create_lime_tab(self):
+        """Create LIME analysis interface"""
+        main_container = ttk.Frame(self.lime_frame)
+        main_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Left panel: Configuration
+        left_panel = ttk.LabelFrame(main_container, text="LIME Configuration", padding=10)
+        left_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=False, padx=(0, 5))
+        
+        # Info label
+        info_label = ttk.Label(left_panel, 
+                              text="ℹ️  LIME is model-agnostic: works with DQN, PPO, PPO_CONCEPT",
+                              font=('Arial', 9, 'italic'), foreground='blue', wraplength=300)
+        info_label.pack(fill=tk.X, pady=(0, 10))
+        
+        # Model selection
+        model_frame = ttk.LabelFrame(left_panel, text="Model Selection", padding=5)
+        model_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Label(model_frame, text="Environment:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=3)
+        self.lime_env_var = tk.StringVar()
+        self.lime_env_combo = ttk.Combobox(model_frame, textvariable=self.lime_env_var, width=30, state="readonly")
+        self.lime_env_combo.grid(row=0, column=1, sticky=tk.W, padx=5, pady=3)
+        self.lime_env_combo.bind('<<ComboboxSelected>>', self.on_lime_env_selected)
+        
+        ttk.Label(model_frame, text="Algorithm:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=3)
+        self.lime_algo_var = tk.StringVar()
+        self.lime_algo_combo = ttk.Combobox(model_frame, textvariable=self.lime_algo_var, width=30, state="readonly")
+        self.lime_algo_combo.grid(row=1, column=1, sticky=tk.W, padx=5, pady=3)
+        self.lime_algo_combo.bind('<<ComboboxSelected>>', self.on_lime_algo_selected)
+        
+        ttk.Label(model_frame, text="Model:").grid(row=2, column=0, sticky=tk.W, padx=5, pady=3)
+        self.lime_model_var = tk.StringVar()
+        self.lime_model_combo = ttk.Combobox(model_frame, textvariable=self.lime_model_var, width=30, state="readonly")
+        self.lime_model_combo.grid(row=2, column=1, sticky=tk.W, padx=5, pady=3)
+        
+        # LIME parameters
+        params_frame = ttk.LabelFrame(left_panel, text="LIME Parameters", padding=5)
+        params_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Label(params_frame, text="Episodes:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=3)
+        self.lime_episodes_var = tk.IntVar(value=5)
+        episodes_spinbox = tk.Spinbox(params_frame, from_=1, to=50, textvariable=self.lime_episodes_var, width=10)
+        episodes_spinbox.grid(row=0, column=1, sticky=tk.W, padx=5, pady=3)
+        
+        ttk.Label(params_frame, text="Num samples:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=3)
+        self.lime_num_samples_var = tk.IntVar(value=1000)
+        samples_spinbox = tk.Spinbox(params_frame, from_=100, to=5000, increment=100,
+                                     textvariable=self.lime_num_samples_var, width=10)
+        samples_spinbox.grid(row=1, column=1, sticky=tk.W, padx=5, pady=3)
+        ttk.Label(params_frame, text="(perturbations)", font=('Arial', 8), foreground='gray').grid(row=1, column=2, sticky=tk.W, padx=2)
+        
+        ttk.Label(params_frame, text="Num features:").grid(row=2, column=0, sticky=tk.W, padx=5, pady=3)
+        self.lime_num_features_var = tk.IntVar(value=10)
+        features_spinbox = tk.Spinbox(params_frame, from_=3, to=20, textvariable=self.lime_num_features_var, width=10)
+        features_spinbox.grid(row=2, column=1, sticky=tk.W, padx=5, pady=3)
+        ttk.Label(params_frame, text="(top regions)", font=('Arial', 8), foreground='gray').grid(row=2, column=2, sticky=tk.W, padx=2)
+        
+        ttk.Label(params_frame, text="Device:").grid(row=3, column=0, sticky=tk.W, padx=5, pady=3)
+        self.lime_device_var = tk.StringVar(value="cpu")
+        device_combo = ttk.Combobox(params_frame, textvariable=self.lime_device_var,
+                                    values=["cpu", "cuda", "mps"], width=10, state="readonly")
+        device_combo.grid(row=3, column=1, sticky=tk.W, padx=5, pady=3)
+        
+        # Save mode
+        save_frame = ttk.LabelFrame(left_panel, text="Save Options", padding=5)
+        save_frame.pack(fill=tk.X, pady=5)
+        
+        self.lime_save_mode_var = tk.StringVar(value="best")
+        ttk.Radiobutton(save_frame, text="Save best episode only", variable=self.lime_save_mode_var,
+                       value="best").pack(anchor=tk.W, padx=5, pady=2)
+        ttk.Radiobutton(save_frame, text="Save all episodes", variable=self.lime_save_mode_var,
+                       value="all").pack(anchor=tk.W, padx=5, pady=2)
+        
+        # Control buttons
+        btn_frame = ttk.Frame(left_panel)
+        btn_frame.pack(fill=tk.X, pady=10)
+        
+        self.lime_run_btn = ttk.Button(btn_frame, text="▶️ Run LIME Analysis", command=self.run_lime_analysis)
+        self.lime_run_btn.pack(fill=tk.X, pady=2)
+        
+        self.lime_open_dir_btn = ttk.Button(btn_frame, text="📁 Open Output Directory", 
+                                            command=self.open_lime_directory, state=tk.DISABLED)
+        self.lime_open_dir_btn.pack(fill=tk.X, pady=2)
+        
+        # Status
+        self.lime_status_var = tk.StringVar(value="Ready")
+        status_label = ttk.Label(left_panel, textvariable=self.lime_status_var, 
+                                font=('Arial', 9, 'italic'), foreground='blue')
+        status_label.pack(pady=5)
+        
+        self.lime_progress = ttk.Progressbar(left_panel, mode='indeterminate')
+        self.lime_progress.pack(fill=tk.X, pady=5)
+        
+        # Right panel: Log
+        right_panel = ttk.LabelFrame(main_container, text="Analysis Log", padding=10)
+        right_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        
+        self.lime_log = scrolledtext.ScrolledText(right_panel, height=35, width=70, wrap=tk.WORD)
+        self.lime_log.pack(fill=tk.BOTH, expand=True)
+        
+        # Initialize model list
+        self.refresh_lime_models()
     
+    def refresh_lime_models(self):
+        """Refresh available models for LIME analysis"""
+        models_dir = "models"
+        if not os.path.exists(models_dir):
+            return
+        
+        envs = [d for d in os.listdir(models_dir) if os.path.isdir(os.path.join(models_dir, d))]
+        envs.sort()
+        self.lime_env_combo['values'] = envs
+        if envs:
+            self.lime_env_combo.current(0)
+            self.on_lime_env_selected(None)
+    
+    def on_lime_env_selected(self, event):
+        """Handle environment selection in LIME tab"""
+        env_id = self.lime_env_var.get()
+        if not env_id:
+            return
+        
+        models_dir = f"models/{env_id}"
+        if not os.path.exists(models_dir):
+            return
+        
+        algos = [d for d in os.listdir(models_dir) if os.path.isdir(os.path.join(models_dir, d))]
+        algos.sort()
+        self.lime_algo_combo['values'] = algos
+        if algos:
+            self.lime_algo_combo.current(0)
+            self.on_lime_algo_selected(None)
+    
+    def on_lime_algo_selected(self, event):
+        """Handle algorithm selection in LIME tab"""
+        env_id = self.lime_env_var.get()
+        algo = self.lime_algo_var.get()
+        if not env_id or not algo:
+            return
+        
+        models_dir = f"models/{env_id}/{algo}"
+        if not os.path.exists(models_dir):
+            return
+        
+        models = [f for f in os.listdir(models_dir) if f.endswith('.zip')]
+        models.sort()
+        self.lime_model_combo['values'] = models
+        if models:
+            self.lime_model_combo.current(0)
+    
+    def run_lime_analysis(self):
+        """Run LIME analysis in a separate thread"""
+        # Validate selections
+        env_id = self.lime_env_var.get()
+        algo = self.lime_algo_var.get()
+        model_file = self.lime_model_var.get()
+        
+        if not all([env_id, algo, model_file]):
+            messagebox.showwarning("Warning", "Please select environment, algorithm, and model!")
+            return
+        
+        model_path = f"models/{env_id}/{algo}/{model_file}"
+        if not os.path.exists(model_path):
+            messagebox.showerror("Error", f"Model not found:\n{model_path}")
+            return
+        
+        # Check if LIME is available
+        try:
+            import lime
+        except ImportError:
+            messagebox.showerror("Error", 
+                "LIME not installed!\n\nPlease install with:\npip install lime")
+            return
+        
+        # Get parameters
+        episodes = self.lime_episodes_var.get()
+        num_samples = self.lime_num_samples_var.get()
+        num_features = self.lime_num_features_var.get()
+        device = self.lime_device_var.get()
+        save_mode = self.lime_save_mode_var.get()
+        
+        # Start analysis
+        self.lime_run_btn.config(state=tk.DISABLED)
+        self.lime_status_var.set("🔬 Running LIME analysis...")
+        self.lime_progress.start()
+        
+        # Clear log
+        self.lime_log.delete(1.0, tk.END)
+        self.lime_log.insert(tk.END, f"{'='*60}\n")
+        self.lime_log.insert(tk.END, f"LIME Analysis Started at {datetime.now().strftime('%H:%M:%S')}\n")
+        self.lime_log.insert(tk.END, f"{'='*60}\n")
+        self.lime_log.insert(tk.END, f"ℹ️  LIME is model-agnostic - works with DQN, PPO, PPO_CONCEPT\n")
+        self.lime_log.insert(tk.END, f"{'='*60}\n")
+        self.lime_log.insert(tk.END, f"Model: {model_path}\n")
+        self.lime_log.insert(tk.END, f"Algorithm: {algo.upper()}\n")
+        self.lime_log.insert(tk.END, f"Environment: {env_id}\n")
+        self.lime_log.insert(tk.END, f"Episodes: {episodes}\n")
+        self.lime_log.insert(tk.END, f"Num samples: {num_samples}\n")
+        self.lime_log.insert(tk.END, f"Num features: {num_features}\n")
+        self.lime_log.insert(tk.END, f"Device: {device}\n")
+        self.lime_log.insert(tk.END, f"Save mode: {save_mode}\n")
+        self.lime_log.insert(tk.END, f"{'='*60}\n\n")
+        
+        # Run in thread
+        thread = threading.Thread(
+            target=self._run_lime_thread,
+            args=(model_path, env_id, episodes, num_samples, num_features, device, save_mode)
+        )
+        thread.daemon = True
+        thread.start()
+    
+    def _run_lime_thread(self, model_path, env_id, episodes, num_samples, num_features, device, save_mode):
+        """Run LIME analysis in background thread"""
+        import io
+        import contextlib
+        
+        # Create string buffer to capture stdout
+        output_buffer = io.StringIO()
+        
+        try:
+            from test_agent_lime import test_agent_lime, LIME_AVAILABLE
+            
+            # Check if LIME is available
+            if not LIME_AVAILABLE:
+                raise ImportError("LIME not installed. Install with: pip install lime scikit-image")
+            
+            # Determine output directory
+            model_name = os.path.splitext(os.path.basename(model_path))[0]
+            algo = model_path.split('/')[-2]
+            outdir = f"lime_out/{env_id}/{algo}/{model_name}"
+            
+            # Log to UI
+            self.root.after(0, lambda: self.lime_log.insert(tk.END, f"🔬 Starting LIME analysis...\n"))
+            self.root.after(0, lambda: self.lime_log.insert(tk.END, f"Output directory: {outdir}\n\n"))
+            
+            # Run LIME with stdout capture
+            save_best_only = (save_mode == "best")
+            
+            with contextlib.redirect_stdout(output_buffer):
+                test_agent_lime(
+                    model_path=model_path,
+                    env_id=env_id,
+                    episodes=episodes,
+                    device=device,
+                    save_best_only=save_best_only,
+                    num_samples=num_samples,
+                    num_features=num_features,
+                    outdir=outdir,
+                    fps=2  # Default FPS for LIME videos
+                )
+            
+            # Get captured output
+            captured_output = output_buffer.getvalue()
+            if captured_output:
+                self.root.after(0, lambda: self.lime_log.insert(tk.END, captured_output))
+                self.root.after(0, lambda: self.lime_log.see(tk.END))
+            
+            # Success
+            self.root.after(0, self._lime_complete, outdir, save_mode)
+            
+        except ImportError as e:
+            error_msg = str(e)
+            self.root.after(0, lambda: self.lime_log.insert(tk.END, f"\n❌ IMPORT ERROR:\n{error_msg}\n"))
+            self.root.after(0, lambda: self.lime_log.insert(tk.END, f"\n💡 Install LIME with:\n"))
+            self.root.after(0, lambda: self.lime_log.insert(tk.END, f"   pip install lime scikit-image\n"))
+            self.root.after(0, lambda: self.lime_log.see(tk.END))
+            self.root.after(0, self._lime_error, error_msg)
+        except Exception as e:
+            import traceback
+            error_msg = f"Error: {str(e)}\n{traceback.format_exc()}"
+            
+            # Get any captured output before error
+            captured_output = output_buffer.getvalue()
+            if captured_output:
+                self.root.after(0, lambda: self.lime_log.insert(tk.END, captured_output))
+            
+            self.root.after(0, lambda: self.lime_log.insert(tk.END, f"\n❌ ERROR:\n{error_msg}\n"))
+            self.root.after(0, lambda: self.lime_log.see(tk.END))
+            self.root.after(0, self._lime_error, str(e))
+        finally:
+            output_buffer.close()
+    
+    def _lime_complete(self, result_dir, save_mode):
+        """Handle LIME completion"""
+        self.lime_progress.stop()
+        self.lime_run_btn.config(state=tk.NORMAL)
+        
+        if save_mode == "best":
+            self.lime_status_var.set("✅ Analysis complete! (best episode)")
+        else:
+            self.lime_status_var.set("✅ Analysis complete! (all episodes)")
+        
+        # Store path
+        self.last_lime_dir = result_dir
+        self.lime_open_dir_btn.config(state=tk.NORMAL)
+        
+        # Ask to open
+        if messagebox.askyesno("Complete", 
+            f"LIME analysis complete!\n\nOpen output directory?"):
+            self.open_lime_directory()
+    
+    def _lime_error(self, error_msg):
+        """Handle LIME error"""
+        self.lime_progress.stop()
+        self.lime_run_btn.config(state=tk.NORMAL)
+        self.lime_status_var.set("❌ Error occurred")
+        messagebox.showerror("LIME Error", f"An error occurred:\n\n{error_msg}")
+    
+    def open_lime_directory(self):
+        """Open LIME output directory"""
+        if not hasattr(self, 'last_lime_dir') or not os.path.exists(self.last_lime_dir):
+            messagebox.showwarning("Warning", "Output directory not found!")
+            return
+        
+        try:
+            if sys.platform == "win32":
+                os.startfile(self.last_lime_dir)
+            elif sys.platform == "darwin":  # macOS
+                subprocess.run(["open", self.last_lime_dir])
+            else:  # Linux
+                subprocess.run(["xdg-open", self.last_lime_dir])
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not open directory:\n{str(e)}")
+    
+    def create_ig_tab(self):
+        """Create Integrated Gradients analysis interface"""
+        main_container = ttk.Frame(self.ig_frame)
+        main_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Left panel: Model selection and parameters
+        left_panel = ttk.LabelFrame(main_container, text="IG Configuration", padding=10)
+        left_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=False, padx=(0, 5))
+        
+        # Model selection
+        model_frame = ttk.LabelFrame(left_panel, text="Select Model (PPO_CONCEPT)", padding=5)
+        model_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        
+        # Treeview for models
+        tree_scroll = ttk.Scrollbar(model_frame)
+        tree_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        self.ig_tree = ttk.Treeview(model_frame, columns=('Environment', 'Model'),
+                                    show='tree headings', height=15,
+                                    yscrollcommand=tree_scroll.set)
+        tree_scroll.config(command=self.ig_tree.yview)
+        
+        self.ig_tree.heading('Environment', text='Environment')
+        self.ig_tree.heading('Model', text='Model')
+        self.ig_tree.column('#0', width=20)
+        self.ig_tree.column('Environment', width=200)
+        self.ig_tree.column('Model', width=250)
+        
+        self.ig_tree.pack(fill=tk.BOTH, expand=True)
+        
+        # Refresh button
+        refresh_btn = ttk.Button(model_frame, text="🔄 Refresh Models", 
+                                command=self.load_ig_models)
+        refresh_btn.pack(fill=tk.X, pady=(5, 0))
+        
+        # Parameters
+        params_frame = ttk.LabelFrame(left_panel, text="Parameters", padding=5)
+        params_frame.pack(fill=tk.X, pady=5)
+        
+        # Episodes
+        ttk.Label(params_frame, text="Episodes:").grid(row=0, column=0, sticky=tk.W, pady=2)
+        self.ig_episodes_var = tk.IntVar(value=10)
+        ttk.Spinbox(params_frame, from_=1, to=100, textvariable=self.ig_episodes_var,
+                   width=10).grid(row=0, column=1, sticky=tk.W, pady=2)
+        
+        # IG Steps
+        ttk.Label(params_frame, text="IG Steps:").grid(row=1, column=0, sticky=tk.W, pady=2)
+        self.ig_steps_var = tk.IntVar(value=50)
+        ttk.Spinbox(params_frame, from_=10, to=200, textvariable=self.ig_steps_var,
+                   width=10).grid(row=1, column=1, sticky=tk.W, pady=2)
+        ttk.Label(params_frame, text="(Higher = More accurate but slower)",
+                 font=('Arial', 8, 'italic')).grid(row=1, column=2, sticky=tk.W, padx=5)
+        
+        # FPS
+        ttk.Label(params_frame, text="Video FPS:").grid(row=2, column=0, sticky=tk.W, pady=2)
+        self.ig_fps_var = tk.IntVar(value=6)
+        ttk.Spinbox(params_frame, from_=1, to=30, textvariable=self.ig_fps_var,
+                   width=10).grid(row=2, column=1, sticky=tk.W, pady=2)
+        
+        # Device
+        ttk.Label(params_frame, text="Device:").grid(row=3, column=0, sticky=tk.W, pady=2)
+        self.ig_device_var = tk.StringVar(value="cpu")
+        device_combo = ttk.Combobox(params_frame, textvariable=self.ig_device_var,
+                                    values=["cpu", "cuda", "mps"], state="readonly", width=8)
+        device_combo.grid(row=3, column=1, sticky=tk.W, pady=2)
+        
+        # Save mode (Best Run / All Episodes)
+        ttk.Label(params_frame, text="Save Mode:").grid(row=4, column=0, sticky=tk.W, pady=2)
+        self.ig_save_mode_var = tk.StringVar(value="best_run")
+        save_mode_combo = ttk.Combobox(params_frame, textvariable=self.ig_save_mode_var,
+                                       values=["best_run", "all_episodes"], 
+                                       state="readonly", width=15)
+        save_mode_combo.grid(row=4, column=1, sticky=tk.W, pady=2)
+        ttk.Label(params_frame, text="(best_run: 1 video | all_episodes: N videos)",
+                 font=('Arial', 8, 'italic')).grid(row=4, column=2, sticky=tk.W, padx=5)
+        
+        # Run buttons
+        run_frame = ttk.Frame(left_panel)
+        run_frame.pack(fill=tk.X, pady=10)
+        
+        self.ig_run_btn = ttk.Button(run_frame, text="▶️ Run IG Analysis",
+                                     command=self.run_ig_analysis)
+        self.ig_run_btn.pack(fill=tk.X, pady=2)
+        
+        self.ig_stop_btn = ttk.Button(run_frame, text="⏹️ Stop", state=tk.DISABLED,
+                                      command=self.stop_ig_analysis)
+        self.ig_stop_btn.pack(fill=tk.X, pady=2)
+        
+        # Status
+        status_frame = ttk.LabelFrame(left_panel, text="Status", padding=5)
+        status_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        
+        self.ig_status_var = tk.StringVar(value="Ready")
+        ttk.Label(status_frame, textvariable=self.ig_status_var, font=('Arial', 10)).pack(pady=5)
+        
+        self.ig_progress = ttk.Progressbar(status_frame, mode='indeterminate')
+        self.ig_progress.pack(fill=tk.X, padx=5, pady=5)
+        
+        # Result buttons
+        result_btn_frame = ttk.Frame(status_frame)
+        result_btn_frame.pack(fill=tk.X, pady=5)
+        
+        self.ig_open_dir_btn = ttk.Button(result_btn_frame, text="📁 Open Output Directory",
+                                         command=self.open_ig_directory, state=tk.DISABLED)
+        self.ig_open_dir_btn.pack(fill=tk.X, pady=2)
+        
+        self.ig_open_video_btn = ttk.Button(result_btn_frame, text="🎬 Open Video",
+                                           command=self.open_ig_video, state=tk.DISABLED)
+        self.ig_open_video_btn.pack(fill=tk.X, pady=2)
+        
+        # Store last result paths
+        self.last_ig_dir = None
+        self.last_ig_video = None
+        
+        # Right panel: Output log
+        right_panel = ttk.LabelFrame(main_container, text="Analysis Log", padding=10)
+        right_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(5, 0))
+        
+        self.ig_log = scrolledtext.ScrolledText(right_panel, height=30, width=60, wrap=tk.WORD)
+        self.ig_log.pack(fill=tk.BOTH, expand=True)
+        
+        # Load models
+        self.load_ig_models()
+    
+    def load_ig_models(self):
+        """Load PPO_CONCEPT models for IG analysis"""
+        # Clear log and add refresh message
+        self.ig_log.insert(tk.END, "🔄 Refreshing models...\n")
+        self.ig_log.see(tk.END)
+        
+        for item in self.ig_tree.get_children():
+            self.ig_tree.delete(item)
+        
+        models_dir = "models"
+        if not os.path.exists(models_dir):
+            self.ig_log.insert(tk.END, "⚠️ Models directory not found!\n")
+            return
+        
+        count = 0
+        for env_id in sorted(os.listdir(models_dir)):
+            env_path = os.path.join(models_dir, env_id)
+            if not os.path.isdir(env_path):
+                continue
+            
+            ppo_concept_path = os.path.join(env_path, "ppo_concept")
+            if not os.path.exists(ppo_concept_path):
+                continue
+            
+            env_node = self.ig_tree.insert("", "end", text="", values=(env_id, ""))
+            
+            for model_file in sorted(os.listdir(ppo_concept_path)):
+                if model_file.endswith('.zip') and not model_file.startswith('.'):
+                    self.ig_tree.insert(env_node, "end", text="", 
+                                       values=("", model_file),
+                                       tags=('model',))
+                    count += 1
+        
+        self.ig_log.insert(tk.END, f"✓ Loaded {count} PPO_CONCEPT models\n")
+        self.ig_log.see(tk.END)
+    
+    def run_ig_analysis(self):
+        """Run Integrated Gradients analysis on selected model"""
+        selection = self.ig_tree.selection()
+        if not selection:
+            messagebox.showwarning("No Selection", "Please select a model to analyze!")
+            return
+        
+        item = selection[0]
+        values = self.ig_tree.item(item, 'values')
+        
+        if 'model' not in self.ig_tree.item(item, 'tags'):
+            messagebox.showwarning("Invalid Selection", "Please select a model!")
+            return
+        
+        parent = self.ig_tree.parent(item)
+        parent_values = self.ig_tree.item(parent, 'values')
+        env_id = parent_values[0]
+        model_file = values[1]
+        
+        model_path = f"models/{env_id}/ppo_concept/{model_file}"
+        
+        if not os.path.exists(model_path):
+            messagebox.showerror("Error", f"Model file not found:\n{model_path}")
+            return
+        
+        # Get parameters
+        episodes = self.ig_episodes_var.get()
+        ig_steps = self.ig_steps_var.get()
+        fps = self.ig_fps_var.get()
+        device = self.ig_device_var.get()
+        save_mode = self.ig_save_mode_var.get()
+        
+        # Disable controls
+        self.ig_run_btn.config(state=tk.DISABLED)
+        self.ig_stop_btn.config(state=tk.NORMAL)
+        self.ig_open_dir_btn.config(state=tk.DISABLED)
+        self.ig_open_video_btn.config(state=tk.DISABLED)
+        
+        # Start progress
+        self.ig_progress.start()
+        self.ig_status_var.set("⏳ Running IG Analysis...")
+        
+        # Run in thread
+        self.ig_thread = threading.Thread(target=self._run_ig_thread,
+                                          args=(model_path, env_id, episodes, ig_steps, fps, device, save_mode))
+        self.ig_thread.daemon = True
+        self.ig_thread.start()
+    
+    def _run_ig_thread(self, model_path, env_id, episodes, ig_steps, fps, device, save_mode):
+        """Thread function for IG analysis"""
+        try:
+            self.ig_log.insert(tk.END, f"\n{'='*60}\n")
+            self.ig_log.insert(tk.END, f"Starting IG Analysis at {datetime.now().strftime('%H:%M:%S')}\n")
+            self.ig_log.insert(tk.END, f"Model: {model_path}\n")
+            self.ig_log.insert(tk.END, f"Environment: {env_id}\n")
+            self.ig_log.insert(tk.END, f"Episodes: {episodes}\n")
+            self.ig_log.insert(tk.END, f"Save Mode: {save_mode}\n")
+            self.ig_log.insert(tk.END, f"IG Steps: {ig_steps}\n")
+            self.ig_log.insert(tk.END, f"Device: {device}\n")
+            self.ig_log.insert(tk.END, f"{'='*60}\n\n")
+            self.ig_log.see(tk.END)
+            
+            # Import and run
+            from test_agent_ig import test_agent_ig
+            
+            model_name = os.path.splitext(os.path.basename(model_path))[0]
+            out_dir = f"ig_out/{env_id}/ppo_concept/{model_name}"
+            
+            # Run IG analysis
+            if save_mode == "best_run":
+                self.ig_log.insert(tk.END, "\n🎮 Running episodes to find best run...\n")
+            else:
+                self.ig_log.insert(tk.END, f"\n🎮 Running {episodes} episodes (saving all)...\n")
+            self.ig_log.see(tk.END)
+            
+            test_agent_ig(
+                model_path=model_path,
+                env_id=env_id,
+                algorithm="PPO_CONCEPT",
+                num_episodes=episodes,
+                device=device,
+                outdir=out_dir,
+                fps=fps,
+                n_steps=ig_steps,
+                save_mode=save_mode  # "best_run" or "all_episodes"
+            )
+            
+            # Find output directory and videos
+            result_dir = out_dir
+            self.last_ig_dir = result_dir
+            self.ig_open_dir_btn.config(state=tk.NORMAL)
+            
+            # Find videos
+            import glob
+            video_files = glob.glob(f"{result_dir}/*/*.mp4") + glob.glob(f"{result_dir}/*.mp4")
+            
+            if video_files:
+                self.last_ig_video = video_files[0]
+                self.ig_open_video_btn.config(state=tk.NORMAL)
+                self.ig_log.insert(tk.END, f"\n✓ Found {len(video_files)} video(s)\n")
+                if save_mode == "best_run":
+                    self.ig_log.insert(tk.END, f"✓ Video: {self.last_ig_video}\n")
+                else:
+                    self.ig_log.insert(tk.END, f"✓ Videos saved in: {result_dir}\n")
+            
+            self.ig_log.insert(tk.END, f"\n{'='*60}\n")
+            self.ig_log.insert(tk.END, "✅ IG Analysis Complete!\n")
+            self.ig_log.insert(tk.END, f"Output: {result_dir}\n")
+            self.ig_log.insert(tk.END, f"{'='*60}\n")
+            self.ig_log.see(tk.END)
+            
+            self.ig_status_var.set("✅ Analysis Complete")
+            self.ig_progress.stop()
+            self.ig_run_btn.config(state=tk.NORMAL)
+            self.ig_stop_btn.config(state=tk.DISABLED)
+            
+        except Exception as e:
+            import traceback
+            error_msg = f"ERROR: {str(e)}\n\n{traceback.format_exc()}"
+            self.ig_log.insert(tk.END, f"\n❌ {error_msg}\n")
+            self.ig_log.see(tk.END)
+            
+            self.ig_status_var.set("❌ Error occurred")
+            self.ig_progress.stop()
+            self.ig_run_btn.config(state=tk.NORMAL)
+            self.ig_stop_btn.config(state=tk.DISABLED)
+            
+            messagebox.showerror("IG Error", f"An error occurred:\n\n{error_msg}")
+    
+    def stop_ig_analysis(self):
+        """Stop IG analysis (limited functionality)"""
+        messagebox.showinfo("Stop", "IG analysis will complete current frame and stop.")
+        self.ig_stop_btn.config(state=tk.DISABLED)
+    
+    def open_ig_directory(self):
+        """Open IG output directory"""
+        if self.last_ig_dir and os.path.exists(self.last_ig_dir):
+            import subprocess
+            import platform
+            system = platform.system()
+            if system == "Darwin":
+                subprocess.run(["open", self.last_ig_dir])
+            elif system == "Windows":
+                subprocess.run(["explorer", self.last_ig_dir])
+            else:
+                subprocess.run(["xdg-open", self.last_ig_dir])
+    
+    def open_ig_video(self):
+        """Open IG video"""
+        if self.last_ig_video and os.path.exists(self.last_ig_video):
+            import subprocess
+            import platform
+            system = platform.system()
+            if system == "Darwin":
+                subprocess.run(["open", self.last_ig_video])
+            elif system == "Windows":
+                subprocess.run(["start", self.last_ig_video], shell=True)
+            else:
+                subprocess.run(["xdg-open", self.last_ig_video])
+
+
+if __name__ == "__main__":
     root = tk.Tk()
     app = ModelTesterUI(root)
     root.mainloop()
-
-if __name__ == "__main__":
-    main()

@@ -27,6 +27,43 @@ from train_ppo_concept import ConceptPPO
 # Helpers
 # ============================================================
 
+def rotate_obs_to_god_view(obs, agent_dir):
+    """
+    Rotate observation to align with God View.
+    
+    In MiniGrid:
+    - Model Input: Agent always faces UP (ego-centric)
+    - God View: Agent can face any direction (world-centric)
+    - agent_dir: 0=Right, 1=Down, 2=Left, 3=Up
+    
+    NEW ROTATION RULE (discovered empirically):
+    Only use rot90 (rotate) and fliplr (horizontal flip)
+    
+    Args:
+        obs: observation array (H, W, C) or (H, W)
+        agent_dir: agent direction (0-3)
+    
+    Returns:
+        rotated observation (H, W, C) or (H, W)
+    """
+    if agent_dir == 0:  # Facing Right
+        result = np.fliplr(obs)     # Only horizontal flip
+        return result
+    elif agent_dir == 1:  # Facing Down
+        result = np.rot90(obs, k=1)   # 90° CCW
+        result = np.fliplr(result)     # Then horizontal flip
+        return result
+    elif agent_dir == 2:  # Facing Left
+        result = np.flipud(obs)
+        return result
+    elif agent_dir == 3:  # Facing Up
+        result = np.rot90(obs, k=-1)   # 90° CW
+        result = np.fliplr(result)     # Then horizontal flip
+        return result
+    else:
+        return obs
+
+
 def normalize_to_0_1(x, eps=1e-8):
     x_min = x.min()
     x_max = x.max()
@@ -104,17 +141,30 @@ def create_concept_values_bar(concept_values, width=200, height=None):
     # Add small title at the very bottom of figure (outside axes)
     fig.text(0.5, 0.02, 'Concept Values', ha='center', va='bottom', fontsize=8, fontstyle='italic')
     
-    # Convert to PIL Image
+    # Convert to PIL Image - draw canvas first
     fig.canvas.draw()
     
-    # Use buffer_rgba() for newer matplotlib or tostring_rgb() for older
+    # Get image from canvas (compatible with newer matplotlib versions)
     try:
+        # Method 1: Modern matplotlib (3.5+) with buffer_rgba
         buf = fig.canvas.buffer_rgba()
         img_array = np.asarray(buf)[:, :, :3]  # Drop alpha channel
-    except AttributeError:
-        # Fallback for older matplotlib
-        img_array = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-        img_array = img_array.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    except (AttributeError, ValueError):
+        try:
+            # Method 2: Older matplotlib with tostring_rgb
+            img_array = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+            img_array = img_array.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+        except AttributeError:
+            # Method 3: Fallback using savefig
+            from io import BytesIO
+            buf = BytesIO()
+            fig.savefig(buf, format='png', bbox_inches='tight', dpi=100)
+            buf.seek(0)
+            img = Image.open(buf)
+            img_array = np.array(img)
+            buf.close()
+            if img_array.shape[-1] == 4:
+                img_array = img_array[:, :, :3]
     
     plt.close(fig)
     
@@ -143,8 +193,8 @@ def compute_concept_gradcams(features_extractor, obs_tensor, device):
     # Detect concept_mode
     concept_mode = getattr(features_extractor, 'concept_mode', 1)
     
-    # All modes 1-4 now use ConceptLayer with concept_map
-    # Mode 4 has additional concept_bottleneck, but we visualize the concept_map from ConceptLayer
+    # All modes 1-5 now use ConceptLayer with concept_map
+    # Modes 4-5 have additional concept_bottleneck, but we visualize the concept_map from ConceptLayer
     
     # CNN forward
     cnn_out = features_extractor.cnn(obs_tensor)
@@ -181,7 +231,24 @@ def compute_concept_gradcams(features_extractor, obs_tensor, device):
         cam_np = normalize_to_0_1(cam_np)
         cams.append(cam_np)
 
-    concept_values = concept_vector[0].detach().cpu().numpy()  # Shape: (K,) or (K*n_frames,)?
+    # ✅ For visualization, use concept bottleneck (Mode 4/5) if available
+    concept_mode = getattr(features_extractor, 'concept_mode', 1)
+    if concept_mode in [4, 5]:
+        # Run full forward to populate last_concept_bottleneck
+        with torch.no_grad():
+            _ = features_extractor(obs_tensor)
+        
+        if hasattr(features_extractor, 'last_concept_bottleneck'):
+            concept_values = features_extractor.last_concept_bottleneck[0].detach().cpu().numpy()
+            print(f"DEBUG: Using concept_bottleneck values (Mode {concept_mode}): {concept_values}")
+        else:
+            concept_values = concept_vector[0].detach().cpu().numpy()
+            print(f"DEBUG: Fallback to concept_vector (no bottleneck found)")
+    else:
+        concept_values = concept_vector[0].detach().cpu().numpy()
+        print(f"DEBUG: Using concept_vector (Mode {concept_mode})")
+    
+    # Shape: (K,) or (K*n_frames,)?
     
     # Check if we have more values than K (due to frame stacking)
     if len(concept_values) > K:
@@ -209,7 +276,7 @@ def compute_concept_gradcams(features_extractor, obs_tensor, device):
     
     # Detect concept_mode for logging
     concept_mode = getattr(features_extractor, 'concept_mode', 1)
-    mode_names = {1: 'flatten', 2: 'avg pool', 3: 'max pool', 4: 'FC-bottleneck'}
+    mode_names = {1: 'flatten', 2: 'avg pool', 3: 'max pool', 4: 'FC-bottleneck', 5: 'FC+STE'}
     mode_name = mode_names.get(concept_mode, 'unknown')
     print(f"DEBUG: concept_mode = {concept_mode} ({mode_name})")
 
@@ -236,30 +303,91 @@ def compute_concept_gradcams(features_extractor, obs_tensor, device):
 # Composite output
 # ============================================================
 
-def composite_and_save(img_rgb_uint8, cams_list, concept_values, out_path, cmap="jet", spacing=5, target_size=300):
+def composite_and_save(img_rgb_uint8, cams_list, concept_values, out_path, cmap="jet", spacing=5, target_size=300, model_obs=None, agent_dir=None):
     """
-    Create composite image: [Original] [Heatmap1] [Heatmap2] ... [HeatmapK] [Bar Chart]
+    Create composite image: [God View] [Model Input] [Heatmap1] [Heatmap2] ... [HeatmapK] [Bar Chart]
     
     Args:
-        img_rgb_uint8: Original image (H, W, 3)
-        cams_list: List of K heatmaps
+        img_rgb_uint8: God View rendered image (H, W, 3)
+        cams_list: List of K heatmaps (in ego-centric frame, need rotation)
         concept_values: Numpy array of K concept values
         out_path: Output file path
         cmap: Colormap for heatmaps
         spacing: Pixels of white space between columns (default: 5)
         target_size: Target size for each panel (default: 300) - larger = less blur
+        model_obs: Model observation (7x7x3) - what agent actually sees (ego-centric)
+        agent_dir: Agent direction (0-3) for rotating both model_obs and heatmaps to align with God View
     """
     # Use target_size for all panels instead of original size
     W = target_size
     H = target_size
     
-    # Resize original image to target size
-    orig = Image.fromarray(img_rgb_uint8).resize((W, H), Image.LANCZOS)
+    # Resize God View to target size
+    god_view = Image.fromarray(img_rgb_uint8).resize((W, H), Image.LANCZOS)
+    
+    # ✅ Add agent direction indicator to God View
+    if agent_dir is not None:
+        from PIL import ImageDraw, ImageFont
+        
+        # Create a copy to draw on
+        god_view_with_dir = god_view.copy()
+        draw = ImageDraw.Draw(god_view_with_dir)
+        
+        # Direction mapping
+        dir_names = {0: "RIGHT →", 1: "DOWN ↓", 2: "LEFT ←", 3: "UP ↑"}
+        dir_name = dir_names.get(agent_dir, f"DIR={agent_dir}")
+        
+        # Draw direction indicator in top-left corner with background
+        text = f"Agent: {dir_name}"
+        
+        # Try to use a decent font, fallback to default
+        try:
+            font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 16)
+        except:
+            font = ImageFont.load_default()
+        
+        # Get text bounding box
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        
+        # Draw background rectangle
+        padding = 5
+        bg_box = [5, 5, 5 + text_width + padding*2, 5 + text_height + padding*2]
+        draw.rectangle(bg_box, fill=(0, 0, 0, 180))  # Semi-transparent black
+        
+        # Draw text
+        draw.text((5 + padding, 5 + padding), text, fill=(255, 255, 0), font=font)  # Yellow text
+        
+        god_view = god_view_with_dir
+    
+    # Prepare model observation if provided
+    model_view = None
+    if model_obs is not None:
+        # Rotate observation to align with God View if agent_dir provided
+        if agent_dir is not None:
+            model_obs_rotated = rotate_obs_to_god_view(model_obs, agent_dir)
+        else:
+            model_obs_rotated = model_obs
+        
+        # model_obs is (7, 7, 3) uint8 [0-5]
+        # Scale to [0-255] for better visibility
+        model_obs_scaled = (model_obs_rotated.astype(np.float32) * 51).astype(np.uint8)
+        model_view = Image.fromarray(model_obs_scaled).resize((W, H), Image.NEAREST)  # NEAREST to keep blocky/pixelated look
+
+    # ...existing code for heatmaps and bar chart...
 
     # Create heatmap images at target size
+    # ✅ Apply same rotation as Model Input to align heatmaps with God View
     cam_ims = []
     for cam in cams_list:
-        cam_rgb = heatmap_apply_colormap(cam)
+        # Rotate heatmap using same rule as model_obs if agent_dir provided
+        if agent_dir is not None:
+            cam_rotated = rotate_obs_to_god_view(cam, agent_dir)
+        else:
+            cam_rotated = cam
+        
+        cam_rgb = heatmap_apply_colormap(cam_rotated)
         cam_rgb = Image.fromarray(cam_rgb).resize((W, H), Image.LANCZOS)
         cam_ims.append(cam_rgb)
 
@@ -271,15 +399,20 @@ def composite_and_save(img_rgb_uint8, cams_list, concept_values, out_path, cmap=
     # Resize to target size using high-quality resampling
     bar_chart = bar_chart_large.resize((W, H), Image.LANCZOS)
 
-    # Total width: original + K heatmaps + bar chart + spacing between each
-    num_panels = 1 + len(cam_ims) + 1
+    # Total width: god_view + model_view (if exists) + K heatmaps + bar chart + spacing between each
+    num_panels = 1 + (1 if model_view else 0) + len(cam_ims) + 1
     total_w = W * num_panels + spacing * (num_panels - 1)
     canvas = Image.new("RGB", (total_w, H), color=(255, 255, 255))  # White background
 
     # Paste images with spacing
     x = 0
-    canvas.paste(orig, (x, 0))
+    canvas.paste(god_view, (x, 0))
     x += W + spacing
+    
+    # Add model view if available
+    if model_view is not None:
+        canvas.paste(model_view, (x, 0))
+        x += W + spacing
 
     for c in cam_ims:
         canvas.paste(c, (x, 0))
@@ -319,6 +452,7 @@ def run_and_collect_best_episode(model_path,
     best_reward = -1e9
     best_obs = None
     best_frames = None
+    best_agent_dirs = None  # Track agent directions
 
     for ep in range(num_episodes):
         obs, _ = env.reset()
@@ -326,11 +460,13 @@ def run_and_collect_best_episode(model_path,
         ep_reward = 0
         obs_list = []
         frame_list = []
+        agent_dir_list = []  # Track directions
         steps = 0
 
         # ✅ Capture initial state BEFORE any step
         obs_list.append(np.array(obs))
         frame_list.append(env.unwrapped.get_frame())
+        agent_dir_list.append(env.unwrapped.agent_dir)  # Capture direction
 
         while not done and steps < max_steps:
             action, _ = model.predict(obs, deterministic=deterministic)
@@ -339,6 +475,7 @@ def run_and_collect_best_episode(model_path,
             # ✅ Capture state AFTER each step (including final state)
             obs_list.append(np.array(obs))
             frame_list.append(env.unwrapped.get_frame())
+            agent_dir_list.append(env.unwrapped.agent_dir)  # Capture direction
 
             ep_reward += reward
             done = terminated or truncated
@@ -350,26 +487,27 @@ def run_and_collect_best_episode(model_path,
             best_reward = ep_reward
             best_obs = obs_list
             best_frames = frame_list
+            best_agent_dirs = agent_dir_list  # Save directions
 
     env.close()
     os.makedirs(out_dir, exist_ok=True)
 
     # ✅ Verify that we captured all frames correctly
     if best_obs is not None and best_frames is not None:
-        print(f"\nBest episode: {len(best_obs)} observations, {len(best_frames)} frames")
-        if len(best_obs) != len(best_frames):
-            print(f"⚠️  WARNING: Mismatch between obs and frames!")
+        print(f"\nBest episode: {len(best_obs)} observations, {len(best_frames)} frames, {len(best_agent_dirs)} directions")
+        if len(best_obs) != len(best_frames) != len(best_agent_dirs):
+            print(f"⚠️  WARNING: Mismatch between obs, frames, and directions!")
         else:
-            print(f"✓ Frame count verified: {len(best_frames)} frames for {len(best_frames)-1} steps")
+            print(f"✓ Data count verified: {len(best_frames)} frames for {len(best_frames)-1} steps")
 
-    return model, best_obs, best_frames, best_reward, out_dir
+    return model, best_obs, best_frames, best_agent_dirs, best_reward, out_dir
 
 
 # ============================================================
 # GradCAM generator for best episode
 # ============================================================
 
-def generate_gradcam_for_best(model, best_obs, frames, out_dir, device="cpu", fps=6):
+def generate_gradcam_for_best(model, best_obs, frames, agent_dirs, out_dir, device="cpu", fps=6):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     run_dir = os.path.join(out_dir, f"gradcam_{timestamp}")
     png_dir = os.path.join(run_dir, "frames")
@@ -401,9 +539,10 @@ def generate_gradcam_for_best(model, best_obs, frames, out_dir, device="cpu", fp
         # IMPORTANT:
         # Use frame from env, not obs, to avoid black obs
         orig = frames[i]
+        agent_dir = agent_dirs[i]  # Get agent direction
 
         out_file = os.path.join(png_dir, f"frame_{i:04d}.png")
-        composite_and_save(orig, cams, concept_vals, out_file)
+        composite_and_save(orig, cams, concept_vals, out_file, model_obs=obs_raw, agent_dir=agent_dir)
         saved.append(out_file)
 
         if (i+1) % 10 == 0:
@@ -474,11 +613,13 @@ def run_and_save_all_episodes(model_path,
         ep_reward = 0
         obs_list = []
         frame_list = []
+        agent_dir_list = []  # Track directions
         steps = 0
 
         # Capture initial state
         obs_list.append(np.array(obs))
         frame_list.append(env.unwrapped.get_frame())
+        agent_dir_list.append(env.unwrapped.agent_dir)  # Capture direction
 
         while not done and steps < max_steps:
             action, _ = model.predict(obs, deterministic=deterministic)
@@ -486,6 +627,7 @@ def run_and_save_all_episodes(model_path,
 
             obs_list.append(np.array(obs))
             frame_list.append(env.unwrapped.get_frame())
+            agent_dir_list.append(env.unwrapped.agent_dir)  # Capture direction
 
             ep_reward += reward
             done = terminated or truncated
@@ -515,8 +657,9 @@ def run_and_save_all_episodes(model_path,
                 continue
 
             orig = frame_list[i]
+            agent_dir = agent_dir_list[i]  # Get agent direction
             out_file = os.path.join(png_dir, f"frame_{i:04d}.png")
-            composite_and_save(orig, cams, concept_vals, out_file)
+            composite_and_save(orig, cams, concept_vals, out_file, model_obs=obs_raw, agent_dir=agent_dir)
             saved.append(out_file)
 
         print(f"  ✓ Saved {len(saved)} frames")
@@ -562,7 +705,7 @@ def main():
 
     if args.save_mode == "best":
         # Original behavior: save only best episode
-        model, best_obs, frames, best_reward, out_dir = run_and_collect_best_episode(
+        model, best_obs, frames, agent_dirs, best_reward, out_dir = run_and_collect_best_episode(
             args.model, args.env, args.algo,
             args.episodes, True, args.device, args.outdir
         )
@@ -570,7 +713,7 @@ def main():
         print(f"\nBest reward = {best_reward}. Running Grad-CAM...")
 
         run_dir = generate_gradcam_for_best(
-            model, best_obs, frames, out_dir,
+            model, best_obs, frames, agent_dirs, out_dir,
             device=args.device, fps=args.fps
         )
 

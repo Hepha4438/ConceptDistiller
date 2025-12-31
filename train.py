@@ -78,7 +78,7 @@ Examples:
     # PPO_CONCEPT specific
     parser.add_argument("--n-concepts", type=int, default=None,
                         help="PPO_CONCEPT number of concepts (default: auto-detect based on env difficulty)")
-    parser.add_argument("--concept-mode", type=int, default=None, choices=[1, 2, 3, 4],
+    parser.add_argument("--concept-mode", type=int, default=None, choices=[1, 2, 3, 4, 5],
                         help="PPO_CONCEPT extraction mode: 1=flatten, 2=avg pool, 3=max pool, 4=FC-bottleneck (default: 1)")
     parser.add_argument("--lambda-1", type=float, default=None,
                         help="PPO_CONCEPT orthogonality regularization weight (default: 0.05)")

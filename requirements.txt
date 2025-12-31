@@ -14,10 +14,15 @@ matplotlib>=3.7.0
 # Utilities
 pandas>=1.5.0
 tqdm>=4.65.0
+optuna>=3.0.0
 
 # Video Recording
 moviepy>=1.0.3
 imageio>=2.31.0
+
+# Explainability
+lime>=0.2.0.1
+scikit-image>=0.21.0
 
 # Optional: For better performance and monitoring
 # opencv-python>=4.8.0  # For video recording

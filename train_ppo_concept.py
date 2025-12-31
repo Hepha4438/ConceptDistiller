@@ -273,8 +273,13 @@ class PPOWithConcept(PPO):
                     concept_loss = self.lambda_1 * L_otho + self.lambda_2 * L_spar + self.lambda_3 * L_l1
                     concept_losses_list.append(concept_loss.item())
                 
-                # ✅ Total loss with concept
-                loss = loss + concept_loss
+                # ✅ ADD constraint loss (Mode 5 only)
+                constraint_loss = torch.tensor(0.0, device=self.device)
+                if hasattr(features_extractor, "last_constraint_loss"):
+                    constraint_loss = features_extractor.last_constraint_loss
+                
+                # ✅ Total loss with concept losses and constraint loss
+                loss = loss + concept_loss + constraint_loss
 
                 # Calculate approximate KL divergence for early stopping
                 with torch.no_grad():
@@ -363,6 +368,17 @@ class ConceptLoggingCallback(BaseCallback):
                     self.logger.record("concept_detail/weighted_ortho", (self.model.lambda_1 * L_otho).item())
                     self.logger.record("concept_detail/weighted_spar", (self.model.lambda_2 * L_spar).item())
                     self.logger.record("concept_detail/weighted_l1", (self.model.lambda_3 * L_l1).item())
+                    
+                    # ✅ Log constraint loss (Mode 5 only)
+                    if hasattr(extractor, "last_constraint_loss"):
+                        constraint_loss_value = extractor.last_constraint_loss
+                        if isinstance(constraint_loss_value, torch.Tensor):
+                            constraint_loss_value = constraint_loss_value.item()
+                        self.logger.record("concept_detail/constraint_loss", constraint_loss_value)
+                        
+                        # Also log constraint lambda if available
+                        if hasattr(extractor, "constraint_lambda"):
+                            self.logger.record("concept_detail/constraint_lambda", extractor.constraint_lambda)
                 
                 # ✅ Log concept activation statistics
                 if hasattr(extractor, "concept_layer"):
@@ -428,6 +444,7 @@ def train_ppo_concept(
         lambda_1=0.05,     # Orthogonality
         lambda_2=0.004,    # Sparsity
         lambda_3=2.0,      # L1
+        constraint_lambda=1.0,  # Constraint loss weight (Mode 5 only)
         is_trial=False,
         trial_number=None
 ):
@@ -466,7 +483,8 @@ def train_ppo_concept(
             features_dim=128,
             concept_distilling=True,
             n_concepts=n_concepts,
-            concept_mode=concept_mode
+            concept_mode=concept_mode,
+            constraint_lambda=constraint_lambda  # For Mode 5
         ),
         net_arch=dict(pi=[256,256], vf=[256,256])
     )
