@@ -2761,6 +2761,16 @@ class ModelTesterUI:
         ttk.Label(params_frame, text="(best_run: 1 video | all_episodes: N videos)",
                  font=('Arial', 8, 'italic')).grid(row=4, column=2, sticky=tk.W, padx=5)
         
+        # ✅ Organize STE frames (Mode 5 only)
+        self.ig_organize_ste_var = tk.BooleanVar(value=True)
+        ste_check = ttk.Checkbutton(params_frame, 
+                                    text="Organize STE Frames (Mode 5 only)",
+                                    variable=self.ig_organize_ste_var)
+        ste_check.grid(row=5, column=0, columnspan=3, sticky=tk.W, pady=5)
+        ttk.Label(params_frame, 
+                 text="Creates C2/, C3/, C4/... folders with activated/inactive frames",
+                 font=('Arial', 8, 'italic')).grid(row=6, column=0, columnspan=3, sticky=tk.W, padx=20)
+        
         # Run buttons
         run_frame = ttk.Frame(left_panel)
         run_frame.pack(fill=tk.X, pady=10)
@@ -2876,6 +2886,7 @@ class ModelTesterUI:
         fps = self.ig_fps_var.get()
         device = self.ig_device_var.get()
         save_mode = self.ig_save_mode_var.get()
+        organize_ste = self.ig_organize_ste_var.get()  # ✅ Get organize STE option
         
         # Disable controls
         self.ig_run_btn.config(state=tk.DISABLED)
@@ -2889,11 +2900,11 @@ class ModelTesterUI:
         
         # Run in thread
         self.ig_thread = threading.Thread(target=self._run_ig_thread,
-                                          args=(model_path, env_id, episodes, ig_steps, fps, device, save_mode))
+                                          args=(model_path, env_id, episodes, ig_steps, fps, device, save_mode, organize_ste))
         self.ig_thread.daemon = True
         self.ig_thread.start()
     
-    def _run_ig_thread(self, model_path, env_id, episodes, ig_steps, fps, device, save_mode):
+    def _run_ig_thread(self, model_path, env_id, episodes, ig_steps, fps, device, save_mode, organize_ste):
         """Thread function for IG analysis"""
         try:
             self.ig_log.insert(tk.END, f"\n{'='*60}\n")
@@ -2904,6 +2915,7 @@ class ModelTesterUI:
             self.ig_log.insert(tk.END, f"Save Mode: {save_mode}\n")
             self.ig_log.insert(tk.END, f"IG Steps: {ig_steps}\n")
             self.ig_log.insert(tk.END, f"Device: {device}\n")
+            self.ig_log.insert(tk.END, f"Organize STE Frames: {'Yes' if organize_ste else 'No'}\n")
             self.ig_log.insert(tk.END, f"{'='*60}\n\n")
             self.ig_log.see(tk.END)
             
@@ -2929,7 +2941,8 @@ class ModelTesterUI:
                 outdir=out_dir,
                 fps=fps,
                 n_steps=ig_steps,
-                save_mode=save_mode  # "best_run" or "all_episodes"
+                save_mode=save_mode,  # "best_run" or "all_episodes"
+                organize_ste=organize_ste  # ✅ Pass organize STE option
             )
             
             # Find output directory and videos

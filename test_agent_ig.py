@@ -557,11 +557,220 @@ def run_and_collect_best_episode(model_path,
 
 
 # ============================================================
+# Mode 5 STE Concept Frame Organization
+# ============================================================
+
+def organize_ste_concept_frames(model, best_obs, frames, agent_dirs, all_attributions, out_dir, device="cpu"):
+    """
+    Organize frames by STE concept activation status for Mode 5 models.
+    
+    Creates directory structure with composite images showing:
+    - God View
+    - Model Input (player view)
+    - Concept IG Heatmap (uses SAME attributions as in video frames)
+    
+    out_dir/
+      C2/
+        activated/    - frames where concept 2 (STE) is active (value > 0.5)
+        inactive/     - frames where concept 2 (STE) is inactive (value <= 0.5)
+      C3/
+        activated/
+        inactive/
+      ...
+    
+    Args:
+        model: Trained model
+        best_obs: List of observations
+        frames: List of frame images (God View)
+        agent_dirs: List of agent directions for each frame
+        all_attributions: List of IG attributions for each frame (from compute_concept_integrated_gradients)
+        out_dir: Base output directory
+        device: Device to run model on
+    """
+    fx = model.policy.features_extractor
+    fx.to(device)
+    fx.eval()
+    
+    # Check if this is Mode 5
+    concept_mode = getattr(fx, 'concept_mode', 1)
+    if concept_mode != 5:
+        print(f"⚠️  Model is not Mode 5 (current mode: {concept_mode}). Skipping STE frame organization.")
+        return
+    
+    n_concepts = getattr(fx, 'n_concepts', 0)
+    if n_concepts <= 1:
+        print(f"⚠️  Model has only {n_concepts} concepts. Need at least 2 for STE organization.")
+        return
+    
+    n_ste_concepts = n_concepts - 1  # First concept is sigmoid, rest are STE
+    
+    print(f"\n{'='*70}")
+    print(f"📊 Organizing frames by STE concept activation (Mode 5)")
+    print(f"{'='*70}")
+    print(f"Total concepts: {n_concepts}")
+    print(f"STE concepts: {n_ste_concepts} (C2 to C{n_concepts})")
+    print(f"Total frames: {len(frames)}")
+    print(f"{'='*70}\n")
+    
+    # Create directory structure
+    concept_dirs = {}
+    for k in range(1, n_concepts):  # Skip C1 (sigmoid)
+        concept_name = f"C{k+1}"
+        concept_base = os.path.join(out_dir, concept_name)
+        activated_dir = os.path.join(concept_base, "activated")
+        inactive_dir = os.path.join(concept_base, "inactive")
+        
+        os.makedirs(activated_dir, exist_ok=True)
+        os.makedirs(inactive_dir, exist_ok=True)
+        
+        concept_dirs[k] = {
+            'activated': activated_dir,
+            'inactive': inactive_dir,
+            'activated_count': 0,
+            'inactive_count': 0
+        }
+    
+    # Process each frame
+    for i, obs_raw in enumerate(best_obs):
+        # Skip if IG attribution failed for this frame
+        if i >= len(all_attributions) or all_attributions[i] is None:
+            print(f"⚠️  Skipping frame {i} (no IG attributions)")
+            continue
+        
+        # Get IG attributions for this frame
+        attributions = all_attributions[i]  # List of K attribution maps [H, W]
+        
+        obs_np = np.array(obs_raw)
+        
+        # Prepare tensor for getting concept_bottleneck values
+        if obs_np.ndim == 3 and obs_np.shape[-1] == 3:
+            obs_np_transposed = np.transpose(obs_np, (2, 0, 1))
+        else:
+            obs_np_transposed = obs_np
+        
+        obs_t = torch.from_numpy(obs_np_transposed).float().unsqueeze(0).to(device)
+        
+        # Get concept bottleneck values (to determine activated/inactive)
+        with torch.no_grad():
+            _ = fx(obs_t)  # Run forward to populate last_concept_bottleneck
+            
+            if not hasattr(fx, 'last_concept_bottleneck'):
+                print(f"⚠️  Warning: Model doesn't have last_concept_bottleneck. Skipping.")
+                return
+            
+            concept_bottleneck = fx.last_concept_bottleneck[0].cpu().numpy()  # [K]
+        
+        # Get corresponding God View frame
+        god_view_frame = frames[i]
+        
+        # Classify and save composite image for each STE concept
+        for k in range(1, n_concepts):  # Skip C1 (sigmoid)
+            concept_value = concept_bottleneck[k]
+            
+            # Determine activation status
+            is_activated = (concept_value > 0.5)
+            
+            # Choose directory
+            target_dir = concept_dirs[k]['activated'] if is_activated else concept_dirs[k]['inactive']
+            
+            # ✅ Create composite image: [God View] [Model Input] [IG Heatmap for this concept]
+            # Use IG attribution (SAME as in video) instead of concept_map
+            heatmap_k = attributions[k]  # [H, W] - already computed by IG
+            
+            # Create composite with 3 panels
+            W = 200  # Size for each panel
+            H = 200
+            spacing = 5
+            
+            # 1. God View
+            god_view_img = Image.fromarray(god_view_frame).resize((W, H), Image.LANCZOS)
+            
+            # 2. Model Input (rotated to align with God View if agent_dir available)
+            agent_dir = agent_dirs[i] if i < len(agent_dirs) else None
+            if agent_dir is not None:
+                model_input_rotated = rotate_obs_to_god_view(obs_raw, agent_dir)
+            else:
+                model_input_rotated = obs_raw
+            
+            # Scale model input (MiniGrid values are 0-5, scale to 0-255)
+            model_input_scaled = (model_input_rotated.astype(np.float32) * 51).astype(np.uint8)
+            model_input_img = Image.fromarray(model_input_scaled).resize((W, H), Image.NEAREST)
+            
+            # 3. IG Heatmap for concept k (also rotated to align with God View)
+            if agent_dir is not None:
+                heatmap_k_rotated = rotate_obs_to_god_view(heatmap_k, agent_dir)
+            else:
+                heatmap_k_rotated = heatmap_k
+            
+            heatmap_rgb = heatmap_apply_colormap(heatmap_k_rotated, "jet")
+            heatmap_img = Image.fromarray(heatmap_rgb).resize((W, H), Image.LANCZOS)
+            
+            # Composite the 3 panels
+            total_w = W * 3 + spacing * 2
+            canvas = Image.new("RGB", (total_w, H), color=(255, 255, 255))
+            
+            canvas.paste(god_view_img, (0, 0))
+            canvas.paste(model_input_img, (W + spacing, 0))
+            canvas.paste(heatmap_img, (W * 2 + spacing * 2, 0))
+            
+            # Add labels
+            from PIL import ImageDraw, ImageFont
+            draw = ImageDraw.Draw(canvas)
+            try:
+                font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 14)
+            except:
+                font = ImageFont.load_default()
+            
+            # Labels at top of each panel
+            draw.text((5, 5), "God View", fill=(255, 255, 0), font=font)
+            draw.text((W + spacing + 5, 5), "Model Input", fill=(255, 255, 0), font=font)
+            draw.text((W * 2 + spacing * 2 + 5, 5), f"C{k+1} IG Heatmap", fill=(255, 255, 0), font=font)
+            
+            # Save composite
+            frame_filename = f"frame_{i:04d}_value_{concept_value:.3f}.png"
+            frame_path = os.path.join(target_dir, frame_filename)
+            canvas.save(frame_path)
+            
+            # Update count
+            if is_activated:
+                concept_dirs[k]['activated_count'] += 1
+            else:
+                concept_dirs[k]['inactive_count'] += 1
+        
+        if (i+1) % 20 == 0 or (i+1) == len(best_obs):
+            print(f"Processed {i+1}/{len(best_obs)} frames...")
+    
+    # Print summary
+    print(f"\n{'='*70}")
+    print(f"✓ Frame organization complete!")
+    print(f"{'='*70}")
+    for k in range(1, n_concepts):
+        concept_name = f"C{k+1}"
+        activated_count = concept_dirs[k]['activated_count']
+        inactive_count = concept_dirs[k]['inactive_count']
+        total = activated_count + inactive_count
+        
+        activated_pct = (activated_count / total * 100) if total > 0 else 0
+        inactive_pct = (inactive_count / total * 100) if total > 0 else 0
+        
+        print(f"\n{concept_name}:")
+        print(f"  ✅ Activated:  {activated_count:4d} frames ({activated_pct:5.1f}%)")
+        print(f"  ❌ Inactive:   {inactive_count:4d} frames ({inactive_pct:5.1f}%)")
+        print(f"  📁 Location:   {os.path.join(out_dir, concept_name)}")
+    
+    print(f"\n{'='*70}\n")
+
+
+# ============================================================
 # IG generator for best episode
 # ============================================================
 
-def generate_ig_for_best(model, best_obs, frames, agent_dirs, out_dir, device="cpu", fps=6, n_steps=50):
-    """Generate Integrated Gradients visualizations for best episode."""
+def generate_ig_for_best(model, best_obs, frames, agent_dirs, out_dir, device="cpu", fps=6, n_steps=50, organize_ste=True):
+    """Generate Integrated Gradients visualizations for best episode.
+    
+    Args:
+        organize_ste: Whether to organize frames by STE concept activation (Mode 5 only)
+    """
     
     if not CAPTUM_AVAILABLE:
         print("❌ ERROR: Captum not available. Install with: pip install captum")
@@ -578,6 +787,7 @@ def generate_ig_for_best(model, best_obs, frames, agent_dirs, out_dir, device="c
     fx.eval()
     
     saved = []
+    all_attributions = []  # ✅ Collect IG attributions for organize_ste
     
     print(f"\n{'='*60}")
     print(f"Generating Integrated Gradients for {len(best_obs)} frames...")
@@ -596,8 +806,10 @@ def generate_ig_for_best(model, best_obs, frames, agent_dirs, out_dir, device="c
             img_input, attributions, concept_vals = compute_concept_integrated_gradients(
                 fx, obs_t, device, n_steps=n_steps
             )
+            all_attributions.append(attributions)  # ✅ Save attributions
         except Exception as e:
             print(f"IG error at frame {i}: {e}")
+            all_attributions.append(None)  # ✅ Placeholder for failed frames
             continue
         
         orig = frames[i]
@@ -612,6 +824,13 @@ def generate_ig_for_best(model, best_obs, frames, agent_dirs, out_dir, device="c
             print(f"Saved {i+1}/{len(best_obs)}")
     
     print(f"\n✓ Saved all {len(saved)} frames")
+    
+    # ✅ Organize frames by STE concept activation (Mode 5 only)
+    # Pass IG attributions so it uses the SAME heatmaps as in the video
+    if organize_ste:
+        organize_ste_concept_frames(model, best_obs, frames, agent_dirs, all_attributions, run_dir, device=device)
+    else:
+        print(f"\nℹ️  STE frame organization skipped (disabled)")
     
     # Make video
     try:
@@ -695,7 +914,7 @@ def main():
 
 
 def test_agent_ig(model_path, env_id, algorithm="PPO_CONCEPT", num_episodes=10,
-                 device="cpu", outdir="ig_out", fps=6, n_steps=50, save_mode="best_run"):
+                 device="cpu", outdir="ig_out", fps=6, n_steps=50, save_mode="best_run", organize_ste=True):
     """
     Wrapper function for UI integration.
     
@@ -709,6 +928,7 @@ def test_agent_ig(model_path, env_id, algorithm="PPO_CONCEPT", num_episodes=10,
         fps: Video FPS
         n_steps: Number of IG steps
         save_mode: "best_run" or "all_episodes"
+        organize_ste: Whether to organize frames by STE concept activation (Mode 5 only)
     """
     model_name = os.path.splitext(os.path.basename(model_path))[0]
     
@@ -723,7 +943,7 @@ def test_agent_ig(model_path, env_id, algorithm="PPO_CONCEPT", num_episodes=10,
         
         run_dir = generate_ig_for_best(
             model, best_obs, frames, agent_dirs, outdir,
-            device=device, fps=fps, n_steps=n_steps
+            device=device, fps=fps, n_steps=n_steps, organize_ste=organize_ste
         )
         
         print(f"✓ Saved best run to: {run_dir}")
@@ -776,7 +996,7 @@ def test_agent_ig(model_path, env_id, algorithm="PPO_CONCEPT", num_episodes=10,
             ep_out_dir = f"{outdir}/episode_{ep+1:03d}"
             run_dir = generate_ig_for_best(
                 model, obs_list, frame_list, agent_dir_list, ep_out_dir,
-                device=device, fps=fps, n_steps=n_steps
+                device=device, fps=fps, n_steps=n_steps, organize_ste=organize_ste
             )
             
             print(f"✓ Saved episode {ep+1} to: {run_dir}")
