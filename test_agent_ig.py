@@ -509,6 +509,10 @@ def run_and_collect_best_episode(model_path,
     best_obs = None
     best_frames = None
     best_agent_dirs = None
+    best_actions = None  # ✅ Collect actions
+    
+    # ✅ Collect ALL episodes for logging (not just best)
+    all_episodes = []  # List of (obs_list, action_list, reward)
     
     for ep in range(num_episodes):
         obs, _ = env.reset()
@@ -517,6 +521,7 @@ def run_and_collect_best_episode(model_path,
         obs_list = []
         frame_list = []
         agent_dir_list = []
+        action_list = []  # ✅ Collect actions
         steps = 0
         
         obs_list.append(np.array(obs))
@@ -525,6 +530,8 @@ def run_and_collect_best_episode(model_path,
         
         while not done and steps < max_steps:
             action, _ = model.predict(obs, deterministic=deterministic)
+            action_list.append(int(action))  # ✅ Record action
+            
             obs, reward, terminated, truncated, _ = env.step(action)
             
             obs_list.append(np.array(obs))
@@ -537,11 +544,15 @@ def run_and_collect_best_episode(model_path,
         
         print(f"Episode {ep+1}: reward={ep_reward:.3f}, steps={steps}, frames={len(frame_list)}")
         
+        # ✅ Save ALL episodes for logging
+        all_episodes.append((obs_list, action_list, ep_reward))
+        
         if ep_reward > best_reward:
             best_reward = ep_reward
             best_obs = obs_list
             best_frames = frame_list
             best_agent_dirs = agent_dir_list
+            best_actions = action_list  # ✅ Save actions
     
     env.close()
     os.makedirs(out_dir, exist_ok=True)
@@ -553,7 +564,126 @@ def run_and_collect_best_episode(model_path,
         else:
             print(f"✓ Data count verified: {len(best_frames)} frames")
     
-    return model, best_obs, best_frames, best_agent_dirs, best_reward, out_dir
+    return model, best_obs, best_frames, best_agent_dirs, best_actions, best_reward, out_dir, all_episodes
+
+
+# ============================================================
+# Concept Vector & Action Logging
+# ============================================================
+
+def log_all_episodes(model, all_episodes, out_dir, env_id, device="cpu"):
+    """
+    Log concept vectors and actions for ALL episodes.
+    
+    Args:
+        model: Trained model
+        all_episodes: List of (obs_list, action_list, reward) tuples
+        out_dir: Output directory
+        env_id: Environment ID
+        device: Device
+    """
+    print(f"\n📝 Logging all {len(all_episodes)} episodes...")
+    
+    for ep_idx, (obs_list, actions_list, reward) in enumerate(all_episodes):
+        print(f"  Logging episode {ep_idx+1}/{len(all_episodes)} (reward={reward:.3f})...")
+        log_concept_actions(model, obs_list, actions_list, reward, out_dir, env_id, device)
+    
+    print(f"✓ Logged all {len(all_episodes)} episodes")
+
+
+def log_concept_actions(model, obs_list, actions_list, reward, out_dir, env_id, device="cpu"):
+    """
+    Log concept vectors and chosen actions to text file.
+    Separate files for success and failed runs.
+    
+    Args:
+        model: Trained model
+        obs_list: List of observations
+        actions_list: List of actions taken (integers)
+        reward: Episode reward
+        out_dir: Output directory
+        env_id: Environment ID
+        device: Device
+    """
+    fx = model.policy.features_extractor
+    fx.to(device)
+    fx.eval()
+    
+    # MiniGrid action names (English)
+    ACTION_NAMES = {
+        0: "TURN_LEFT",
+        1: "TURN_RIGHT", 
+        2: "MOVE_FORWARD",
+        3: "PICKUP_OBJECT",
+        4: "DROP_OBJECT",
+        5: "TOGGLE_DOOR",
+        6: "DONE"
+    }
+    
+    # Determine if success or failed based on reward
+    # For MiniGrid, success threshold set to 0.2
+    is_success = (reward >= 0.2)
+    
+    # Choose file based on success/failure
+    if is_success:
+        log_file = os.path.join(out_dir, "success_runs.txt")
+    else:
+        log_file = os.path.join(out_dir, "failed_runs.txt")
+    
+    # Open file in append mode
+    with open(log_file, 'a') as f:
+        # Write episode header
+        f.write("="*70 + "\n")
+        f.write(f"Episode: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f"Environment: {env_id}\n")
+        f.write(f"Reward: {reward:.4f}\n")
+        f.write(f"Status: {'SUCCESS' if is_success else 'FAILED'}\n")
+        f.write(f"Total steps: {len(actions_list)}\n")
+        f.write("="*70 + "\n\n")
+        
+        # Process each step
+        for step_idx in range(len(actions_list)):
+            obs_raw = obs_list[step_idx]
+            action = actions_list[step_idx]
+            
+            # Prepare observation
+            obs_np = np.array(obs_raw)
+            if obs_np.ndim == 3 and obs_np.shape[-1] == 3:
+                obs_np = np.transpose(obs_np, (2, 0, 1))
+            
+            obs_t = torch.from_numpy(obs_np).float().unsqueeze(0).to(device)
+            
+            # Get concept vector (after STE for Mode 5)
+            with torch.no_grad():
+                _ = fx(obs_t)
+                
+                # Try to get concept_bottleneck first (Mode 4/5)
+                if hasattr(fx, 'last_concept_bottleneck'):
+                    concept_vec = fx.last_concept_bottleneck[0].cpu().numpy()
+                    vector_type = "bottleneck (after STE)"
+                else:
+                    # Fallback to concept_layer output
+                    cnn_out = fx.cnn(obs_t)
+                    _, concept_vector = fx.concept_layer(cnn_out)
+                    concept_vec = concept_vector[0].cpu().numpy()
+                    vector_type = "concept_layer"
+            
+            # Format concept vector
+            concept_str = "[" + ", ".join([f"{v:.3f}" for v in concept_vec]) + "]"
+            
+            # Get action name
+            action_name = ACTION_NAMES.get(action, f"UNKNOWN_{action}")
+            
+            # Write step info
+            f.write(f"Step {step_idx:4d}:\n")
+            f.write(f"  Concept Vector ({vector_type}): {concept_str}\n")
+            f.write(f"  Action: {action} ({action_name})\n")
+            f.write("\n")
+        
+        # Write episode footer
+        f.write("-"*70 + "\n\n")
+    
+    print(f"✓ Logged {len(actions_list)} steps to: {log_file}")
 
 
 # ============================================================
@@ -765,10 +895,14 @@ def organize_ste_concept_frames(model, best_obs, frames, agent_dirs, all_attribu
 # IG generator for best episode
 # ============================================================
 
-def generate_ig_for_best(model, best_obs, frames, agent_dirs, out_dir, device="cpu", fps=6, n_steps=50, organize_ste=True):
+def generate_ig_for_best(model, best_obs, frames, agent_dirs, best_actions, best_reward, all_episodes, out_dir, env_id, device="cpu", fps=6, n_steps=50, organize_ste=True):
     """Generate Integrated Gradients visualizations for best episode.
     
     Args:
+        best_actions: List of actions taken in best episode
+        best_reward: Best episode reward
+        all_episodes: List of ALL episodes (obs_list, action_list, reward) - for logging
+        env_id: Environment ID
         organize_ste: Whether to organize frames by STE concept activation (Mode 5 only)
     """
     
@@ -824,6 +958,10 @@ def generate_ig_for_best(model, best_obs, frames, agent_dirs, out_dir, device="c
             print(f"Saved {i+1}/{len(best_obs)}")
     
     print(f"\n✓ Saved all {len(saved)} frames")
+    
+    # ✅ Log concept vectors and actions for ALL episodes (not just best)
+    print(f"\n📝 Logging concept vectors and actions for all episodes...")
+    log_all_episodes(model, all_episodes, run_dir, env_id, device=device)
     
     # ✅ Organize frames by STE concept activation (Mode 5 only)
     # Pass IG attributions so it uses the SAME heatmaps as in the video
@@ -894,17 +1032,18 @@ def main():
     print("="*60 + "\n")
     
     # Run and collect best episode
-    model, best_obs, frames, agent_dirs, best_reward, out_dir = run_and_collect_best_episode(
+    model, best_obs, frames, agent_dirs, best_actions, best_reward, out_dir, all_episodes = run_and_collect_best_episode(
         args.model, args.env, args.algo,
         args.episodes, True, args.device, out_dir
     )
     
     print(f"\n✓ Best reward = {best_reward}")
+    print(f"✓ Collected {len(all_episodes)} episodes for logging")
     print(f"\nRunning Integrated Gradients visualization...")
     
     # Generate IG visualizations
     run_dir = generate_ig_for_best(
-        model, best_obs, frames, agent_dirs, out_dir,
+        model, best_obs, frames, agent_dirs, best_actions, best_reward, all_episodes, out_dir, args.env,
         device=args.device, fps=args.fps, n_steps=args.n_steps
     )
     
@@ -933,23 +1072,24 @@ def test_agent_ig(model_path, env_id, algorithm="PPO_CONCEPT", num_episodes=10,
     model_name = os.path.splitext(os.path.basename(model_path))[0]
     
     if save_mode == "best_run":
-        # Original behavior: save only best run
-        model, best_obs, frames, agent_dirs, best_reward, _ = run_and_collect_best_episode(
+        # Original behavior: save only best run (but log ALL episodes)
+        model, best_obs, frames, agent_dirs, best_actions, best_reward, _, all_episodes = run_and_collect_best_episode(
             model_path, env_id, algorithm,
             num_episodes, True, device, outdir
         )
         
         print(f"✓ Best reward = {best_reward}")
+        print(f"✓ Collected {len(all_episodes)} episodes for logging")
         
         run_dir = generate_ig_for_best(
-            model, best_obs, frames, agent_dirs, outdir,
+            model, best_obs, frames, agent_dirs, best_actions, best_reward, all_episodes, outdir, env_id,
             device=device, fps=fps, n_steps=n_steps, organize_ste=organize_ste
         )
         
         print(f"✓ Saved best run to: {run_dir}")
         
     else:  # all_episodes
-        # New behavior: save all episodes
+        # New behavior: save all episodes in timestamped folder
         env = gym.make(env_id, render_mode="rgb_array")
         env = ImgObsWrapper(env)
         
@@ -959,6 +1099,16 @@ def test_agent_ig(model_path, env_id, algorithm="PPO_CONCEPT", num_episodes=10,
             model = PPO.load(model_path, env=env, device=device)
         elif algorithm.upper() == "DQN":
             model = DQN.load(model_path, env=env, device=device)
+        
+        # ✅ Create timestamped base directory (like best_run mode)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        base_run_dir = os.path.join(outdir, f"ig_{timestamp}")
+        os.makedirs(base_run_dir, exist_ok=True)
+        
+        print(f"\n📁 All episodes will be saved to: {base_run_dir}")
+        
+        # ✅ Collect all episodes for logging
+        all_episodes_data = []
         
         for ep in range(num_episodes):
             print(f"\n{'='*60}")
@@ -971,6 +1121,7 @@ def test_agent_ig(model_path, env_id, algorithm="PPO_CONCEPT", num_episodes=10,
             obs_list = []
             frame_list = []
             agent_dir_list = []
+            action_list = []
             steps = 0
             max_steps = 1000
             
@@ -980,6 +1131,8 @@ def test_agent_ig(model_path, env_id, algorithm="PPO_CONCEPT", num_episodes=10,
             
             while not done and steps < max_steps:
                 action, _ = model.predict(obs, deterministic=True)
+                action_list.append(int(action))
+                
                 obs, reward, terminated, truncated, _ = env.step(action)
                 
                 obs_list.append(np.array(obs))
@@ -992,17 +1145,102 @@ def test_agent_ig(model_path, env_id, algorithm="PPO_CONCEPT", num_episodes=10,
             
             print(f"✓ Episode {ep+1} reward: {ep_reward}, steps: {steps}")
             
-            # Generate IG for this episode
-            ep_out_dir = f"{outdir}/episode_{ep+1:03d}"
-            run_dir = generate_ig_for_best(
-                model, obs_list, frame_list, agent_dir_list, ep_out_dir,
-                device=device, fps=fps, n_steps=n_steps, organize_ste=organize_ste
-            )
+            # ✅ Save episode data for processing
+            all_episodes_data.append({
+                'obs_list': obs_list,
+                'frame_list': frame_list,
+                'agent_dir_list': agent_dir_list,
+                'action_list': action_list,
+                'reward': ep_reward
+            })
+        
+        # ✅ Now process all episodes and save to base_run_dir
+        print(f"\n{'='*60}")
+        print(f"Processing {num_episodes} episodes...")
+        print(f"{'='*60}")
+        
+        for ep_idx, ep_data in enumerate(all_episodes_data):
+            print(f"\nProcessing episode {ep_idx+1}/{num_episodes}...")
             
-            print(f"✓ Saved episode {ep+1} to: {run_dir}")
+            # ✅ Episode folder INSIDE timestamped directory
+            ep_folder = os.path.join(base_run_dir, f"episode_{ep_idx+1:03d}")
+            os.makedirs(ep_folder, exist_ok=True)
+            
+            # Generate IG for this episode
+            obs_list = ep_data['obs_list']
+            frame_list = ep_data['frame_list']
+            agent_dir_list = ep_data['agent_dir_list']
+            action_list = ep_data['action_list']
+            ep_reward = ep_data['reward']
+            
+            # Process IG
+            if not CAPTUM_AVAILABLE:
+                print("⚠️  Captum not available, skipping IG visualization")
+                continue
+            
+            fx = model.policy.features_extractor
+            fx.to(device)
+            fx.eval()
+            
+            saved = []
+            all_attributions = []
+            
+            frames_dir = os.path.join(ep_folder, "frames")
+            os.makedirs(frames_dir, exist_ok=True)
+            
+            for i, obs_raw in enumerate(obs_list):
+                obs_np = np.array(obs_raw)
+                
+                if obs_np.ndim == 3 and obs_np.shape[-1] == 3:
+                    obs_np = np.transpose(obs_np, (2, 0, 1))
+                
+                obs_t = torch.from_numpy(obs_np).float().unsqueeze(0)
+                
+                try:
+                    img_input, attributions, concept_vals = compute_concept_integrated_gradients(
+                        fx, obs_t, device, n_steps=n_steps
+                    )
+                    all_attributions.append(attributions)
+                except Exception as e:
+                    print(f"IG error at frame {i}: {e}")
+                    all_attributions.append(None)
+                    continue
+                
+                orig = frame_list[i]
+                agent_dir = agent_dir_list[i]
+                
+                out_file = os.path.join(frames_dir, f"frame_{i:04d}.png")
+                composite_and_save(orig, attributions, concept_vals, out_file, 
+                                  model_obs=obs_raw, agent_dir=agent_dir)
+                saved.append(out_file)
+            
+            print(f"  ✓ Saved {len(saved)} frames")
+            
+            # Organize STE frames if needed
+            if organize_ste:
+                organize_ste_concept_frames(model, obs_list, frame_list, agent_dir_list, 
+                                          all_attributions, ep_folder, device=device)
+            
+            # Create video for this episode
+            try:
+                from moviepy import ImageSequenceClip
+                clip = ImageSequenceClip(saved, fps=fps)
+                vid_path = os.path.join(ep_folder, "ig_episode.mp4")
+                clip.write_videofile(vid_path, codec="libx264", audio=False, logger=None)
+                print(f"  ✓ Video saved: {vid_path}")
+            except Exception as e:
+                print(f"  ⚠ Warning: Could not create video: {e}")
+            
+            print(f"  ✓ Episode {ep_idx+1} saved to: {ep_folder}")
+        
+        # ✅ Log ALL episodes to shared success_runs.txt/failed_runs.txt in base_run_dir
+        print(f"\n📝 Logging all {num_episodes} episodes to {base_run_dir}...")
+        all_episodes_for_log = [(ep['obs_list'], ep['action_list'], ep['reward']) 
+                                for ep in all_episodes_data]
+        log_all_episodes(model, all_episodes_for_log, base_run_dir, env_id, device)
         
         env.close()
-        print(f"\n✓ All {num_episodes} episodes saved to: {outdir}")
+        print(f"\n✓ All {num_episodes} episodes saved to: {base_run_dir}")
 
 
 if __name__ == "__main__":
