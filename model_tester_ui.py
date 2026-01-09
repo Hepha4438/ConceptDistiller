@@ -245,6 +245,11 @@ class ModelTesterUI:
         self.lime_frame = ttk.Frame(notebook)
         notebook.add(self.lime_frame, text="🔬 LIME Analysis")
         self.create_lime_tab()
+        
+        # Gemini Labeling Tab
+        self.gemini_frame = ttk.Frame(notebook)
+        notebook.add(self.gemini_frame, text="🏷️ Concept Labeling")
+        self.create_gemini_tab()
     
     def create_training_tab(self):
         """Create the training interface"""
@@ -3017,6 +3022,420 @@ class ModelTesterUI:
                 subprocess.run(["start", self.last_ig_video], shell=True)
             else:
                 subprocess.run(["xdg-open", self.last_ig_video])
+
+    def create_gemini_tab(self):
+        """Create Gemini Concept Labeling interface"""
+        main_container = ttk.Frame(self.gemini_frame)
+        main_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Left panel: IG directory selection and API configuration
+        left_panel = ttk.LabelFrame(main_container, text="Gemini Configuration", padding=10)
+        left_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=False, padx=(0, 5))
+        
+        # IG Directory selection
+        dir_frame = ttk.LabelFrame(left_panel, text="Select IG Analysis Output", padding=5)
+        dir_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        
+        # Treeview for IG directories
+        tree_scroll = ttk.Scrollbar(dir_frame)
+        tree_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        self.gemini_tree = ttk.Treeview(dir_frame, columns=('Environment', 'Model', 'IG Run'),
+                                        show='tree headings', height=12,
+                                        yscrollcommand=tree_scroll.set)
+        tree_scroll.config(command=self.gemini_tree.yview)
+        
+        self.gemini_tree.heading('Environment', text='Environment')
+        self.gemini_tree.heading('Model', text='Model')
+        self.gemini_tree.heading('IG Run', text='IG Run')
+        self.gemini_tree.column('#0', width=20)
+        self.gemini_tree.column('Environment', width=180)
+        self.gemini_tree.column('Model', width=200)
+        self.gemini_tree.column('IG Run', width=150)
+        
+        self.gemini_tree.pack(fill=tk.BOTH, expand=True)
+        
+        # Refresh button
+        refresh_btn = ttk.Button(dir_frame, text="🔄 Refresh IG Outputs", 
+                                command=self.load_gemini_ig_dirs)
+        refresh_btn.pack(fill=tk.X, pady=(5, 0))
+        
+        # API Configuration
+        api_frame = ttk.LabelFrame(left_panel, text="Google Gemini API", padding=5)
+        api_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Label(api_frame, text="API Key:", font=('Arial', 10, 'bold')).pack(anchor=tk.W, pady=2)
+        
+        self.gemini_api_key_var = tk.StringVar()
+        api_entry = ttk.Entry(api_frame, textvariable=self.gemini_api_key_var, 
+                             show="*", width=40)
+        api_entry.pack(fill=tk.X, pady=2)
+        
+        ttk.Label(api_frame, text="Get your free API key:", 
+                 font=('Arial', 8, 'italic')).pack(anchor=tk.W, pady=(5, 0))
+        
+        link_frame = ttk.Frame(api_frame)
+        link_frame.pack(fill=tk.X, pady=2)
+        
+        link_label = ttk.Label(link_frame, text="https://aistudio.google.com/apikey",
+                              foreground="blue", cursor="hand2", font=('Arial', 8, 'underline'))
+        link_label.pack(side=tk.LEFT)
+        link_label.bind("<Button-1>", lambda e: self.open_url("https://aistudio.google.com/apikey"))
+        
+        ttk.Label(api_frame, text="Cost: ~$0.0004 per model analysis",
+                 font=('Arial', 8, 'italic'), foreground="green").pack(anchor=tk.W, pady=(5, 0))
+        
+        # Parameters
+        params_frame = ttk.LabelFrame(left_panel, text="Labeling Parameters", padding=5)
+        params_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Label(params_frame, text="Max Images:").grid(row=0, column=0, sticky=tk.W, pady=2)
+        self.gemini_max_images_var = tk.IntVar(value=5)
+        ttk.Spinbox(params_frame, from_=3, to=20, textvariable=self.gemini_max_images_var,
+                   width=10).grid(row=0, column=1, sticky=tk.W, pady=2)
+        ttk.Label(params_frame, text="(More images = better but costlier)",
+                 font=('Arial', 8, 'italic')).grid(row=0, column=2, sticky=tk.W, padx=5)
+        
+        # Run buttons
+        run_frame = ttk.Frame(left_panel)
+        run_frame.pack(fill=tk.X, pady=10)
+        
+        self.gemini_run_btn = ttk.Button(run_frame, text="🤖 Generate Labels with Gemini",
+                                        command=self.run_gemini_labeling)
+        self.gemini_run_btn.pack(fill=tk.X, pady=2)
+        
+        self.gemini_demo_btn = ttk.Button(run_frame, text="🎭 Demo Mode (No API)",
+                                         command=self.run_gemini_demo)
+        self.gemini_demo_btn.pack(fill=tk.X, pady=2)
+        
+        # Status
+        status_frame = ttk.LabelFrame(left_panel, text="Status", padding=5)
+        status_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        
+        self.gemini_status_var = tk.StringVar(value="Ready")
+        ttk.Label(status_frame, textvariable=self.gemini_status_var, 
+                 font=('Arial', 10)).pack(pady=5)
+        
+        self.gemini_progress = ttk.Progressbar(status_frame, mode='indeterminate')
+        self.gemini_progress.pack(fill=tk.X, padx=5, pady=5)
+        
+        # Result buttons
+        result_btn_frame = ttk.Frame(status_frame)
+        result_btn_frame.pack(fill=tk.X, pady=5)
+        
+        self.gemini_open_json_btn = ttk.Button(result_btn_frame, text="📄 Open Labels JSON",
+                                              command=self.open_gemini_json, state=tk.DISABLED)
+        self.gemini_open_json_btn.pack(fill=tk.X, pady=2)
+        
+        self.gemini_open_dir_btn = ttk.Button(result_btn_frame, text="📁 Open Output Directory",
+                                             command=self.open_gemini_directory, state=tk.DISABLED)
+        self.gemini_open_dir_btn.pack(fill=tk.X, pady=2)
+        
+        # Store last result paths
+        self.last_gemini_json = None
+        self.last_gemini_dir = None
+        
+        # Right panel: Output log
+        right_panel = ttk.LabelFrame(main_container, text="Labeling Log", padding=10)
+        right_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(5, 0))
+        
+        self.gemini_log = scrolledtext.ScrolledText(right_panel, height=30, width=60, wrap=tk.WORD)
+        self.gemini_log.pack(fill=tk.BOTH, expand=True)
+        
+        # Load IG directories
+        self.load_gemini_ig_dirs()
+    
+    def load_gemini_ig_dirs(self):
+        """Load IG analysis outputs for labeling"""
+        self.gemini_log.insert(tk.END, "🔄 Searching for IG outputs...\n")
+        self.gemini_log.see(tk.END)
+        
+        for item in self.gemini_tree.get_children():
+            self.gemini_tree.delete(item)
+        
+        ig_out_dir = "ig_out"
+        if not os.path.exists(ig_out_dir):
+            self.gemini_log.insert(tk.END, "⚠️ ig_out directory not found!\n")
+            return
+        
+        count = 0
+        for env_id in sorted(os.listdir(ig_out_dir)):
+            env_path = os.path.join(ig_out_dir, env_id)
+            if not os.path.isdir(env_path):
+                continue
+            
+            ppo_concept_path = os.path.join(env_path, "ppo_concept")
+            if not os.path.exists(ppo_concept_path):
+                continue
+            
+            env_node = self.gemini_tree.insert("", "end", text="", values=(env_id, "", ""))
+            
+            for model_dir in sorted(os.listdir(ppo_concept_path)):
+                model_path = os.path.join(ppo_concept_path, model_dir)
+                if not os.path.isdir(model_path):
+                    continue
+                
+                model_node = self.gemini_tree.insert(env_node, "end", text="", 
+                                                    values=("", model_dir, ""))
+                
+                # Find IG run directories (ig_YYYYMMDD_HHMMSS)
+                for ig_run in sorted(os.listdir(model_path)):
+                    ig_run_path = os.path.join(model_path, ig_run)
+                    if os.path.isdir(ig_run_path) and ig_run.startswith('ig_'):
+                        # Check if success_runs.txt exists
+                        success_file = os.path.join(ig_run_path, 'success_runs.txt')
+                        if os.path.exists(success_file):
+                            self.gemini_tree.insert(model_node, "end", text="", 
+                                                  values=("", "", ig_run),
+                                                  tags=('ig_run',))
+                            count += 1
+        
+        self.gemini_log.insert(tk.END, f"✓ Found {count} IG analysis outputs\n")
+        self.gemini_log.see(tk.END)
+    
+    def run_gemini_labeling(self):
+        """Run Gemini labeling on selected IG output"""
+        selection = self.gemini_tree.selection()
+        if not selection:
+            messagebox.showwarning("No Selection", "Please select an IG run to label!")
+            return
+        
+        item = selection[0]
+        if 'ig_run' not in self.gemini_tree.item(item, 'tags'):
+            messagebox.showwarning("Invalid Selection", "Please select an IG run!")
+            return
+        
+        # Get API key
+        api_key = self.gemini_api_key_var.get().strip()
+        if not api_key:
+            messagebox.showerror("Missing API Key", 
+                               "Please enter your Google Gemini API key!\n\n"
+                               "Get one for free at:\nhttps://aistudio.google.com/apikey")
+            return
+        
+        # Get IG run path
+        values = self.gemini_tree.item(item, 'values')
+        ig_run = values[2]
+        
+        model_item = self.gemini_tree.parent(item)
+        model_values = self.gemini_tree.item(model_item, 'values')
+        model_dir = model_values[1]
+        
+        env_item = self.gemini_tree.parent(model_item)
+        env_values = self.gemini_tree.item(env_item, 'values')
+        env_id = env_values[0]
+        
+        ig_dir = f"ig_out/{env_id}/ppo_concept/{model_dir}/{ig_run}"
+        
+        if not os.path.exists(ig_dir):
+            messagebox.showerror("Error", f"IG directory not found:\n{ig_dir}")
+            return
+        
+        # Get parameters
+        max_images = self.gemini_max_images_var.get()
+        
+        # Disable controls
+        self.gemini_run_btn.config(state=tk.DISABLED)
+        self.gemini_demo_btn.config(state=tk.DISABLED)
+        self.gemini_open_json_btn.config(state=tk.DISABLED)
+        self.gemini_open_dir_btn.config(state=tk.DISABLED)
+        
+        # Start progress
+        self.gemini_progress.start()
+        self.gemini_status_var.set("⏳ Calling Gemini API...")
+        
+        # Run in thread
+        self.gemini_thread = threading.Thread(target=self._run_gemini_thread,
+                                              args=(ig_dir, api_key, max_images, False))
+        self.gemini_thread.daemon = True
+        self.gemini_thread.start()
+    
+    def run_gemini_demo(self):
+        """Run demo mode (mock Gemini) on selected IG output"""
+        selection = self.gemini_tree.selection()
+        if not selection:
+            messagebox.showwarning("No Selection", "Please select an IG run to analyze!")
+            return
+        
+        item = selection[0]
+        if 'ig_run' not in self.gemini_tree.item(item, 'tags'):
+            messagebox.showwarning("Invalid Selection", "Please select an IG run!")
+            return
+        
+        # Get IG run path
+        values = self.gemini_tree.item(item, 'values')
+        ig_run = values[2]
+        
+        model_item = self.gemini_tree.parent(item)
+        model_values = self.gemini_tree.item(model_item, 'values')
+        model_dir = model_values[1]
+        
+        env_item = self.gemini_tree.parent(model_item)
+        env_values = self.gemini_tree.item(env_item, 'values')
+        env_id = env_values[0]
+        
+        ig_dir = f"ig_out/{env_id}/ppo_concept/{model_dir}/{ig_run}"
+        
+        if not os.path.exists(ig_dir):
+            messagebox.showerror("Error", f"IG directory not found:\n{ig_dir}")
+            return
+        
+        # Get parameters
+        max_images = self.gemini_max_images_var.get()
+        
+        # Disable controls
+        self.gemini_run_btn.config(state=tk.DISABLED)
+        self.gemini_demo_btn.config(state=tk.DISABLED)
+        self.gemini_open_json_btn.config(state=tk.DISABLED)
+        self.gemini_open_dir_btn.config(state=tk.DISABLED)
+        
+        # Start progress
+        self.gemini_progress.start()
+        self.gemini_status_var.set("⏳ Generating demo labels...")
+        
+        # Run in thread
+        self.gemini_thread = threading.Thread(target=self._run_gemini_thread,
+                                              args=(ig_dir, None, max_images, True))
+        self.gemini_thread.daemon = True
+        self.gemini_thread.start()
+    
+    def _run_gemini_thread(self, ig_dir, api_key, max_images, demo_mode):
+        """Thread function for Gemini labeling"""
+        try:
+            self.gemini_log.insert(tk.END, f"\n{'='*60}\n")
+            self.gemini_log.insert(tk.END, f"Starting Concept Labeling at {datetime.now().strftime('%H:%M:%S')}\n")
+            self.gemini_log.insert(tk.END, f"IG Directory: {ig_dir}\n")
+            self.gemini_log.insert(tk.END, f"Mode: {'Demo (Mock Gemini)' if demo_mode else 'Real Gemini API'}\n")
+            self.gemini_log.insert(tk.END, f"Max Images: {max_images}\n")
+            self.gemini_log.insert(tk.END, f"{'='*60}\n\n")
+            self.gemini_log.see(tk.END)
+            
+            if demo_mode:
+                # Use demo mode
+                from demo_gemini_labeling import mock_gemini_label
+                from label_concepts_gemini import parse_success_runs
+                
+                success_file = os.path.join(ig_dir, 'success_runs.txt')
+                if not os.path.exists(success_file):
+                    raise FileNotFoundError(f"success_runs.txt not found in {ig_dir}")
+                
+                self.gemini_log.insert(tk.END, "📊 Parsing concept patterns...\n")
+                self.gemini_log.see(tk.END)
+                
+                summary = parse_success_runs(success_file)
+                
+                self.gemini_log.insert(tk.END, "🤖 Generating labels (Mock Gemini)...\n")
+                self.gemini_log.see(tk.END)
+                
+                labels = mock_gemini_label(summary)
+                
+                # Save results
+                output_file = os.path.join(ig_dir, 'concept_labels_demo.json')
+                import json
+                with open(output_file, 'w') as f:
+                    json.dump(labels, f, indent=2)
+                
+                self.last_gemini_json = output_file
+                
+            else:
+                # Use real Gemini API
+                from label_concepts_gemini import label_concepts_with_gemini
+                from pathlib import Path
+                
+                self.gemini_log.insert(tk.END, "📊 Analyzing concept patterns...\n")
+                self.gemini_log.insert(tk.END, "🤖 Calling Gemini API...\n")
+                self.gemini_log.see(tk.END)
+                
+                labels = label_concepts_with_gemini(
+                    ig_out_dir=Path(ig_dir),
+                    api_key=api_key,
+                    n_sample_images=max_images
+                )
+                
+                # The function saves to concept_labels.json
+                output_file = os.path.join(ig_dir, 'concept_labels.json')
+                self.last_gemini_json = output_file
+            
+            self.last_gemini_dir = ig_dir
+            
+            # Display results
+            self.gemini_log.insert(tk.END, f"\n{'='*60}\n")
+            self.gemini_log.insert(tk.END, "✅ Labeling Complete!\n")
+            self.gemini_log.insert(tk.END, f"{'='*60}\n\n")
+            
+            # Read and display labels
+            import json
+            with open(self.last_gemini_json, 'r') as f:
+                labels = json.load(f)
+            
+            self.gemini_log.insert(tk.END, "CONCEPT LABELS:\n")
+            self.gemini_log.insert(tk.END, f"{'-'*60}\n")
+            
+            for concept_id, label_data in labels.items():
+                self.gemini_log.insert(tk.END, f"\n{concept_id}: {label_data.get('label', 'N/A')}\n")
+                if 'type' in label_data:
+                    self.gemini_log.insert(tk.END, f"  Type: {label_data['type']}\n")
+                elif concept_id == 'C1':
+                    self.gemini_log.insert(tk.END, f"  Type: Sigmoid (continuous)\n")
+                else:
+                    self.gemini_log.insert(tk.END, f"  Type: STE (binary)\n")
+                self.gemini_log.insert(tk.END, f"  Confidence: {label_data.get('confidence', 'N/A')}\n")
+                self.gemini_log.insert(tk.END, f"  Reasoning: {label_data.get('reasoning', 'N/A')}\n")
+            
+            self.gemini_log.insert(tk.END, f"\n{'-'*60}\n")
+            self.gemini_log.insert(tk.END, f"✓ Saved to: {os.path.basename(self.last_gemini_json)}\n")
+            self.gemini_log.see(tk.END)
+            
+            self.gemini_status_var.set("✅ Labeling Complete")
+            self.gemini_progress.stop()
+            self.gemini_run_btn.config(state=tk.NORMAL)
+            self.gemini_demo_btn.config(state=tk.NORMAL)
+            self.gemini_open_json_btn.config(state=tk.NORMAL)
+            self.gemini_open_dir_btn.config(state=tk.NORMAL)
+            
+        except Exception as e:
+            import traceback
+            error_msg = f"ERROR: {str(e)}\n\n{traceback.format_exc()}"
+            self.gemini_log.insert(tk.END, f"\n❌ {error_msg}\n")
+            self.gemini_log.see(tk.END)
+            
+            self.gemini_status_var.set("❌ Error occurred")
+            self.gemini_progress.stop()
+            self.gemini_run_btn.config(state=tk.NORMAL)
+            self.gemini_demo_btn.config(state=tk.NORMAL)
+            
+            messagebox.showerror("Gemini Error", f"An error occurred:\n\n{str(e)}")
+    
+    def open_gemini_json(self):
+        """Open labels JSON file"""
+        if self.last_gemini_json and os.path.exists(self.last_gemini_json):
+            import subprocess
+            import platform
+            system = platform.system()
+            if system == "Darwin":
+                subprocess.run(["open", self.last_gemini_json])
+            elif system == "Windows":
+                subprocess.run(["start", self.last_gemini_json], shell=True)
+            else:
+                subprocess.run(["xdg-open", self.last_gemini_json])
+    
+    def open_gemini_directory(self):
+        """Open Gemini output directory"""
+        if self.last_gemini_dir and os.path.exists(self.last_gemini_dir):
+            import subprocess
+            import platform
+            system = platform.system()
+            if system == "Darwin":
+                subprocess.run(["open", self.last_gemini_dir])
+            elif system == "Windows":
+                subprocess.run(["explorer", self.last_gemini_dir])
+            else:
+                subprocess.run(["xdg-open", self.last_gemini_dir])
+    
+    def open_url(self, url):
+        """Open URL in default browser"""
+        import webbrowser
+        webbrowser.open(url)
 
 
 if __name__ == "__main__":
