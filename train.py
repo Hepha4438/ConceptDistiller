@@ -86,6 +86,8 @@ Examples:
                         help="PPO_CONCEPT sparsity regularization weight (default: 0.004)")
     parser.add_argument("--lambda-3", type=float, default=None,
                         help="PPO_CONCEPT L1 regularization weight (default: 2.0)")
+    parser.add_argument("--constraint-lambda", type=float, default=None,
+                        help="PPO_CONCEPT mode 5 constraint loss weight (default: 0.1)")
     
     # Utility
     parser.add_argument("--show-config", action="store_true",
@@ -154,6 +156,8 @@ Examples:
                 config["lambda_2"] = args.lambda_2
             if args.lambda_3 is not None:
                 config["lambda_3"] = args.lambda_3
+            if args.constraint_lambda is not None:
+                config["constraint_lambda"] = args.constraint_lambda
     
     # Show configuration
     if args.show_config:

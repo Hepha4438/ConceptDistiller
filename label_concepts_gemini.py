@@ -156,6 +156,23 @@ def select_representative_images_with_clustering(ig_out_dir: Path, n_samples: in
 def create_gemini_prompt(summary: Dict, env_name: str, clustered_images: Dict[str, List[Path]]) -> str:
     """Create detailed prompt for Gemini with clustered images"""
     
+    # Detect number of concepts from clustered_images
+    binary_concepts = set()
+    for key in clustered_images.keys():
+        if "_activated" in key or "_inactive" in key:
+            concept = key.split("_")[0]  # Extract C2, C3, C4, ...
+            binary_concepts.add(concept)
+    
+    binary_concepts = sorted(binary_concepts)
+    n_total_concepts = 1 + len(binary_concepts)  # C1 + binary concepts
+    
+    # Build concept list string
+    if binary_concepts:
+        binary_list = ", ".join(binary_concepts)
+        all_concepts = f"C1, {binary_list}"
+    else:
+        all_concepts = "C1"
+    
     prompt = f"""You are analyzing learned concepts from a Reinforcement Learning agent trained on {env_name}.
 
 **Environment Description:**
@@ -165,13 +182,14 @@ def create_gemini_prompt(summary: Dict, env_name: str, clustered_images: Dict[st
 - Observation: Agent's partial field-of-view (ego-centric)
 
 **Concept Architecture:**
-The agent has 4 learned concepts (C1, C2, C3, C4):
+The agent has {n_total_concepts} learned concepts ({all_concepts}):
 - **C1**: Continuous sigmoid activation (range 0-1)
-- **C2, C3, C4**: Binary STE (Straight-Through Estimator) - values are 0 or 1
-
-**Statistical Analysis from Successful Episodes:**
-
 """
+    
+    if binary_concepts:
+        prompt += f"- **{binary_list}**: Binary STE (Straight-Through Estimator) - values are 0 or 1\n"
+    
+    prompt += "\n**Statistical Analysis from Successful Episodes:**\n\n"
     
     for concept, stats in sorted(summary.items()):
         prompt += f"\n### {concept} Statistics:\n"
@@ -232,6 +250,9 @@ The agent has 4 learned concepts (C1, C2, C3, C4):
     prompt += "  - Middle: Model Input (agent's ego-centric view)\n"
     prompt += "  - Right side: Heatmaps showing spatial attribution per concept\n"
     
+    # Build guidelines dynamically
+    binary_examples = ", ".join(binary_concepts) if binary_concepts else "C2, C3, ..."
+    
     prompt += f"""
 
 **Your Task:**
@@ -241,7 +262,7 @@ provide semantic labels for each concept.
 **Guidelines:**
 - C1 (sigmoid): May represent continuous features like "confidence", "distance to goal", "obstacle proximity"
   * Compare low/medium/high value samples to understand what C1 is measuring
-- C2-C4 (binary): More likely discrete states like "has-key", "door-open", "facing-goal", "at-wall"
+- {binary_examples} (binary): More likely discrete states like "has-key", "door-open", "facing-goal", "at-wall"
   * Compare activated vs inactive samples to understand when concept "turns on"
   * Look at heatmaps to see WHAT the concept is attending to
 - Consider action correlations (e.g., high activation with TOGGLE_DOOR → "at-door")
@@ -251,21 +272,21 @@ provide semantic labels for each concept.
 **Output Format (JSON):**
 {{
   "C1": {{
-    "label": "short_semantic_label",
+    "label": "short_semantic_label (or 'Unable to label' if cannot determine)",
     "reasoning": "explanation based on statistics AND visual patterns from low/med/high samples",
-    "confidence": "high/medium/low"
-  }},
-  "C2": {{
-    "label": "short_semantic_label",
+    "confidence": "high/medium/low/unlabeled"
+  }}"""
+    
+    # Add binary concepts to output format
+    for concept in binary_concepts:
+        prompt += f""",
+  "{concept}": {{
+    "label": "short_semantic_label (or 'Unable to label' if cannot determine)",
     "reasoning": "explanation based on statistics AND visual patterns from activated/inactive samples",
-    "confidence": "high/medium/low"
-  }},
-  "C3": {{ ... }},
-  "C4": {{ ... }}
-}}
-
-Provide your analysis:
-"""
+    "confidence": "high/medium/low/unlabeled"
+  }}"""
+    
+    prompt += "\n}\n\nProvide your analysis:\n"
     
     return prompt
 
