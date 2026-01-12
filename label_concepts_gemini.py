@@ -269,11 +269,74 @@ provide semantic labels for each concept.
 - Consider co-activation patterns (e.g., C2+C3 often together)
 - Use visual patterns from heatmaps to confirm or refine your hypothesis
 
+**Confidence Scoring Guidelines (STRICT):**
+
+For **HIGH confidence**, ALL of the following must be met:
+- Statistical pattern is extremely clear and consistent (>85% correlation or very distinct value ranges)
+- Visual heatmaps show OBVIOUS and CONSISTENT spatial patterns across ALL samples
+- Action correlations are VERY STRONG and make logical sense (>85% correlation)
+- The concept's meaning is UNAMBIGUOUS and easily explainable
+- **The concept represents ONE CLEAR, DISTINCT semantic meaning** (not multiple overlapping concepts)
+- **No ambiguity or overlap** with other possible interpretations
+
+For **MEDIUM confidence**, ALL of the following must be met:
+- Statistical pattern shows clear trend (70-85% correlation)
+- Visual heatmaps show recognizable patterns in MOST samples (with some variation)
+- Action correlations are reasonably strong (70-85% correlation)
+- The concept's meaning is plausible but may have alternative interpretations
+- Some minor overlap with other concepts is acceptable, but ONE interpretation dominates
+
+For **LOW confidence**:
+- Statistical pattern is weak or inconsistent (50-69% correlation)
+- Visual heatmaps show mixed or unclear patterns
+- Action correlations are weak or contradictory (50-69% correlation)
+- Multiple competing interpretations are equally plausible
+- **The concept appears to represent MULTIPLE overlapping semantic meanings** (e.g., could be "has-key" OR "near-door" OR "ready-to-act")
+- **Unclear whether concept is unitary or composite**
+
+Use **UNLABELED** when:
+- No clear pattern emerges from statistics OR visuals (<50% correlation)
+- Heatmaps are random or incomprehensible
+- Cannot form any reasonable hypothesis about the concept's meaning
+- The concept appears to be noise or an artifact
+- **Severe overlap/confusion**: The concept could equally represent 3+ different semantic meanings with no way to distinguish
+
+**CRITICAL: Concept Overlap/Ambiguity Rule**
+If a concept shows patterns that could reasonably represent MULTIPLE different semantic concepts (e.g., activates both when "has-key" AND when "facing-door"), you MUST:
+1. Explicitly mention this overlap in your reasoning
+2. Assign LOW confidence (or UNLABELED if severely unclear)
+3. State something like: "Concept shows overlap between X and Y - not a clear unitary semantic"
+
+**Important:** When in doubt between two confidence levels, ALWAYS choose the LOWER one.
+Default to LOW/UNLABELED rather than MEDIUM/HIGH if the evidence is not overwhelming.
+
+**Examples of SUFFICIENT evidence for HIGH confidence (>85%):**
+✅ "C2 activates in 100% of TOGGLE_DOOR actions (10/10), heatmaps consistently highlight door region with >0.8 intensity in all activated samples, and never activates when agent is >3 cells from door"
+✅ "C3 shows distinct value progression: low (mean=0.15) when far from goal, medium (mean=0.52) when mid-distance, high (mean=0.89) when adjacent. Heatmaps show focused attention on goal object in all high-value samples."
+✅ "C4 activates exclusively (100%, 15/15 samples) when agent holds the key, and never activates without key. Heatmaps show attention on key/inventory area. Clear unitary concept: 'has-key'."
+
+**Examples of MEDIUM confidence (70-85%):**
+⚠️ "C2 activates in 85% of TOGGLE_DOOR actions (17/20), with occasional false positives when near door. Heatmaps usually highlight door region but sometimes show noise."
+⚠️ "C3 correlates with distance to goal (r=0.75), with clear visual patterns in 15/20 samples. Some ambiguity in mid-range states."
+
+**Examples of LOW confidence (50-69%):**
+⚠️ "Activates in 65% of PICKUP actions, but also seen in 40% of MOVE_FORWARD. Heatmaps show mixed patterns."
+⚠️ **"C2 activates both when picking up key (70%, 7/10) AND when toggling door (60%, 6/10), heatmaps highlight both key and door regions"** → **LOW confidence: Overlap between 'has-key' and 'at-door' - not unitary**
+
+**Examples of UNLABELED (<50%):**
+❌ "The concept seems to relate to doors" (too vague, no specific evidence)
+❌ "High activation with MOVE_FORWARD suggests movement" (circular reasoning)
+❌ "Heatmaps show some patterns" (not specific enough)
+❌ **"C3 could represent 'near-goal' OR 'task-complete' OR 'forward-clearance' based on different samples"** → **UNLABELED: Multiple overlapping interpretations**
+❌ **"Activates in 45% of samples across ALL actions with no clear spatial pattern"** → **UNLABELED: Too diffuse, no clear semantic meaning**
+
+**Remember: Be SKEPTICAL. Only assign HIGH confidence when evidence is overwhelming (>85% correlation). When unclear, use LOW or UNLABELED.**
+
 **Output Format (JSON):**
 {{
   "C1": {{
     "label": "short_semantic_label (or 'Unable to label' if cannot determine)",
-    "reasoning": "explanation based on statistics AND visual patterns from low/med/high samples",
+    "reasoning": "DETAILED explanation citing SPECIFIC quantitative evidence from BOTH statistics AND visual patterns. Must justify confidence level with numbers (e.g., '95% activation rate', 'all 10 samples show X pattern')",
     "confidence": "high/medium/low/unlabeled"
   }}"""
     
@@ -282,7 +345,7 @@ provide semantic labels for each concept.
         prompt += f""",
   "{concept}": {{
     "label": "short_semantic_label (or 'Unable to label' if cannot determine)",
-    "reasoning": "explanation based on statistics AND visual patterns from activated/inactive samples",
+    "reasoning": "DETAILED explanation citing SPECIFIC quantitative evidence from BOTH statistics AND visual patterns. Must justify confidence level with numbers (e.g., '100% activation with TOGGLE_DOOR', 'heatmaps highlight door in all 10 activated samples')",
     "confidence": "high/medium/low/unlabeled"
   }}"""
     
@@ -373,6 +436,11 @@ def label_concepts_with_gemini(
             except Exception as e:
                 print(f"   ⚠ Failed to prepare {img_path.name}: {e}")
         
+        print(f"\n   📊 Summary:")
+        print(f"      - Prompt length: {len(prompt)} chars")
+        print(f"      - Images prepared: {len(uploaded_files)}")
+        print(f"      - Total content parts: {1 + len(uploaded_files)} (1 text + {len(uploaded_files)} images)")
+        
         # Try each model until one works
         for model_attempt in model_names_to_try:
             try:
@@ -382,6 +450,7 @@ def label_concepts_with_gemini(
                     contents=[prompt] + uploaded_files
                 )
                 print(f"   ✅ Success with model: {model_attempt}")
+                print(f"      - Response length: {len(response.text)} chars")
                 response_text = response.text
                 break
             except Exception as e:
@@ -407,6 +476,11 @@ def label_concepts_with_gemini(
             except Exception as e:
                 print(f"   ⚠ Failed to upload {img_path.name}: {e}")
         
+        print(f"\n   📊 Summary:")
+        print(f"      - Prompt length: {len(prompt)} chars")
+        print(f"      - Images uploaded: {len(uploaded_files)}")
+        print(f"      - Total content parts: {1 + len(uploaded_files)} (1 text + {len(uploaded_files)} images)")
+        
         # Try each model until one works
         for model_attempt in model_names_to_try:
             try:
@@ -414,6 +488,7 @@ def label_concepts_with_gemini(
                 model = genai.GenerativeModel(model_attempt)
                 response = model.generate_content([prompt] + uploaded_files)
                 print(f"   ✅ Success with model: {model_attempt}")
+                print(f"      - Response length: {len(response.text)} chars")
                 response_text = response.text
                 break
             except Exception as e:
