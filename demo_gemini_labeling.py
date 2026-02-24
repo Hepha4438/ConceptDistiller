@@ -71,8 +71,9 @@ def main():
     
     # Parse statistics
     print("📊 Step 1: Parsing concept patterns...")
-    summary = parse_success_runs(success_txt)
-    print("✓ Parsed 106 steps from successful episodes\n")
+    summary, model_metadata = parse_success_runs(success_txt)
+    print(f"✓ Parsed steps from successful episodes")
+    print(f"  Model: {model_metadata['n_concepts']} concepts, {model_metadata['n_continuous_concepts']} continuous\n")
     
     # Mock Gemini labeling
     print("🤖 Step 2: Generating labels (simulated Gemini API)...")

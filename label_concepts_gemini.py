@@ -24,20 +24,48 @@ import re
 import os
 
 
-def parse_success_runs(txt_path: Path) -> Dict:
-    """Parse success_runs.txt to extract concept-action patterns"""
+def parse_success_runs(txt_path: Path) -> Tuple[Dict, Dict]:
+    """Parse success_runs.txt to extract concept-action patterns and model metadata
+    
+    Returns:
+        (summary_stats, model_metadata)
+    """
     
     with open(txt_path, 'r') as f:
         content = f.read()
     
-    # Statistics for each concept
+    # Extract model metadata from first episode header
+    model_metadata = {
+        'n_concepts': 4,  # Default fallback
+        'concept_mode': 5,  # Default fallback
+        'n_continuous_concepts': 1  # Default fallback
+    }
+    
+    # Try to parse model info from episode header
+    model_info_match = re.search(r'Model: (\d+) concepts, mode (\d+), (\d+) continuous', content)
+    if model_info_match:
+        model_metadata['n_concepts'] = int(model_info_match.group(1))
+        model_metadata['concept_mode'] = int(model_info_match.group(2))
+        model_metadata['n_continuous_concepts'] = int(model_info_match.group(3))
+        print(f"\n📊 Model Metadata from success_runs.txt:")
+        print(f"   Total concepts: {model_metadata['n_concepts']}")
+        print(f"   Concept mode: {model_metadata['concept_mode']}")
+        print(f"   Continuous concepts: {model_metadata['n_continuous_concepts']}")
+        print(f"   STE concepts: {model_metadata['n_concepts'] - model_metadata['n_continuous_concepts']}\n")
+    else:
+        print(f"\n⚠️  No model metadata found in success_runs.txt. Using defaults: {model_metadata}\n")
+    
+    n_concepts = model_metadata['n_concepts']
+    n_continuous = model_metadata['n_continuous_concepts']
+    
+    # Statistics for each concept (dynamic based on n_concepts)
     concept_stats = {
         f"C{i}": {
             "values": [],
             "actions": defaultdict(list),  # action -> [values]
             "co_occurrence": defaultdict(int)  # other_concepts -> count
         }
-        for i in range(1, 5)  # C1, C2, C3, C4
+        for i in range(1, n_concepts + 1)
     }
     
     # Parse episodes
@@ -58,19 +86,20 @@ def parse_success_runs(txt_path: Path) -> Dict:
             vector_str, action_num, action_name = step
             vector = [float(v.strip()) for v in vector_str.split(",")]
             
-            if len(vector) != 4:
+            if len(vector) != n_concepts:
                 continue
             
-            # C1 is sigmoid (index 0), C2-C4 are STE (index 1-3)
+            # Process each concept (continuous vs STE based on n_continuous)
             for i, val in enumerate(vector):
                 concept_name = f"C{i+1}"
                 concept_stats[concept_name]["values"].append(val)
                 concept_stats[concept_name]["actions"][action_name].append(val)
                 
                 # Co-occurrence with other active concepts (for STE only)
-                if i >= 1 and val == 1.0:  # STE concepts
+                # STE concepts are at indices >= n_continuous
+                if i >= n_continuous and val == 1.0:  # STE concepts
                     for j, other_val in enumerate(vector):
-                        if j != i and j >= 1 and other_val == 1.0:
+                        if j != i and j >= n_continuous and other_val == 1.0:
                             other_name = f"C{j+1}"
                             concept_stats[concept_name]["co_occurrence"][other_name] += 1
     
@@ -81,13 +110,16 @@ def parse_success_runs(txt_path: Path) -> Dict:
             continue
             
         values = np.array(data["values"])
+        concept_idx = int(concept[1:]) - 1  # C1 -> 0, C2 -> 1, ...
+        is_continuous = (concept_idx < n_continuous)
         
         # Overall statistics
         summary[concept] = {
             "mean": float(np.mean(values)),
             "std": float(np.std(values)),
-            "activation_rate": float(np.mean(values > 0.5)),  # For C1 (sigmoid)
-            "is_binary": concept != "C1",  # C2-C4 are binary STE
+            "activation_rate": float(np.mean(values > 0.5)),
+            "is_binary": not is_continuous,  # STE concepts are binary
+            "is_continuous": is_continuous,
             "total_samples": len(values),
             "action_correlations": {},
             "co_occurrence": dict(data["co_occurrence"])
@@ -104,7 +136,7 @@ def parse_success_runs(txt_path: Path) -> Dict:
                 "activation_rate": float(np.mean(action_vals > 0.5))
             }
     
-    return summary
+    return summary, model_metadata
 
 
 def select_representative_images_with_clustering(ig_out_dir: Path, n_samples: int = 5) -> Dict[str, List[Path]]:
@@ -126,52 +158,48 @@ def select_representative_images_with_clustering(ig_out_dir: Path, n_samples: in
     # Collect clustered images
     clustered_images = {}
     
-    # C1 bins
-    c1_dir = cluster_dir / "C1"
-    if c1_dir.exists():
-        for bin_name in ["low", "medium", "high"]:
-            bin_dir = c1_dir / bin_name
-            if bin_dir.exists():
-                images = list(bin_dir.glob("sample_*.png"))
-                clustered_images[f"C1_{bin_name}"] = images
-                print(f"   ✓ C1 {bin_name}: {len(images)} samples")
-    
-    # Binary concepts (C2, C3, C4, ...)
+    # Iterate through all concept folders
     for concept_dir in sorted(cluster_dir.glob("C*")):
-        if concept_dir.name == "C1":
-            continue
-        
         concept_name = concept_dir.name
         
-        for state_name in ["activated", "inactive"]:
-            state_dir = concept_dir / state_name
-            if state_dir.exists():
-                images = list(state_dir.glob("sample_*.png"))
-                clustered_images[f"{concept_name}_{state_name}"] = images
-                print(f"   ✓ {concept_name} {state_name}: {len(images)} samples")
+        # Check if it's a continuous concept (has low/medium/high bins)
+        has_bins = (concept_dir / "low").exists() or (concept_dir / "medium").exists() or (concept_dir / "high").exists()
+        
+        if has_bins:
+            # Continuous concept - collect from bins
+            for bin_name in ["low", "medium", "high"]:
+                bin_dir = concept_dir / bin_name
+                if bin_dir.exists():
+                    images = list(bin_dir.glob("sample_*.png"))
+                    clustered_images[f"{concept_name}_{bin_name}"] = images
+                    print(f"   ✓ {concept_name} {bin_name}: {len(images)} samples")
+        else:
+            # Binary concept - collect from activated/inactive
+            for state_name in ["activated", "inactive"]:
+                state_dir = concept_dir / state_name
+                if state_dir.exists():
+                    images = list(state_dir.glob("sample_*.png"))
+                    clustered_images[f"{concept_name}_{state_name}"] = images
+                    print(f"   ✓ {concept_name} {state_name}: {len(images)} samples")
     
     return clustered_images
 
 
-def create_gemini_prompt(summary: Dict, env_name: str, clustered_images: Dict[str, List[Path]]) -> str:
-    """Create detailed prompt for Gemini with clustered images"""
+def create_gemini_prompt(summary: Dict, env_name: str, clustered_images: Dict[str, List[Path]], model_metadata: Dict) -> str:
+    """Create detailed prompt for Gemini with clustered images and model metadata"""
     
-    # Detect number of concepts from clustered_images
-    binary_concepts = set()
-    for key in clustered_images.keys():
-        if "_activated" in key or "_inactive" in key:
-            concept = key.split("_")[0]  # Extract C2, C3, C4, ...
-            binary_concepts.add(concept)
+    # Extract model metadata
+    n_total_concepts = model_metadata.get('n_concepts', len(summary))
+    n_continuous = model_metadata.get('n_continuous_concepts', 1)
+    n_ste = n_total_concepts - n_continuous
     
-    binary_concepts = sorted(binary_concepts)
-    n_total_concepts = 1 + len(binary_concepts)  # C1 + binary concepts
+    # Build concept lists
+    continuous_concepts = [f"C{i}" for i in range(1, n_continuous + 1)]
+    ste_concepts = [f"C{i}" for i in range(n_continuous + 1, n_total_concepts + 1)]
     
-    # Build concept list string
-    if binary_concepts:
-        binary_list = ", ".join(binary_concepts)
-        all_concepts = f"C1, {binary_list}"
-    else:
-        all_concepts = "C1"
+    continuous_str = ", ".join(continuous_concepts) if continuous_concepts else "None"
+    ste_str = ", ".join(ste_concepts) if ste_concepts else "None"
+    all_concepts_str = ", ".join(continuous_concepts + ste_concepts)
     
     prompt = f"""You are analyzing learned concepts from a Reinforcement Learning agent trained on {env_name}.
 
@@ -182,22 +210,27 @@ def create_gemini_prompt(summary: Dict, env_name: str, clustered_images: Dict[st
 - Observation: Agent's partial field-of-view (ego-centric)
 
 **Concept Architecture:**
-The agent has {n_total_concepts} learned concepts ({all_concepts}):
-- **C1**: Continuous sigmoid activation (range 0-1)
+The agent has {n_total_concepts} learned concepts ({all_concepts_str}):
 """
     
-    if binary_concepts:
-        prompt += f"- **{binary_list}**: Binary STE (Straight-Through Estimator) - values are 0 or 1\n"
+    if continuous_concepts:
+        prompt += f"- **{continuous_str}**: Continuous sigmoid activation (range 0-1)\n"
+    
+    if ste_concepts:
+        prompt += f"- **{ste_str}**: Binary STE (Straight-Through Estimator) - values are 0 or 1\n"
     
     prompt += "\n**Statistical Analysis from Successful Episodes:**\n\n"
     
     for concept, stats in sorted(summary.items()):
+        concept_idx = int(concept[1:]) - 1  # C1 -> 0, C2 -> 1, ...
+        is_continuous = stats.get('is_continuous', concept_idx < n_continuous)
+        
         prompt += f"\n### {concept} Statistics:\n"
-        prompt += f"- Type: {'Continuous (sigmoid)' if concept == 'C1' else 'Binary (STE)'}\n"
+        prompt += f"- Type: {'Continuous (sigmoid)' if is_continuous else 'Binary (STE)'}\n"
         prompt += f"- Overall mean: {stats['mean']:.3f}\n"
         prompt += f"- Std dev: {stats['std']:.3f}\n"
         
-        if concept != "C1":
+        if not is_continuous:
             prompt += f"- Activation rate: {stats['activation_rate']*100:.1f}%\n"
         
         prompt += f"- Total samples: {stats['total_samples']}\n"
@@ -209,12 +242,12 @@ The agent has {n_total_concepts} learned concepts ({all_concepts}):
                                               key=lambda x: x[1]["count"], reverse=True):
                 prompt += f"  - {action}: mean={action_stats['mean']:.3f}, "
                 prompt += f"count={action_stats['count']}, "
-                if concept != "C1":
+                if not is_continuous:
                     prompt += f"activation_rate={action_stats['activation_rate']*100:.1f}%"
                 prompt += "\n"
         
         # Co-occurrence (only for STE concepts)
-        if concept != "C1" and stats.get("co_occurrence"):
+        if not is_continuous and stats.get("co_occurrence"):
             prompt += f"\n**Co-activation with other concepts:**\n"
             for other_concept, count in sorted(stats["co_occurrence"].items(), 
                                               key=lambda x: x[1], reverse=True):
@@ -224,16 +257,18 @@ The agent has {n_total_concepts} learned concepts ({all_concepts}):
     prompt += "\n\n**Attached Images:**\n"
     prompt += "The following clustered representative images are attached for visual analysis:\n\n"
     
-    # C1 bins
-    if any(k.startswith("C1_") for k in clustered_images.keys()):
-        prompt += "**C1 (Continuous Concept) - Representative samples from 3 value ranges:**\n"
-        for bin_name in ["low", "medium", "high"]:
-            key = f"C1_{bin_name}"
-            if key in clustered_images:
-                prompt += f"  - C1 {bin_name} values (0.0-0.33/0.33-0.67/0.67-1.0): {len(clustered_images[key])} samples\n"
+    # List continuous and binary concepts dynamically
+    for i in range(1, n_continuous + 1):
+        concept_name = f"C{i}"
+        if any(k.startswith(f"{concept_name}_") for k in clustered_images.keys()):
+            prompt += f"\n**{concept_name} (Continuous Concept) - Representative samples from 3 value ranges:**\n"
+            for bin_name in ["low", "medium", "high"]:
+                key = f"{concept_name}_{bin_name}"
+                if key in clustered_images:
+                    prompt += f"  - {concept_name} {bin_name} values (0.0-0.33/0.33-0.67/0.67-1.0): {len(clustered_images[key])} samples\n"
     
-    # Binary concepts
-    for i in range(2, 10):  # C2-C9
+    # Binary concepts (STE)
+    for i in range(n_continuous + 1, n_total_concepts + 1):
         concept_name = f"C{i}"
         act_key = f"{concept_name}_activated"
         inact_key = f"{concept_name}_inactive"
@@ -251,7 +286,8 @@ The agent has {n_total_concepts} learned concepts ({all_concepts}):
     prompt += "  - Right side: Heatmaps showing spatial attribution per concept\n"
     
     # Build guidelines dynamically
-    binary_examples = ", ".join(binary_concepts) if binary_concepts else "C2, C3, ..."
+    continuous_examples = ", ".join(continuous_concepts) if continuous_concepts else "C1"
+    ste_examples = ", ".join(ste_concepts) if ste_concepts else "C2, C3, ..."
     
     prompt += f"""
 
@@ -260,13 +296,19 @@ Based on the statistical patterns AND the attached clustered heatmap images,
 provide semantic labels for each concept.
 
 **Guidelines:**
-- C1 (sigmoid): May represent continuous features like "confidence", "distance to goal", "obstacle proximity"
-  * Compare low/medium/high value samples to understand what C1 is measuring
-- {binary_examples} (binary): More likely discrete states like "has-key", "door-open", "facing-goal", "at-wall"
-  * Compare activated vs inactive samples to understand when concept "turns on"
-  * Look at heatmaps to see WHAT the concept is attending to
-- Consider action correlations (e.g., high activation with TOGGLE_DOOR → "at-door")
-- Consider co-activation patterns (e.g., C2+C3 often together)
+"""
+    
+    if continuous_concepts:
+        prompt += f"- {continuous_examples} (sigmoid): May represent continuous features like \"confidence\", \"distance to goal\", \"obstacle proximity\"\n"
+        prompt += f"  * Compare low/medium/high value samples to understand what these concepts are measuring\n"
+    
+    if ste_concepts:
+        prompt += f"- {ste_examples} (binary): More likely discrete states like \"has-key\", \"door-open\", \"facing-goal\", \"at-wall\"\n"
+        prompt += f"  * Compare activated vs inactive samples to understand when concept \"turns on\"\n"
+        prompt += f"  * Look at heatmaps to see WHAT the concept is attending to\n"
+    
+    prompt += """- Consider action correlations (e.g., high activation with TOGGLE_DOOR → "at-door")
+- Consider co-activation patterns (e.g., concepts often together)
 - Use visual patterns from heatmaps to confirm or refine your hypothesis
 
 **Confidence Scoring Guidelines (STRICT):**
@@ -333,19 +375,18 @@ Default to LOW/UNLABELED rather than MEDIUM/HIGH if the evidence is not overwhel
 **Remember: Be SKEPTICAL. Only assign HIGH confidence when evidence is overwhelming (>85% correlation). When unclear, use LOW or UNLABELED.**
 
 **Output Format (JSON):**
-{{
-  "C1": {{
-    "label": "short_semantic_label (or 'Unable to label' if cannot determine)",
-    "reasoning": "DETAILED explanation citing SPECIFIC quantitative evidence from BOTH statistics AND visual patterns. Must justify confidence level with numbers (e.g., '95% activation rate', 'all 10 samples show X pattern')",
-    "confidence": "high/medium/low/unlabeled"
-  }}"""
+{{"""
     
-    # Add binary concepts to output format
-    for concept in binary_concepts:
-        prompt += f""",
+    # Add all concepts to output format (continuous + STE)
+    all_concept_list = continuous_concepts + ste_concepts
+    for i, concept in enumerate(all_concept_list):
+        is_continuous = concept in continuous_concepts
+        separator = "" if i == 0 else ","
+        
+        prompt += f"""{separator}
   "{concept}": {{
     "label": "short_semantic_label (or 'Unable to label' if cannot determine)",
-    "reasoning": "DETAILED explanation citing SPECIFIC quantitative evidence from BOTH statistics AND visual patterns. Must justify confidence level with numbers (e.g., '100% activation with TOGGLE_DOOR', 'heatmaps highlight door in all 10 activated samples')",
+    "reasoning": "DETAILED explanation citing SPECIFIC quantitative evidence from BOTH statistics AND visual patterns. Must justify confidence level with numbers (e.g., '{'95% activation rate' if not is_continuous else 'mean=0.85 in high bin'}', '{'all 10 samples show X pattern' if not is_continuous else 'clear value progression'}').",
     "confidence": "high/medium/low/unlabeled"
   }}"""
     
@@ -370,7 +411,7 @@ def label_concepts_with_gemini(
         raise FileNotFoundError(f"success_runs.txt not found in {ig_out_dir}")
     
     print("📊 Parsing concept patterns...")
-    summary = parse_success_runs(success_txt)
+    summary, model_metadata = parse_success_runs(success_txt)
     
     # Save summary to file
     summary_file = ig_out_dir / "concept_statistics.json"
@@ -391,7 +432,7 @@ def label_concepts_with_gemini(
     
     # Create prompt
     env_name = ig_out_dir.parts[-4]  # Extract env name from path
-    prompt = create_gemini_prompt(summary, env_name, clustered_images)
+    prompt = create_gemini_prompt(summary, env_name, clustered_images, model_metadata)
     
     # Save prompt for debugging
     prompt_file = ig_out_dir / "gemini_prompt.txt"

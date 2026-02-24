@@ -573,6 +573,16 @@ class ModelTesterUI:
                                          text="(1:flatten, 2:avg, 3:max, 4:FC, 5:FC+STE)", 
                                          foreground="gray", font=('Arial', 8))
                 tooltip_label.grid(row=row, column=2, sticky=tk.W, padx=5, pady=3)
+            elif param_name == "n_continuous_concepts":
+                # Special field for n_continuous_concepts (Mode 5)
+                var = tk.IntVar(value=param_value)
+                widget = ttk.Entry(self.hyperparam_frame, textvariable=var, width=20)
+                widget.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
+                # Add tooltip
+                tooltip_label = ttk.Label(self.hyperparam_frame, 
+                                         text="(Mode 5 only: # of continuous sigmoid concepts)", 
+                                         foreground="gray", font=('Arial', 8))
+                tooltip_label.grid(row=row, column=2, sticky=tk.W, padx=5, pady=3)
             elif isinstance(param_value, bool):
                 var = tk.BooleanVar(value=param_value)
                 widget = ttk.Checkbutton(self.hyperparam_frame, variable=var)
@@ -947,6 +957,7 @@ class ModelTesterUI:
                 lambda_2 = hyperparams.pop('lambda_2', 0.004)
                 lambda_3 = hyperparams.pop('lambda_3', 2.0)
                 constraint_lambda = hyperparams.pop('constraint_lambda', 1.0)  # Mode 5 constraint
+                n_continuous_concepts = hyperparams.pop('n_continuous_concepts', 1)  # Mode 5: continuous concepts
                 
                 # Create environments
                 train_env = DummyVecEnv([make_env(env_id, seed=seed+i) for i in range(n_envs)])
@@ -983,7 +994,8 @@ class ModelTesterUI:
                         concept_distilling=True, 
                         n_concepts=n_concepts,
                         concept_mode=concept_mode,
-                        constraint_lambda=constraint_lambda  # Mode 5 constraint
+                        constraint_lambda=constraint_lambda,  # Mode 5 constraint
+                        n_continuous_concepts=n_continuous_concepts  # Mode 5: continuous concepts
                     ),
                     net_arch=dict(pi=[256, 256], vf=[256, 256]),
                 )
@@ -2128,9 +2140,17 @@ class ModelTesterUI:
         ttk.Label(params_frame, text="(1:flatten, 2:avg, 3:max, 4:FC, 5:FC+STE)", 
                  font=('Arial', 8), foreground='gray').grid(row=5, column=2, sticky=tk.W, padx=2, pady=3)
         
+        # n_continuous_concepts (Mode 5 only)
+        ttk.Label(params_frame, text="Continuous concepts:").grid(row=6, column=0, sticky=tk.W, padx=5, pady=3)
+        self.optuna_n_continuous_var = tk.IntVar(value=1)
+        n_continuous_spinbox = tk.Spinbox(params_frame, from_=0, to=20, textvariable=self.optuna_n_continuous_var, width=10)
+        n_continuous_spinbox.grid(row=6, column=1, sticky=tk.W, padx=5, pady=3)
+        ttk.Label(params_frame, text="(Mode 5: # sigmoid concepts)", 
+                 font=('Arial', 8), foreground='gray').grid(row=6, column=2, sticky=tk.W, padx=2, pady=3)
+        
         # Button to load defaults from config
         ttk.Button(params_frame, text="🔄 Load Defaults from Config", 
-                  command=self.load_optuna_defaults).grid(row=6, column=0, columnspan=3, pady=5)
+                  command=self.load_optuna_defaults).grid(row=7, column=0, columnspan=3, pady=5)
         
         # Final training option
         final_frame = ttk.LabelFrame(left_panel, text="Final Training (Optional)", padding=5)
@@ -2224,6 +2244,7 @@ class ModelTesterUI:
         n_envs = self.optuna_n_envs_var.get()
         device = self.optuna_device_var.get()
         concept_mode = self.optuna_concept_mode_var.get()
+        n_continuous_concepts = self.optuna_n_continuous_var.get()
         train_final = self.optuna_train_final_var.get()
         final_timesteps = self.optuna_final_timesteps_var.get()
         
@@ -2248,6 +2269,8 @@ class ModelTesterUI:
         self.optuna_log.insert(tk.END, f"Device: {device}\n")
         mode_names_full = {1: "flatten", 2: "avg pool", 3: "max pool", 4: "FC bottleneck", 5: "FC+STE"}
         self.optuna_log.insert(tk.END, f"Concept mode: {concept_mode} ({mode_names_full.get(concept_mode, 'unknown')}) - FIXED\n")
+        if concept_mode == 5:
+            self.optuna_log.insert(tk.END, f"  → Continuous concepts: {n_continuous_concepts} (sigmoid), rest use STE\n")
         if train_final:
             self.optuna_log.insert(tk.END, f"Final training: Yes ({final_timesteps:,} timesteps)\n")
         else:
@@ -2270,11 +2293,11 @@ class ModelTesterUI:
         
         # Run in thread
         thread = threading.Thread(target=self._run_optuna_thread,
-                                 args=(env_id, n_trials, timesteps, n_envs, device, concept_mode, train_final, final_timesteps))
+                                 args=(env_id, n_trials, timesteps, n_envs, device, concept_mode, n_continuous_concepts, train_final, final_timesteps))
         thread.daemon = True
         thread.start()
     
-    def _run_optuna_thread(self, env_id, n_trials, timesteps, n_envs, device, concept_mode, train_final, final_timesteps):
+    def _run_optuna_thread(self, env_id, n_trials, timesteps, n_envs, device, concept_mode, n_continuous_concepts, train_final, final_timesteps):
         """Run Optuna tuning in background thread"""
         try:
             from tune_ppo_concept_optuna import optimize_hyperparameters, train_with_best_params, set_ui_log_callback
@@ -2295,6 +2318,7 @@ class ModelTesterUI:
                     seed=42,
                     device=device,
                     concept_mode=concept_mode,
+                    n_continuous_concepts=n_continuous_concepts,
                     storage=None
                 )
                 
@@ -2313,7 +2337,8 @@ class ModelTesterUI:
                         n_envs=n_envs,
                         seed=42,
                         device=device,
-                        concept_mode=concept_mode
+                        concept_mode=concept_mode,
+                        n_continuous_concepts=n_continuous_concepts
                     )
                     
                     log_callback(f"\n✅ Final model training complete!\n\n")
@@ -3368,14 +3393,30 @@ class ModelTesterUI:
             with open(self.last_gemini_json, 'r') as f:
                 labels = json.load(f)
             
+            # Try to get metadata from success_runs.txt to determine concept types
+            n_continuous_concepts = 1  # Default fallback
+            success_file = os.path.join(ig_dir, 'success_runs.txt')
+            if os.path.exists(success_file):
+                import re
+                with open(success_file, 'r') as f:
+                    content = f.read(1000)  # Read first 1000 chars
+                model_info_match = re.search(r'Model: (\d+) concepts, mode (\d+), (\d+) continuous', content)
+                if model_info_match:
+                    n_continuous_concepts = int(model_info_match.group(3))
+            
             self.gemini_log.insert(tk.END, "CONCEPT LABELS:\n")
             self.gemini_log.insert(tk.END, f"{'-'*60}\n")
             
             for concept_id, label_data in labels.items():
                 self.gemini_log.insert(tk.END, f"\n{concept_id}: {label_data.get('label', 'N/A')}\n")
+                
+                # Determine type from metadata
+                concept_idx = int(concept_id[1:]) - 1  # C1 -> 0, C2 -> 1, ...
+                is_continuous = (concept_idx < n_continuous_concepts)
+                
                 if 'type' in label_data:
                     self.gemini_log.insert(tk.END, f"  Type: {label_data['type']}\n")
-                elif concept_id == 'C1':
+                elif is_continuous:
                     self.gemini_log.insert(tk.END, f"  Type: Sigmoid (continuous)\n")
                 else:
                     self.gemini_log.insert(tk.END, f"  Type: STE (binary)\n")

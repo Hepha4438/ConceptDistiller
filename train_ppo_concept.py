@@ -445,6 +445,7 @@ def train_ppo_concept(
         lambda_2=0.004,    # Sparsity
         lambda_3=2.0,      # L1
         constraint_lambda=1.0,  # Constraint loss weight (Mode 5 only)
+        n_continuous_concepts=1,  # Mode 5: Number of continuous (sigmoid) concepts, rest use STE
         is_trial=False,
         trial_number=None
 ):
@@ -484,7 +485,8 @@ def train_ppo_concept(
             concept_distilling=True,
             n_concepts=n_concepts,
             concept_mode=concept_mode,
-            constraint_lambda=constraint_lambda  # For Mode 5
+            constraint_lambda=constraint_lambda,  # For Mode 5
+            n_continuous_concepts=n_continuous_concepts  # For Mode 5: Number of continuous concepts
         ),
         net_arch=dict(pi=[256,256], vf=[256,256])
     )

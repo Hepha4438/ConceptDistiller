@@ -46,7 +46,7 @@ def make_env(env_id, seed=0):
     return _init
 
 
-def objective(trial, env_id, total_timesteps, n_envs, seed, device, concept_mode=1, is_trial=True):
+def objective(trial, env_id, total_timesteps, n_envs, seed, device, concept_mode=1, n_continuous_concepts=1, is_trial=True):
     """
     Objective function for Optuna
     Returns: combined score (reward + concept quality penalties)
@@ -56,6 +56,7 @@ def objective(trial, env_id, total_timesteps, n_envs, seed, device, concept_mode
     
     Args:
         is_trial: If True, save to trials/ directory; if False, save to normal directory
+        n_continuous_concepts: Mode 5 only - number of continuous sigmoid concepts
     """
 
     # Get difficulty and n_concepts range from config
@@ -100,6 +101,7 @@ def objective(trial, env_id, total_timesteps, n_envs, seed, device, concept_mode
             lambda_1=lambda_1,
             lambda_2=lambda_2,
             lambda_3=lambda_3,
+            n_continuous_concepts=n_continuous_concepts,  # Mode 5: continuous concepts
             is_trial=is_trial,
             trial_number=trial.number
         )
@@ -254,6 +256,7 @@ def optimize_hyperparameters(
     seed=42,
     device="cuda",
     concept_mode=1,  # Fixed mode chosen by user
+    n_continuous_concepts=1,  # Mode 5: number of continuous sigmoid concepts
     study_name=None,
     storage=None
 ):
@@ -267,7 +270,8 @@ def optimize_hyperparameters(
         n_envs: Number of parallel environments
         seed: Random seed
         device: Device (cuda/cpu/mps)
-        concept_mode: Concept extraction mode (1-4) - fixed for all trials
+        concept_mode: Concept extraction mode (1-5) - fixed for all trials
+        n_continuous_concepts: Mode 5 only - number of continuous sigmoid concepts (rest use STE)
         study_name: Name for the study (for resuming)
         storage: Storage URL (e.g., 'sqlite:///optuna_study.db')
     """
@@ -279,7 +283,7 @@ def optimize_hyperparameters(
     tuning_config = get_optuna_tuning_config(env_id)
     n_startup_trials = tuning_config.get('n_startup_trials', 5)  # Default to 5 if not in config
     
-    mode_names = {1: 'flatten', 2: 'avg pool', 3: 'max pool', 4: 'FC-bottleneck'}
+    mode_names = {1: 'flatten', 2: 'avg pool', 3: 'max pool', 4: 'FC-bottleneck', 5: 'FC-bottleneck+STE'}
     
     log_to_ui("="*60 + "\n")
     log_to_ui("OPTUNA HYPERPARAMETER TUNING FOR PPO_CONCEPT\n")
@@ -291,6 +295,8 @@ def optimize_hyperparameters(
     log_to_ui(f"Timesteps/trial: {total_timesteps:,}\n")
     log_to_ui(f"Device:          {device}\n")
     log_to_ui(f"Concept mode:    {concept_mode} ({mode_names[concept_mode]}) - FIXED\n")
+    if concept_mode == 5:
+        log_to_ui(f"  → n_continuous_concepts: {n_continuous_concepts} (continuous sigmoid, rest STE)\n")
     log_to_ui("="*60 + "\n")
     log_to_ui("\n🎯 Optimization Goal:\n")
     log_to_ui("  Maximize: Combined Score = Reward - Concept Loss Penalties\n")
@@ -326,7 +332,7 @@ def optimize_hyperparameters(
     
     # Optimize
     study.optimize(
-        lambda trial: objective(trial, env_id, total_timesteps, n_envs, seed, device, concept_mode),
+        lambda trial: objective(trial, env_id, total_timesteps, n_envs, seed, device, concept_mode, n_continuous_concepts),
         n_trials=n_trials,
         show_progress_bar=True
     )
@@ -380,13 +386,13 @@ def optimize_hyperparameters(
     return study
 
 
-def train_with_best_params(study, env_id, total_timesteps, n_envs, seed, device, concept_mode=1):
+def train_with_best_params(study, env_id, total_timesteps, n_envs, seed, device, concept_mode=1, n_continuous_concepts=1):
     """
     Train a final model with best parameters found by Optuna
     """
     best_params = study.best_params
     
-    mode_names = {1: 'flatten', 2: 'avg pool', 3: 'max pool', 4: 'FC-bottleneck'}
+    mode_names = {1: 'flatten', 2: 'avg pool', 3: 'max pool', 4: 'FC-bottleneck', 5: 'FC-bottleneck+STE'}
     
     print("\n" + "="*60)
     print("TRAINING FINAL MODEL WITH BEST PARAMS")
@@ -396,6 +402,8 @@ def train_with_best_params(study, env_id, total_timesteps, n_envs, seed, device,
     print(f"  lambda_3: {best_params['lambda_3']:.6f}")
     print(f"  n_concepts: {best_params['n_concepts']}")
     print(f"  concept_mode: {concept_mode} ({mode_names[concept_mode]}) - FIXED")
+    if concept_mode == 5:
+        print(f"  n_continuous_concepts: {n_continuous_concepts}")
     print("="*60 + "\n")
     
     model = train_ppo_concept(
@@ -408,7 +416,8 @@ def train_with_best_params(study, env_id, total_timesteps, n_envs, seed, device,
         device=device,
         lambda_1=best_params['lambda_1'],
         lambda_2=best_params['lambda_2'],
-        lambda_3=best_params['lambda_3']
+        lambda_3=best_params['lambda_3'],
+        n_continuous_concepts=n_continuous_concepts  # Mode 5: continuous concepts
     )
     
     print(f"\n✅ Final model trained and saved!")

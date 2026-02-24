@@ -97,7 +97,8 @@ class MinigridFeaturesExtractor(BaseFeaturesExtractor):
     - Mode 2: concept_map [B,K,H,W] -> global average pool -> concept_vector [B,K] -> FC
     - Mode 3: concept_map [B,K,H,W] -> global max pool -> concept_vector [B,K] -> FC
     - Mode 4: concept_map [B,K,H,W] -> flatten -> FC1 -> concept bottleneck [B,K] -> FC2
-    - Mode 5: Like Mode 4, but only 1st concept uses sigmoid, rest use STE (binary 0/1)
+    - Mode 5: Like Mode 4, but first n_continuous_concepts use sigmoid (soft), rest use STE (binary 0/1)
+               - n_continuous_concepts: Number of continuous concepts (default=1)
     """
     def __init__(
             self,
@@ -109,7 +110,8 @@ class MinigridFeaturesExtractor(BaseFeaturesExtractor):
             concept_mode: int = 1,
             patch_pool_size: int = 2,
             n_bins: int = 10,
-            constraint_lambda: float = 1.0  # Weight for Mode 5 constraint loss
+            constraint_lambda: float = 1.0,  # Weight for Mode 5 constraint loss
+            n_continuous_concepts: int = 1   # Number of continuous concepts (sigmoid) in Mode 5, rest use STE
     ):
         super().__init__(observation_space, features_dim)
         self.concept_distilling = concept_distilling
@@ -118,6 +120,7 @@ class MinigridFeaturesExtractor(BaseFeaturesExtractor):
         self.patch_pool_size = patch_pool_size
         self.n_bins = n_bins
         self.constraint_lambda = constraint_lambda
+        self.n_continuous_concepts = n_continuous_concepts
         
         # Initialize constraint loss storage (for Mode 5)
         self.last_constraint_loss = torch.tensor(0.0)
@@ -258,7 +261,7 @@ class MinigridFeaturesExtractor(BaseFeaturesExtractor):
                 return self.fc2(concept_bottleneck_vector)
                 
             elif self.concept_mode == 5:
-                # Mode 5: Like Mode 4, but only 1st concept uses sigmoid, rest use STE
+                # Mode 5: First n_continuous_concepts use sigmoid, rest use STE
                 x_flat = concept_map.flatten(start_dim=1)  # [B,K*H*W]
                 h = F.relu(self.fc1(x_flat))  # [B, features_dim]
                 
@@ -266,11 +269,12 @@ class MinigridFeaturesExtractor(BaseFeaturesExtractor):
                 concept_raw = self.concept_bottleneck(h)  # [B,K]
                 concept_sigmoid = torch.sigmoid(concept_raw)  # [B,K]
                 
-                # Split: 1st concept = sigmoid (soft), rest = STE (binary)
-                concept_first = concept_sigmoid[:, 0:1]  # [B,1] - Keep sigmoid (soft)
+                # Split: first n_continuous_concepts = sigmoid (soft), rest = STE (binary)
+                n_cont = min(self.n_continuous_concepts, self.n_concepts)  # Ensure not exceeding n_concepts
+                concept_continuous = concept_sigmoid[:, :n_cont]  # [B, n_cont] - Keep sigmoid (soft)
                 
-                if self.n_concepts > 1:
-                    concept_rest_sigmoid = concept_sigmoid[:, 1:]  # [B,K-1]
+                if n_cont < self.n_concepts:
+                    concept_rest_sigmoid = concept_sigmoid[:, n_cont:]  # [B, K-n_cont]
                     
                     # --- Compute Constraint Loss on Soft Probabilities ---
                     # Soft count of active concepts (sum of sigmoid probabilities)
@@ -292,12 +296,12 @@ class MinigridFeaturesExtractor(BaseFeaturesExtractor):
                     concept_rest_hard = (concept_rest_sigmoid > 0.5).float()  # [B,K-1] - binary 0/1
                     concept_rest_ste = concept_rest_sigmoid + (concept_rest_hard - concept_rest_sigmoid).detach()
                     
-                    # Concatenate: [sigmoid, STE, STE, ...]
-                    concept_bottleneck_vector = torch.cat([concept_first, concept_rest_ste], dim=1)  # [B,K]
+                    # Concatenate: [continuous sigmoid, STE, STE, ...]
+                    concept_bottleneck_vector = torch.cat([concept_continuous, concept_rest_ste], dim=1)  # [B,K]
                 else:
-                    # Only 1 concept: just use sigmoid, no constraint
-                    concept_bottleneck_vector = concept_first
-                    self.last_constraint_loss = torch.tensor(0.0, device=concept_first.device)
+                    # All concepts are continuous: just use sigmoid, no constraint
+                    concept_bottleneck_vector = concept_continuous
+                    self.last_constraint_loss = torch.tensor(0.0, device=concept_continuous.device)
                 
                 # Store for visualization/analysis
                 self.last_concept_bottleneck = concept_bottleneck_vector

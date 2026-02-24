@@ -142,13 +142,20 @@ def select_representative_samples(clusters: List[List[Path]], n_samples_per_clus
     return representatives
 
 
-def cluster_concept_c1(ig_out_dir: Path, n_samples_per_bin: int) -> Dict[str, List[Path]]:
+def cluster_concept_continuous(ig_out_dir: Path, concept_name: str, concept_idx: int, n_samples_per_bin: int) -> Dict[str, List[Path]]:
     """
-    Cluster C1 (continuous concept) into 3 bins: low, medium, high
+    Cluster continuous concept into 3 bins: low, medium, high
+    
+    Args:
+        ig_out_dir: Path to IG output directory
+        concept_name: Name like "C1", "C2", etc.
+        concept_idx: 0-based index (C1=0, C2=1, ...)
+        n_samples_per_bin: Number of samples per bin
+    
     Returns dict: {"low": [paths], "medium": [paths], "high": [paths]}
     """
     
-    print("\n📊 Clustering C1 (continuous concept)...")
+    print(f"\n📊 Clustering {concept_name} (continuous concept)...")
     
     frame_to_value = {}
     
@@ -210,31 +217,31 @@ def cluster_concept_c1(ig_out_dir: Path, n_samples_per_bin: int) -> Dict[str, Li
             if abs(len(frame_files) - len(steps)) > 1:
                 print(f"    ⚠ Frame/step mismatch in {episode_dir.name}: {len(frame_files)} frames vs {len(steps)} steps")
             
-            # Map frames to C1 values (use min length to avoid index errors)
+            # Map frames to concept values (use min length to avoid index errors)
             for i in range(min(len(frame_files), len(steps))):
                 step_num, vector_str = steps[i]
                 vector = [float(v.strip()) for v in vector_str.split(",")]
-                if len(vector) < 1:
+                if len(vector) <= concept_idx:
                     continue
                 
-                c1_val = vector[0]  # C1 is first element
-                frame_to_value[frame_files[i]] = c1_val
+                concept_val = vector[concept_idx]
+                frame_to_value[frame_files[i]] = concept_val
         
         print(f"    Found {episodes_in_txt} episodes in {txt_file.name}")
     
-    print(f"  Mapped {len(frame_to_value)} frames to C1 values")
+    print(f"  Mapped {len(frame_to_value)} frames to {concept_name} values")
     
     if not frame_to_value:
-        print("  ⚠ No C1 values mapped - cannot cluster")
+        print(f"  ⚠ No {concept_name} values mapped - cannot cluster")
         return {"low": [], "medium": [], "high": []}
     
-    # Bin frames by C1 value
+    # Bin frames by concept value
     bins = {"low": [], "medium": [], "high": []}
     
-    for frame_path, c1_val in frame_to_value.items():
-        if c1_val < 0.33:
+    for frame_path, concept_val in frame_to_value.items():
+        if concept_val < 0.33:
             bins["low"].append(frame_path)
-        elif c1_val < 0.67:
+        elif concept_val < 0.67:
             bins["medium"].append(frame_path)
         else:
             bins["high"].append(frame_path)
@@ -261,7 +268,7 @@ def cluster_concept_c1(ig_out_dir: Path, n_samples_per_bin: int) -> Dict[str, Li
         
         # Use 2-3 clusters per bin
         n_clusters = min(3, max(2, len(bin_frames) // 5))
-        clusters = cluster_images(bin_frames, n_clusters, f"C1_{bin_name}")
+        clusters = cluster_images(bin_frames, n_clusters, f"{concept_name}_{bin_name}")
         
         # Select representatives
         representatives = select_representative_samples(clusters, n_samples_per_bin)
@@ -336,6 +343,10 @@ def create_clustering_output(ig_out_dir: Path, n_samples: int = 5):
     """
     Main function to cluster all concepts and create output folders
     
+    Detects continuous vs binary concepts from:
+    1. Model metadata in success_runs.txt (preferred)
+    2. Folder structure as fallback
+    
     Args:
         ig_out_dir: Path to ig_YYYYMMDD_HHMMSS folder
         n_samples: Number of sample images per cluster/bin
@@ -351,44 +362,89 @@ def create_clustering_output(ig_out_dir: Path, n_samples: int = 5):
     cluster_dir = ig_out_dir / "clustered_samples"
     cluster_dir.mkdir(exist_ok=True)
     
-    # 1. Cluster C1 (continuous)
-    c1_bins = cluster_concept_c1(ig_out_dir, n_samples_per_bin=n_samples)
+    # Try to get model metadata from success_runs.txt
+    success_txt = ig_out_dir / "success_runs.txt"
+    n_continuous_concepts = 1  # Default fallback
+    n_total_concepts = 0
     
-    # Save C1 representatives
-    c1_dir = cluster_dir / "C1"
-    c1_dir.mkdir(exist_ok=True)
-    
-    for bin_name, frames in c1_bins.items():
-        bin_dir = c1_dir / bin_name
-        bin_dir.mkdir(exist_ok=True)
+    if success_txt.exists():
+        import re
+        with open(success_txt, 'r') as f:
+            content = f.read(1000)  # Read first 1000 chars to find metadata
         
-        for i, frame_path in enumerate(frames):
-            dest = bin_dir / f"sample_{i:03d}.png"
-            shutil.copy2(frame_path, dest)
-        
-        print(f"  ✓ Saved {len(frames)} samples to {bin_dir}")
+        # Try to parse model metadata
+        model_info_match = re.search(r'Model: (\d+) concepts, mode (\d+), (\d+) continuous', content)
+        if model_info_match:
+            n_total_concepts = int(model_info_match.group(1))
+            n_continuous_concepts = int(model_info_match.group(3))
+            print(f"  ✓ Detected from metadata: {n_total_concepts} concepts, {n_continuous_concepts} continuous")
     
-    # 2. Cluster C2-Cn (binary concepts)
-    # Detect number of concepts from episode folders
+    # If metadata was not found, try to detect from folder structure
     first_episode = next(ig_out_dir.glob("episode_*"), None)
     if not first_episode:
         print("  ⚠ No episodes found!")
-        return
+        return cluster_dir
     
-    concept_names = [d.name for d in first_episode.iterdir() if d.is_dir() and d.name.startswith("C") and d.name != "C1"]
-    concept_names = sorted([c for c in concept_names if c[1:].isdigit()])
+    # If we have metadata, use it to determine concept count
+    if n_total_concepts == 0:
+        # Fallback: count concept folders in first episode
+        all_concept_folders = [d.name for d in first_episode.iterdir() 
+                              if d.is_dir() and d.name.startswith("C") and d.name[1:].isdigit()]
+        n_total_concepts = len(all_concept_folders)
+        if n_total_concepts == 0:
+            print("  ⚠ No concept folders found!")
+            return cluster_dir
     
-    print(f"\n  Detected binary concepts: {concept_names}")
+    # Generate concept names based on total count from metadata
+    # NOTE: IG output only creates folders for BINARY concepts (activated/inactive)
+    # Continuous concepts don't have folders in episode_XXX, but we still cluster them from frames
+    all_concepts = [f"C{i}" for i in range(1, n_total_concepts + 1)]
     
-    for concept_name in concept_names:
+    # Classify concepts based on metadata
+    continuous_concepts = []
+    binary_concepts = []
+    
+    for concept_name in all_concepts:
+        concept_idx = int(concept_name[1:]) - 1  # C1 -> 0, C2 -> 1, ...
+        
+        # Check if continuous based on index from metadata
+        if concept_idx < n_continuous_concepts:
+            continuous_concepts.append(concept_name)
+        else:
+            binary_concepts.append(concept_name)
+    
+    print(f"\n  Detected continuous concepts: {continuous_concepts}")
+    print(f"  Detected binary concepts: {binary_concepts}")
+    
+    # 1. Cluster continuous concepts
+    for concept_name in continuous_concepts:
+        concept_idx = int(concept_name[1:]) - 1  # C1 -> 0, C2 -> 1, ...
+        bins = cluster_concept_continuous(ig_out_dir, concept_name, concept_idx, n_samples_per_bin=n_samples)
+        
+        # Save representatives
+        concept_dir_out = cluster_dir / concept_name
+        concept_dir_out.mkdir(exist_ok=True)
+        
+        for bin_name, frames in bins.items():
+            bin_dir = concept_dir_out / bin_name
+            bin_dir.mkdir(exist_ok=True)
+            
+            for i, frame_path in enumerate(frames):
+                dest = bin_dir / f"sample_{i:03d}.png"
+                shutil.copy2(frame_path, dest)
+            
+            print(f"  ✓ Saved {len(frames)} samples to {bin_dir}")
+    
+    # 2. Cluster binary concepts
+    for concept_name in binary_concepts:
         states = cluster_concept_binary(ig_out_dir, concept_name, n_samples_per_state=n_samples)
         
         # Save representatives
-        concept_dir = cluster_dir / concept_name
-        concept_dir.mkdir(exist_ok=True)
+        concept_dir_out = cluster_dir / concept_name
+        concept_dir_out.mkdir(exist_ok=True)
         
         for state_name, frames in states.items():
-            state_dir = concept_dir / state_name
+            state_dir = concept_dir_out / state_name
             state_dir.mkdir(exist_ok=True)
             
             for i, frame_path in enumerate(frames):

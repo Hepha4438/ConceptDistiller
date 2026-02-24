@@ -146,11 +146,12 @@ PPO_CONCEPT_CONFIGS = {
         "max_grad_norm": 0.5,
         "n_envs": 4,
         "n_concepts": 3,  # Updated: 6 → 3
-        "concept_mode": 4,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool; Mode 4: FC-bottleneck; Mode 5: FC-bottleneck with STE
+        "concept_mode": 5,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool; Mode 4: FC-bottleneck; Mode 5: FC-bottleneck with STE
         "lambda_1": 0.05,    # Orthogonality: Giúp concept tách biệt rõ hơn
         "lambda_2": 0.004,   # Sparsity: Khuyến khích sparse activation
         "lambda_3": 2.0,     # L1: Regularization mạnh cho concept weights
         "constraint_lambda": 1.0,  # Mode 5 constraint: Ensure 1-67% concepts active per state
+        "n_continuous_concepts": 1,  # Mode 5: Number of continuous (sigmoid) concepts, rest use STE
     },
     
     # Medium environments - 5 concepts
@@ -168,11 +169,12 @@ PPO_CONCEPT_CONFIGS = {
         "max_grad_norm": 0.5,
         "n_envs": 8,
         "n_concepts": 5,  # Updated: 8 → 5
-        "concept_mode": 4,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool; Mode 4: FC-bottleneck; Mode 5: FC-bottleneck with STE
+        "concept_mode": 5,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool; Mode 4: FC-bottleneck; Mode 5: FC-bottleneck with STE
         "lambda_1": 0.05,    # Orthogonality
         "lambda_2": 0.004,   # Sparsity
         "lambda_3": 2.0,     # L1
         "constraint_lambda": 1.0,  # Mode 5 constraint
+        "n_continuous_concepts": 1,  # Mode 5: Number of continuous (sigmoid) concepts, rest use STE
     },
     
     # Hard environments - 6 concepts
@@ -190,11 +192,12 @@ PPO_CONCEPT_CONFIGS = {
         "max_grad_norm": 0.5,
         "n_envs": 8,
         "n_concepts": 6,  # Updated: 12 → 6
-        "concept_mode": 4,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool; Mode 4: FC-bottleneck; Mode 5: FC-bottleneck with STE
+        "concept_mode": 5,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool; Mode 4: FC-bottleneck; Mode 5: FC-bottleneck with STE
         "lambda_1": 0.05,    # Orthogonality
         "lambda_2": 0.004,   # Sparsity
         "lambda_3": 2.0,     # L1
         "constraint_lambda": 1.0,  # Mode 5 constraint
+        "n_continuous_concepts": 1,  # Mode 5: Number of continuous (sigmoid) concepts, rest use STE
     },
 
     # Extremely hard environments - 8 concepts
@@ -212,11 +215,12 @@ PPO_CONCEPT_CONFIGS = {
         "max_grad_norm": 0.5,
         "n_envs": 16,
         "n_concepts": 8,  # Updated: 16 → 8
-        "concept_mode": 4,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool; Mode 4: FC-bottleneck; Mode 5: FC-bottleneck with STE
+        "concept_mode": 5,   # Mode 1: flatten; Mode 2: avg pool; Mode 3: max pool; Mode 4: FC-bottleneck; Mode 5: FC-bottleneck with STE
         "lambda_1": 0.05,    # Orthogonality
         "lambda_2": 0.004,   # Sparsity
         "lambda_3": 2.0,     # L1
         "constraint_lambda": 1.0,  # Mode 5 constraint
+        "n_continuous_concepts": 1,  # Mode 5: Number of continuous (sigmoid) concepts, rest use STE
     }
 }
 

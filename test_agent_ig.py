@@ -630,15 +630,21 @@ def log_concept_actions(model, obs_list, actions_list, reward, out_dir, env_id, 
     else:
         log_file = os.path.join(out_dir, "failed_runs.txt")
     
+    # Get model metadata
+    n_concepts = getattr(fx, 'n_concepts', 0)
+    concept_mode = getattr(fx, 'concept_mode', 1)
+    n_continuous_concepts = getattr(fx, 'n_continuous_concepts', 1)
+    
     # Open file in append mode
     with open(log_file, 'a') as f:
-        # Write episode header
+        # Write episode header with model metadata
         f.write("="*70 + "\n")
         f.write(f"Episode: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write(f"Environment: {env_id}\n")
         f.write(f"Reward: {reward:.4f}\n")
         f.write(f"Status: {'SUCCESS' if is_success else 'FAILED'}\n")
         f.write(f"Total steps: {len(actions_list)}\n")
+        f.write(f"Model: {n_concepts} concepts, mode {concept_mode}, {n_continuous_concepts} continuous\n")
         f.write("="*70 + "\n\n")
         
         # Process each step
@@ -728,23 +734,26 @@ def organize_ste_concept_frames(model, best_obs, frames, agent_dirs, all_attribu
         return
     
     n_concepts = getattr(fx, 'n_concepts', 0)
-    if n_concepts <= 1:
-        print(f"⚠️  Model has only {n_concepts} concepts. Need at least 2 for STE organization.")
+    n_continuous_concepts = getattr(fx, 'n_continuous_concepts', 1)  # Default to 1 for backward compatibility
+    
+    if n_concepts <= n_continuous_concepts:
+        print(f"⚠️  Model has {n_concepts} total concepts with {n_continuous_concepts} continuous. No STE concepts to organize.")
         return
     
-    n_ste_concepts = n_concepts - 1  # First concept is sigmoid, rest are STE
+    n_ste_concepts = n_concepts - n_continuous_concepts  # Remaining concepts are STE
     
     print(f"\n{'='*70}")
     print(f"📊 Organizing frames by STE concept activation (Mode 5)")
     print(f"{'='*70}")
     print(f"Total concepts: {n_concepts}")
-    print(f"STE concepts: {n_ste_concepts} (C2 to C{n_concepts})")
+    print(f"Continuous concepts: {n_continuous_concepts} (C1 to C{n_continuous_concepts})")
+    print(f"STE concepts: {n_ste_concepts} (C{n_continuous_concepts+1} to C{n_concepts})")
     print(f"Total frames: {len(frames)}")
     print(f"{'='*70}\n")
     
     # Create directory structure
     concept_dirs = {}
-    for k in range(1, n_concepts):  # Skip C1 (sigmoid)
+    for k in range(n_continuous_concepts, n_concepts):  # Skip continuous concepts (C1 to C{n_continuous})
         concept_name = f"C{k+1}"
         concept_base = os.path.join(out_dir, concept_name)
         activated_dir = os.path.join(concept_base, "activated")
@@ -794,7 +803,7 @@ def organize_ste_concept_frames(model, best_obs, frames, agent_dirs, all_attribu
         god_view_frame = frames[i]
         
         # Classify and save composite image for each STE concept
-        for k in range(1, n_concepts):  # Skip C1 (sigmoid)
+        for k in range(n_continuous_concepts, n_concepts):  # Skip continuous concepts
             concept_value = concept_bottleneck[k]
             
             # Determine activation status
@@ -874,7 +883,7 @@ def organize_ste_concept_frames(model, best_obs, frames, agent_dirs, all_attribu
     print(f"\n{'='*70}")
     print(f"✓ Frame organization complete!")
     print(f"{'='*70}")
-    for k in range(1, n_concepts):
+    for k in range(n_continuous_concepts, n_concepts):
         concept_name = f"C{k+1}"
         activated_count = concept_dirs[k]['activated_count']
         inactive_count = concept_dirs[k]['inactive_count']
