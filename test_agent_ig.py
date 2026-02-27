@@ -674,8 +674,8 @@ def log_concept_actions(model, obs_list, actions_list, reward, out_dir, env_id, 
                     concept_vec = concept_vector[0].cpu().numpy()
                     vector_type = "concept_layer"
             
-            # Format concept vector
-            concept_str = "[" + ", ".join([f"{v:.3f}" for v in concept_vec]) + "]"
+            # Format concept vector with higher precision (6 decimals to avoid conflicts)
+            concept_str = "[" + ", ".join([f"{v:.6f}" for v in concept_vec]) + "]"
             
             # Get action name
             action_name = ACTION_NAMES.get(action, f"UNKNOWN_{action}")
@@ -866,7 +866,7 @@ def organize_ste_concept_frames(model, best_obs, frames, agent_dirs, all_attribu
             draw.text((W * 2 + spacing * 2 + 5, 5), f"C{k+1} IG Heatmap", fill=(255, 255, 0), font=font)
             
             # Save composite
-            frame_filename = f"frame_{i:04d}_value_{concept_value:.3f}.png"
+            frame_filename = f"frame_{i:04d}_value_{concept_value:.6f}.png"
             frame_path = os.path.join(target_dir, frame_filename)
             canvas.save(frame_path)
             

@@ -250,6 +250,11 @@ class ModelTesterUI:
         self.gemini_frame = ttk.Frame(notebook)
         notebook.add(self.gemini_frame, text="🏷️ Concept Labeling")
         self.create_gemini_tab()
+        
+        # Decision Tree Policy Tab
+        self.dt_frame = ttk.Frame(notebook)
+        notebook.add(self.dt_frame, text="🌳 Decision Tree Policy")
+        self.create_dt_tab()
     
     def create_training_tab(self):
         """Create the training interface"""
@@ -3446,6 +3451,848 @@ class ModelTesterUI:
             self.gemini_demo_btn.config(state=tk.NORMAL)
             
             messagebox.showerror("Gemini Error", f"An error occurred:\n\n{str(e)}")
+    
+    def create_dt_tab(self):
+        """Create Decision Tree Policy interface"""
+        main_container = ttk.Frame(self.dt_frame)
+        main_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Left panel: Configuration
+        left_panel = ttk.Frame(main_container)
+        left_panel.pack(side=tk.LEFT, fill=tk.BOTH, expand=False, padx=(0, 5))
+        
+        # ========== STEP 1: Parse Training Data ==========
+        parse_frame = ttk.LabelFrame(left_panel, text="Step 1: Parse Training Data", padding=10)
+        parse_frame.pack(fill=tk.X, pady=5)
+        
+        # IG Directory selection
+        ig_dir_frame = ttk.Frame(parse_frame)
+        ig_dir_frame.pack(fill=tk.X, pady=2)
+        ttk.Label(ig_dir_frame, text="IG Directory:").pack(side=tk.LEFT)
+        self.dt_ig_dir_var = tk.StringVar()
+        ig_dir_entry = ttk.Entry(ig_dir_frame, textvariable=self.dt_ig_dir_var, width=40)
+        ig_dir_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+        ttk.Button(ig_dir_frame, text="📁", width=3,
+                  command=lambda: self._browse_directory(self.dt_ig_dir_var)).pack(side=tk.LEFT)
+        
+        # Failed ratio
+        ratio_frame = ttk.Frame(parse_frame)
+        ratio_frame.pack(fill=tk.X, pady=2)
+        ttk.Label(ratio_frame, text="Failed Sample Ratio:").pack(side=tk.LEFT)
+        self.dt_failed_ratio_var = tk.DoubleVar(value=0.1)
+        ttk.Spinbox(ratio_frame, from_=0.0, to=1.0, increment=0.05,
+                   textvariable=self.dt_failed_ratio_var, width=10).pack(side=tk.LEFT, padx=5)
+        
+        # Preprocessing checkboxes
+        preprocess_label = ttk.Label(parse_frame, text="Preprocessing Options:", font=('', 9, 'bold'))
+        preprocess_label.pack(fill=tk.X, pady=(5, 2))
+        
+        self.dt_preprocess_failed_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(parse_frame, text="Remove loops/duplicates from failed runs",
+                       variable=self.dt_preprocess_failed_var).pack(fill=tk.X, pady=1, padx=10)
+        
+        self.dt_preprocess_success_var = tk.BooleanVar(value=False)
+        success_cb = ttk.Checkbutton(parse_frame, text="Remove ALL duplicate (concept, action) pairs (⚠️ reduces 50-70%)",
+                       variable=self.dt_preprocess_success_var)
+        success_cb.pack(fill=tk.X, pady=1, padx=10)
+        
+        # Parse button
+        self.dt_parse_btn = ttk.Button(parse_frame, text="▶️ Parse Data",
+                                       command=self.run_dt_parse)
+        self.dt_parse_btn.pack(fill=tk.X, pady=5)
+        
+        # ========== STEP 2: Train Decision Tree ==========
+        train_frame = ttk.LabelFrame(left_panel, text="Step 2: Train Decision Tree", padding=10)
+        train_frame.pack(fill=tk.X, pady=5)
+        
+        # Training data file
+        data_frame = ttk.Frame(train_frame)
+        data_frame.pack(fill=tk.X, pady=2)
+        ttk.Label(data_frame, text="Training Data:").pack(side=tk.LEFT)
+        self.dt_train_data_var = tk.StringVar(value="dt_training_data.pkl")
+        data_entry = ttk.Entry(data_frame, textvariable=self.dt_train_data_var, width=30)
+        data_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+        ttk.Button(data_frame, text="📁", width=3,
+                  command=lambda: self._browse_file(self.dt_train_data_var, "pkl")).pack(side=tk.LEFT)
+        
+        # Hyperparameter tuning
+        self.dt_tuning_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(train_frame, text="Hyperparameter Tuning (slower but better)",
+                       variable=self.dt_tuning_var).pack(fill=tk.X, pady=2)
+        
+        # Algorithm choice
+        self.dt_use_rf_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(train_frame, text="Use RandomForest (better accuracy, slower)",
+                       variable=self.dt_use_rf_var).pack(fill=tk.X, pady=2)
+        
+        # Test split
+        split_frame = ttk.Frame(train_frame)
+        split_frame.pack(fill=tk.X, pady=2)
+        ttk.Label(split_frame, text="Test Split:").pack(side=tk.LEFT)
+        self.dt_test_split_var = tk.DoubleVar(value=0.2)
+        test_split_spin = ttk.Spinbox(split_frame, from_=0.0, to=0.5, increment=0.05,
+                   textvariable=self.dt_test_split_var, width=10)
+        test_split_spin.pack(side=tk.LEFT, padx=5)
+        ttk.Label(split_frame, text="(0.0 = train & test on all data)", 
+                 foreground='gray').pack(side=tk.LEFT, padx=5)
+        
+        # Max depth override
+        depth_frame = ttk.Frame(train_frame)
+        depth_frame.pack(fill=tk.X, pady=2)
+        ttk.Label(depth_frame, text="Max Depth:").pack(side=tk.LEFT)
+        self.dt_max_depth_var = tk.IntVar(value=0)
+        depth_spin = ttk.Spinbox(depth_frame, from_=0, to=50, increment=5,
+                   textvariable=self.dt_max_depth_var, width=10)
+        depth_spin.pack(side=tk.LEFT, padx=5)
+        ttk.Label(depth_frame, text="(0 = auto, higher = better fit)", 
+                 foreground='gray').pack(side=tk.LEFT, padx=5)
+        
+        # Train button
+        self.dt_train_btn = ttk.Button(train_frame, text="▶️ Train DT",
+                                       command=self.run_dt_train)
+        self.dt_train_btn.pack(fill=tk.X, pady=5)
+        
+        # ========== STEP 3: Test DT Agent ==========
+        test_frame = ttk.LabelFrame(left_panel, text="Step 3: Test DT Agent", padding=10)
+        test_frame.pack(fill=tk.X, pady=5)
+        
+        # DT model file
+        dt_model_frame = ttk.Frame(test_frame)
+        dt_model_frame.pack(fill=tk.X, pady=2)
+        ttk.Label(dt_model_frame, text="DT Model:").pack(side=tk.LEFT)
+        self.dt_model_var = tk.StringVar(value="dt_output/dt_policy.pkl")
+        dt_model_entry = ttk.Entry(dt_model_frame, textvariable=self.dt_model_var, width=30)
+        dt_model_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+        ttk.Button(dt_model_frame, text="📁", width=3,
+                  command=lambda: self._browse_file(self.dt_model_var, "pkl")).pack(side=tk.LEFT)
+        
+        # PPO model file
+        ppo_model_frame = ttk.Frame(test_frame)
+        ppo_model_frame.pack(fill=tk.X, pady=2)
+        ttk.Label(ppo_model_frame, text="PPO Model:").pack(side=tk.LEFT)
+        self.dt_ppo_model_var = tk.StringVar()
+        ppo_model_entry = ttk.Entry(ppo_model_frame, textvariable=self.dt_ppo_model_var, width=30)
+        ppo_model_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+        ttk.Button(ppo_model_frame, text="📁", width=3,
+                  command=lambda: self._browse_file(self.dt_ppo_model_var, "zip")).pack(side=tk.LEFT)
+        
+        # Episodes
+        episodes_frame = ttk.Frame(test_frame)
+        episodes_frame.pack(fill=tk.X, pady=2)
+        ttk.Label(episodes_frame, text="Episodes:").pack(side=tk.LEFT)
+        self.dt_episodes_var = tk.IntVar(value=100)
+        ttk.Spinbox(episodes_frame, from_=10, to=1000, increment=10,
+                   textvariable=self.dt_episodes_var, width=10).pack(side=tk.LEFT, padx=5)
+        
+        # Epsilon-greedy randomness
+        epsilon_frame = ttk.Frame(test_frame)
+        epsilon_frame.pack(fill=tk.X, pady=2)
+        ttk.Label(epsilon_frame, text="Epsilon (random):").pack(side=tk.LEFT)
+        self.dt_epsilon_var = tk.DoubleVar(value=0.0)
+        epsilon_spinbox = ttk.Spinbox(epsilon_frame, from_=0.0, to=0.5, increment=0.05,
+                   textvariable=self.dt_epsilon_var, width=10, format="%.2f")
+        epsilon_spinbox.pack(side=tk.LEFT, padx=5)
+        ttk.Label(epsilon_frame, text="(0=none, 0.1=recommended)").pack(side=tk.LEFT, padx=5)
+        
+        # Compare with MLP
+        self.dt_compare_mlp_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(test_frame, text="Compare with MLP Policy",
+                       variable=self.dt_compare_mlp_var).pack(fill=tk.X, pady=2)
+        
+        # Save episode logs
+        self.dt_save_logs_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(test_frame, text="Save Episode Logs (success/failed_runs.txt)",
+                       variable=self.dt_save_logs_var).pack(fill=tk.X, pady=2)
+        
+        # Test button
+        self.dt_test_btn = ttk.Button(test_frame, text="▶️ Test DT Agent",
+                                      command=self.run_dt_test)
+        self.dt_test_btn.pack(fill=tk.X, pady=5)
+        
+        # ========== STEP 4: Visualize ==========
+        viz_frame = ttk.LabelFrame(left_panel, text="Step 4: Visualize (Optional)", padding=10)
+        viz_frame.pack(fill=tk.X, pady=5)
+        
+        # Concept labels (optional)
+        labels_frame = ttk.Frame(viz_frame)
+        labels_frame.pack(fill=tk.X, pady=2)
+        ttk.Label(labels_frame, text="Concept Labels:").pack(side=tk.LEFT)
+        self.dt_labels_var = tk.StringVar()
+        labels_entry = ttk.Entry(labels_frame, textvariable=self.dt_labels_var, width=30)
+        labels_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+        ttk.Button(labels_frame, text="📁", width=3,
+                  command=lambda: self._browse_file(self.dt_labels_var, "json")).pack(side=tk.LEFT)
+        ttk.Label(viz_frame, text="(Optional: for semantic labels)",
+                 font=('Arial', 8, 'italic')).pack(fill=tk.X)
+        
+        # Visualize button
+        self.dt_viz_btn = ttk.Button(viz_frame, text="▶️ Create Visualizations",
+                                     command=self.run_dt_visualize)
+        self.dt_viz_btn.pack(fill=tk.X, pady=5)
+        
+        # ========== Quick Actions ==========
+        quick_frame = ttk.LabelFrame(left_panel, text="Quick Actions", padding=10)
+        quick_frame.pack(fill=tk.X, pady=5)
+        
+        self.dt_run_all_btn = ttk.Button(quick_frame, text="⚡ Run All Steps",
+                                         command=self.run_dt_all)
+        self.dt_run_all_btn.pack(fill=tk.X, pady=2)
+        
+        self.dt_open_output_btn = ttk.Button(quick_frame, text="📁 Open Output Directory",
+                                            command=self.open_dt_output, state=tk.DISABLED)
+        self.dt_open_output_btn.pack(fill=tk.X, pady=2)
+        
+        # ========== Right panel: Output Log ==========
+        right_panel = ttk.LabelFrame(main_container, text="Output Log", padding=10)
+        right_panel.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=(5, 0))
+        
+        self.dt_log = scrolledtext.ScrolledText(right_panel, height=40, width=80, wrap=tk.WORD)
+        self.dt_log.pack(fill=tk.BOTH, expand=True)
+        
+        # Status bar
+        status_frame = ttk.Frame(right_panel)
+        status_frame.pack(fill=tk.X, pady=(5, 0))
+        self.dt_status_var = tk.StringVar(value="Ready")
+        ttk.Label(status_frame, textvariable=self.dt_status_var, font=('Arial', 10, 'bold')).pack(side=tk.LEFT)
+        
+        # Store last paths
+        self.last_dt_output = None
+        self.dt_current_step = 0
+    
+    def _browse_directory(self, var):
+        """Browse for directory"""
+        from tkinter import filedialog
+        directory = filedialog.askdirectory()
+        if directory:
+            var.set(directory)
+    
+    def _browse_file(self, var, ext):
+        """Browse for file"""
+        from tkinter import filedialog
+        filetypes = [(f"{ext.upper()} files", f"*.{ext}"), ("All files", "*.*")]
+        filename = filedialog.askopenfilename(filetypes=filetypes)
+        if filename:
+            var.set(filename)
+    
+    def run_dt_parse(self):
+        """Run parse_concept_actions.py"""
+        ig_dir = self.dt_ig_dir_var.get().strip()
+        if not ig_dir or not os.path.exists(ig_dir):
+            messagebox.showerror("Error", "Please select a valid IG directory!")
+            return
+        
+        # Check for success_runs.txt and failed_runs.txt
+        success_file = os.path.join(ig_dir, "success_runs.txt")
+        failed_file = os.path.join(ig_dir, "failed_runs.txt")
+        if not os.path.exists(success_file) and not os.path.exists(failed_file):
+            messagebox.showerror("Error", "No success_runs.txt or failed_runs.txt found in directory!")
+            return
+        
+        # Disable button
+        self.dt_parse_btn.config(state=tk.DISABLED)
+        self.dt_status_var.set("⏳ Parsing data...")
+        
+        # Run in thread
+        thread = threading.Thread(target=self._run_dt_parse_thread)
+        thread.daemon = True
+        thread.start()
+    
+    def _run_dt_parse_thread(self):
+        """Thread for parsing data"""
+        try:
+            from pathlib import Path
+            
+            ig_dir = self.dt_ig_dir_var.get().strip()
+            failed_ratio = self.dt_failed_ratio_var.get()
+            preprocess_failed = self.dt_preprocess_failed_var.get()
+            preprocess_success = self.dt_preprocess_success_var.get()
+            
+            self.dt_log.insert(tk.END, f"\n{'='*60}\n")
+            self.dt_log.insert(tk.END, f"Step 1: Parsing Training Data\n")
+            self.dt_log.insert(tk.END, f"{'='*60}\n")
+            self.dt_log.insert(tk.END, f"IG Directory: {ig_dir}\n")
+            self.dt_log.insert(tk.END, f"Failed Ratio: {failed_ratio}\n")
+            self.dt_log.insert(tk.END, f"Preprocess Failed: {'Yes' if preprocess_failed else 'No'}\n")
+            self.dt_log.insert(tk.END, f"Preprocess Success: {'Yes' if preprocess_success else 'No'}\n\n")
+            self.dt_log.see(tk.END)
+            
+            # Import and run
+            from parse_concept_actions import load_concept_action_data
+            import pickle
+            
+            # Convert to Path object
+            ig_dir_path = Path(ig_dir)
+            
+            # Load data
+            X, y, metadata = load_concept_action_data(
+                ig_dir=ig_dir_path,
+                failed_sample_ratio=failed_ratio,
+                preprocess_failed=preprocess_failed,
+                preprocess_success=preprocess_success
+            )
+            
+            # Create data dictionary
+            data = {
+                'X': X,
+                'y': y,
+                'metadata': metadata,
+                'action_names': {0: 'TURN_LEFT', 1: 'TURN_RIGHT', 2: 'MOVE_FORWARD', 
+                                3: 'PICKUP', 4: 'DROP', 5: 'TOGGLE', 6: 'DONE'}
+            }
+            
+            # Save
+            output_file = "dt_training_data.pkl"
+            with open(output_file, 'wb') as f:
+                pickle.dump(data, f)
+            
+            self.dt_train_data_var.set(output_file)
+            
+            self.dt_log.insert(tk.END, f"\n✅ Parsing Complete!\n")
+            self.dt_log.insert(tk.END, f"Output: {output_file}\n")
+            self.dt_log.insert(tk.END, f"Samples: {len(data['X'])}\n")
+            self.dt_log.insert(tk.END, f"Concepts: {data['X'].shape[1]}\n")
+            self.dt_log.insert(tk.END, f"{'='*60}\n")
+            self.dt_log.see(tk.END)
+            
+            # Check if we have enough data
+            if len(data['X']) == 0:
+                self.dt_status_var.set("⚠️  No data found")
+                messagebox.showwarning(
+                    "No Data",
+                    "No samples were extracted from the IG directory.\\n\\n"
+                    "Please check:\\n"
+                    "- success_runs.txt and/or failed_runs.txt exist\\n"
+                    "- Files contain valid episode data\\n"
+                    "- File format matches expected pattern"
+                )
+            elif len(data['X']) < 100:
+                self.dt_status_var.set("⚠️  Step 1 Complete (Low samples)")
+                messagebox.showwarning(
+                    "Low Sample Count",
+                    f"Only {len(data['X'])} samples found.\\n\\n"
+                    "Recommended: ≥1000 samples for reliable training.\\n"
+                    "Consider running more IG episodes."
+                )
+            else:
+                self.dt_status_var.set("✅ Step 1 Complete")
+            
+        except Exception as e:
+            self.dt_log.insert(tk.END, f"\n❌ Error: {str(e)}\n")
+            self.dt_log.see(tk.END)
+            self.dt_status_var.set("❌ Error in Step 1")
+            messagebox.showerror("Parse Error", str(e))
+        
+        finally:
+            self.dt_parse_btn.config(state=tk.NORMAL)
+    
+    def run_dt_train(self):
+        """Run train_decision_tree_policy.py"""
+        data_file = self.dt_train_data_var.get().strip()
+        if not data_file or not os.path.exists(data_file):
+            messagebox.showerror("Error", "Please select a valid training data file!")
+            return
+        
+        # Disable button
+        self.dt_train_btn.config(state=tk.DISABLED)
+        self.dt_status_var.set("⏳ Training Decision Tree...")
+        
+        # Run in thread
+        thread = threading.Thread(target=self._run_dt_train_thread)
+        thread.daemon = True
+        thread.start()
+    
+    def _run_dt_train_thread(self):
+        """Thread for training DT"""
+        try:
+            data_file = self.dt_train_data_var.get().strip()
+            tuning = self.dt_tuning_var.get()
+            test_split = self.dt_test_split_var.get()
+            max_depth_override = self.dt_max_depth_var.get()
+            use_rf = self.dt_use_rf_var.get()
+            
+            self.dt_log.insert(tk.END, f"\n{'='*60}\n")
+            self.dt_log.insert(tk.END, f"Step 2: Training {'Random Forest' if use_rf else 'Decision Tree'}\n")
+            self.dt_log.insert(tk.END, f"{'='*60}\n")
+            self.dt_log.insert(tk.END, f"Data: {data_file}\n")
+            self.dt_log.insert(tk.END, f"Algorithm: {'RandomForest' if use_rf else 'DecisionTree'}\n")
+            self.dt_log.insert(tk.END, f"Hyperparameter Tuning: {'Yes' if tuning else 'No'}\n")
+            self.dt_log.insert(tk.END, f"Test Split: {test_split}\n")
+            if max_depth_override > 0:
+                self.dt_log.insert(tk.END, f"Max Depth Override: {max_depth_override}\n")
+            self.dt_log.insert(tk.END, f"\n")
+            self.dt_log.see(tk.END)
+            
+            # Import and run
+            from train_decision_tree_policy import train_decision_tree, train_random_forest, evaluate_model, plot_confusion_matrix, plot_feature_importance, export_tree_rules
+            import pickle
+            from sklearn.model_selection import train_test_split
+            
+            # Load data
+            with open(data_file, 'rb') as f:
+                data = pickle.load(f)
+            
+            X = data['X']
+            y = data['y']
+            
+            # Split (train_decision_tree will further split train into train/val)
+            # If test_split=0, train and test on all data (for deduplicated datasets)
+            if test_split == 0 or test_split < 0.01:
+                self.dt_log.insert(tk.END, f"⚠️ test_split={test_split}: Training and testing on ALL data (no split)\n")
+                self.dt_log.insert(tk.END, f"   This shows training accuracy on deduplicated dataset.\n\n")
+                X_train = X_test = X
+                y_train = y_test = y
+                skip_val_split = True
+            else:
+                X_train, X_test, y_train, y_test = train_test_split(
+                    X, y, test_size=test_split, random_state=42, stratify=y
+                )
+                skip_val_split = False
+            
+            self.dt_log.insert(tk.END, f"Training samples: {len(X_train)}\n")
+            self.dt_log.insert(tk.END, f"Test samples: {len(X_test)}\n\n")
+            self.dt_log.see(tk.END)
+            
+            # Train (will auto-split X_train into train/val for validation unless skip_val_split=True)
+            if tuning and (not max_depth_override or max_depth_override == 0):
+                self.dt_log.insert(tk.END, "Starting GridSearchCV (this may take a while)...\n")
+                self.dt_log.see(tk.END)
+            
+            # Choose algorithm
+            if use_rf:
+                dt_model = train_random_forest(
+                    X_train, y_train,
+                    hyperparameter_tuning=tuning,
+                    skip_validation_split=skip_val_split,
+                    max_depth_override=max_depth_override if max_depth_override > 0 else None
+                )
+            else:
+                dt_model = train_decision_tree(
+                    X_train, y_train,
+                    hyperparameter_tuning=tuning,
+                    skip_validation_split=skip_val_split,
+                    max_depth_override=max_depth_override if max_depth_override > 0 else None
+                )
+            
+            # Evaluate on test set
+            results = evaluate_model(dt_model, X_test, y_test)
+            
+            self.dt_log.insert(tk.END, f"\n📊 Evaluation Results:\n")
+            self.dt_log.insert(tk.END, f"  Accuracy: {results['accuracy']:.4f}\n")
+            self.dt_log.insert(tk.END, f"  Macro F1: {results['macro_f1']:.4f}\n")
+            self.dt_log.insert(tk.END, f"  Weighted F1: {results['weighted_f1']:.4f}\n")
+            self.dt_log.insert(tk.END, f"  Tree Depth: {results['max_depth']}\n")
+            self.dt_log.insert(tk.END, f"  Number of Nodes: {results['n_nodes']}\n")
+            self.dt_log.insert(tk.END, f"  Number of Leaves: {results['n_leaves']}\n\n")
+            self.dt_log.see(tk.END)
+            
+            # Save model
+            output_dir = "dt_output"
+            os.makedirs(output_dir, exist_ok=True)
+            
+            # Calculate training statistics for diagnostics
+            unique_train_states = len(np.unique(X_train, axis=0))
+            total_train_states = len(X_train)
+            unique_actions, action_counts = np.unique(y_train, return_counts=True)
+            action_distribution = {int(a): int(c) for a, c in zip(unique_actions, action_counts)}
+            
+            training_stats = {
+                'unique_states': unique_train_states,
+                'total_states': total_train_states,
+                'state_diversity': unique_train_states / total_train_states,
+                'action_distribution': action_distribution,
+                'concept_ranges': {
+                    'min': X_train.min(axis=0).tolist(),
+                    'max': X_train.max(axis=0).tolist(),
+                    'mean': X_train.mean(axis=0).tolist(),
+                    'std': X_train.std(axis=0).tolist()
+                }
+            }
+            
+            model_path = os.path.join(output_dir, "dt_policy.pkl")
+            with open(model_path, 'wb') as f:
+                pickle.dump({
+                    'model': dt_model,
+                    'metadata': data.get('metadata', {}),
+                    'action_names': data.get('action_names', {}),
+                    'evaluation': results,
+                    'training_stats': training_stats
+                }, f)
+            
+            self.dt_model_var.set(model_path)
+            self.last_dt_output = output_dir
+            self.dt_open_output_btn.config(state=tk.NORMAL)
+            
+            # Create concept labels for visualization
+            n_concepts = data['metadata'].get('n_concepts', len(results['feature_importances']))
+            n_continuous = data['metadata'].get('n_continuous_concepts', 1)
+            concept_labels = []
+            for i in range(n_concepts):
+                label = f"C{i+1}"
+                if i < n_continuous:
+                    label += " (cont)"
+                else:
+                    label += " (bin)"
+                concept_labels.append(label)
+            
+            # Save visualizations
+            plot_confusion_matrix(
+                results['confusion_matrix'],
+                os.path.join(output_dir, "confusion_matrix.png")
+            )
+            
+            plot_feature_importance(
+                results['feature_importances'],
+                concept_labels,
+                os.path.join(output_dir, "feature_importance.png")
+            )
+            
+            # Export tree rules only for single DecisionTree
+            if not use_rf:
+                export_tree_rules(
+                    dt_model,
+                    concept_labels,
+                    os.path.join(output_dir, "tree_rules.txt")
+                )
+            else:
+                self.dt_log.insert(tk.END, f"\nℹ️  Tree rules not exported for RandomForest (ensemble of {dt_model.n_estimators} trees)\n")
+            
+            self.dt_log.insert(tk.END, f"✅ Training Complete!\n")
+            self.dt_log.insert(tk.END, f"Model saved: {model_path}\n")
+            self.dt_log.insert(tk.END, f"Visualizations saved in: {output_dir}\n")
+            self.dt_log.insert(tk.END, f"{'='*60}\n")
+            self.dt_log.see(tk.END)
+            
+            self.dt_status_var.set("✅ Step 2 Complete")
+            
+        except Exception as e:
+            import traceback
+            self.dt_log.insert(tk.END, f"\n❌ Error: {str(e)}\n")
+            self.dt_log.insert(tk.END, traceback.format_exc())
+            self.dt_log.see(tk.END)
+            self.dt_status_var.set("❌ Error in Step 2")
+            messagebox.showerror("Training Error", str(e))
+        
+        finally:
+            self.dt_train_btn.config(state=tk.NORMAL)
+    
+    def run_dt_test(self):
+        """Run test_decision_tree_agent.py"""
+        dt_model = self.dt_model_var.get().strip()
+        ppo_model = self.dt_ppo_model_var.get().strip()
+        
+        if not dt_model or not os.path.exists(dt_model):
+            messagebox.showerror("Error", "Please select a valid DT model file!")
+            return
+        
+        if not ppo_model or not os.path.exists(ppo_model):
+            messagebox.showerror("Error", "Please select a valid PPO model file!")
+            return
+        
+        # Disable button
+        self.dt_test_btn.config(state=tk.DISABLED)
+        self.dt_status_var.set("⏳ Testing DT Agent...")
+        
+        # Run in thread
+        thread = threading.Thread(target=self._run_dt_test_thread)
+        thread.daemon = True
+        thread.start()
+    
+    def _run_dt_test_thread(self):
+        """Thread for testing DT"""
+        try:
+            dt_model_path = self.dt_model_var.get().strip()
+            ppo_model_path = self.dt_ppo_model_var.get().strip()
+            episodes = self.dt_episodes_var.get()
+            epsilon = self.dt_epsilon_var.get()
+            compare_mlp = self.dt_compare_mlp_var.get()
+            save_logs = self.dt_save_logs_var.get()
+            
+            self.dt_log.insert(tk.END, f"\n{'='*60}\n")
+            self.dt_log.insert(tk.END, f"Step 3: Testing DT Agent\n")
+            self.dt_log.insert(tk.END, f"{'='*60}\n")
+            self.dt_log.insert(tk.END, f"DT Model: {dt_model_path}\n")
+            self.dt_log.insert(tk.END, f"PPO Model: {ppo_model_path}\n")
+            self.dt_log.insert(tk.END, f"Episodes: {episodes}\n")
+            self.dt_log.insert(tk.END, f"Epsilon (random): {epsilon:.2f}\n")
+            self.dt_log.insert(tk.END, f"Compare with MLP: {compare_mlp}\n")
+            self.dt_log.insert(tk.END, f"Save Episode Logs: {save_logs}\n\n")
+            self.dt_log.insert(tk.END, f"DT Model: {dt_model_path}\n")
+            self.dt_log.insert(tk.END, f"PPO Model: {ppo_model_path}\n")
+            self.dt_log.insert(tk.END, f"Episodes: {episodes}\n")
+            self.dt_log.insert(tk.END, f"Compare with MLP: {'Yes' if compare_mlp else 'No'}\n\n")
+            self.dt_log.see(tk.END)
+            
+            # Import and run
+            from test_decision_tree_agent import DecisionTreeAgent, test_agent, compare_with_mlp
+            import pickle
+            
+            # Load DT model to get environment
+            with open(dt_model_path, 'rb') as f:
+                dt_data = pickle.load(f)
+            
+            env_id = dt_data.get('metadata', {}).get('environment', 'MiniGrid-DoorKey-6x6-v0')
+            
+            self.dt_log.insert(tk.END, f"Environment: {env_id}\n\n")
+            self.dt_log.see(tk.END)
+            
+            if epsilon > 0:
+                self.dt_log.insert(tk.END, f"🎲 Epsilon-greedy enabled: ε={epsilon:.2f} ({epsilon*100:.0f}% random actions)\n")
+                self.dt_log.insert(tk.END, f"   This helps break out of action loops\n\n")
+                self.dt_log.see(tk.END)
+            
+            # Determine log directory
+            log_dir = None
+            if save_logs:
+                output_dir = self.last_dt_output or "dt_output"
+                log_dir = output_dir
+                self.dt_log.insert(tk.END, f"📝 Episode logs will be saved to: {log_dir}/\n\n")
+                self.dt_log.see(tk.END)
+            
+            # Create agent
+            agent = DecisionTreeAgent(
+                ppo_model_path=ppo_model_path,
+                dt_model_path=dt_model_path,
+                device="cpu",
+                epsilon=epsilon
+            )
+            
+            # Test
+            if compare_mlp:
+                self.dt_log.insert(tk.END, "Running comparison test...\n\n")
+                self.dt_log.see(tk.END)
+                
+                results = compare_with_mlp(
+                    dt_agent=agent,
+                    ppo_model_path=ppo_model_path,
+                    env_id=env_id,
+                    num_episodes=episodes,
+                    log_dir=log_dir
+                )
+                
+                dt_res = results['dt_results']
+                self.dt_log.insert(tk.END, f"\n📊 Comparison Results:\n")
+                self.dt_log.insert(tk.END, f"  DT Success Rate: {dt_res['success_rate']:.2f}%\n")
+                self.dt_log.insert(tk.END, f"  MLP Success Rate: {results['mlp_success_rate']:.2f}%\n")
+                self.dt_log.insert(tk.END, f"  Performance Ratio: {results['performance_ratio']:.1f}%\n\n")
+                self.dt_log.insert(tk.END, f"  DT Avg Reward: {dt_res['avg_reward']:.2f} ± {dt_res['std_reward']:.2f}\n")
+                self.dt_log.insert(tk.END, f"  MLP Avg Reward: {results['mlp_avg_reward']:.2f}\n\n")
+            else:
+                self.dt_log.insert(tk.END, "Testing DT policy...\n\n")
+                self.dt_log.see(tk.END)
+                
+                results = test_agent(
+                    agent=agent,
+                    env_id=env_id,
+                    num_episodes=episodes,
+                    render=False,
+                    verbose=False,
+                    log_dir=log_dir
+                )
+                
+                self.dt_log.insert(tk.END, f"\n📊 Test Results:\n")
+                self.dt_log.insert(tk.END, f"  Success Rate: {results['success_rate']:.2f}%\n")
+                self.dt_log.insert(tk.END, f"  Avg Reward: {results['avg_reward']:.2f} ± {results['std_reward']:.2f}\n")
+                self.dt_log.insert(tk.END, f"  Avg Steps: {results['avg_length']:.2f} ± {results['std_length']:.2f}\n")
+            
+            # Save results
+            output_dir = self.last_dt_output or "dt_output"
+            results_path = os.path.join(output_dir, "test_results.pkl")
+            with open(results_path, 'wb') as f:
+                pickle.dump(results, f)
+            
+            self.dt_log.insert(tk.END, f"\n✅ Testing Complete!\n")
+            self.dt_log.insert(tk.END, f"Results saved: {results_path}\n")
+            if save_logs and log_dir:
+                self.dt_log.insert(tk.END, f"Episode logs saved: {log_dir}/success_runs.txt, {log_dir}/failed_runs.txt\n")
+            self.dt_log.insert(tk.END, f"{'='*60}\n")
+            self.dt_log.see(tk.END)
+            
+            self.dt_status_var.set("✅ Step 3 Complete")
+            
+        except Exception as e:
+            import traceback
+            self.dt_log.insert(tk.END, f"\n❌ Error: {str(e)}\n")
+            self.dt_log.insert(tk.END, traceback.format_exc())
+            self.dt_log.see(tk.END)
+            self.dt_status_var.set("❌ Error in Step 3")
+            messagebox.showerror("Testing Error", str(e))
+        
+        finally:
+            self.dt_test_btn.config(state=tk.NORMAL)
+    
+    def run_dt_visualize(self):
+        """Run visualize_dt_policy.py"""
+        dt_model = self.dt_model_var.get().strip()
+        if not dt_model or not os.path.exists(dt_model):
+            messagebox.showerror("Error", "Please select a valid DT model file!")
+            return
+        
+        # Disable button
+        self.dt_viz_btn.config(state=tk.DISABLED)
+        self.dt_status_var.set("⏳ Creating visualizations...")
+        
+        # Run in thread
+        thread = threading.Thread(target=self._run_dt_visualize_thread)
+        thread.daemon = True
+        thread.start()
+    
+    def _run_dt_visualize_thread(self):
+        """Thread for visualization"""
+        try:
+            dt_model_path = self.dt_model_var.get().strip()
+            labels_path = self.dt_labels_var.get().strip() or None
+            training_data = self.dt_train_data_var.get().strip()
+            
+            output_dir = self.last_dt_output or "dt_output"
+            viz_dir = os.path.join(output_dir, "visualizations")
+            os.makedirs(viz_dir, exist_ok=True)
+            
+            self.dt_log.insert(tk.END, f"\n{'='*60}\n")
+            self.dt_log.insert(tk.END, f"Step 4: Creating Visualizations\n")
+            self.dt_log.insert(tk.END, f"{'='*60}\n")
+            self.dt_log.insert(tk.END, f"DT Model: {dt_model_path}\n")
+            self.dt_log.insert(tk.END, f"Concept Labels: {labels_path or 'None'}\n")
+            self.dt_log.insert(tk.END, f"Output: {viz_dir}\n\n")
+            self.dt_log.see(tk.END)
+            
+            # Import and run
+            from visualize_dt_policy import DTVisualizer
+            
+            visualizer = DTVisualizer(dt_model_path, labels_path)
+            
+            # Tree structure
+            self.dt_log.insert(tk.END, "Creating tree structure visualization...\n")
+            self.dt_log.see(tk.END)
+            visualizer.plot_tree_structure(
+                output_path=os.path.join(viz_dir, "tree_structure.png")
+            )
+            
+            # Feature importance
+            self.dt_log.insert(tk.END, "Creating feature importance plot...\n")
+            self.dt_log.see(tk.END)
+            visualizer.plot_feature_importance_detailed(
+                output_path=os.path.join(viz_dir, "feature_importance_detailed.png")
+            )
+            
+            # Concept-action heatmap (if training data exists)
+            if training_data and os.path.exists(training_data):
+                self.dt_log.insert(tk.END, "Creating concept-action heatmap...\n")
+                self.dt_log.see(tk.END)
+                visualizer.plot_concept_action_heatmap(
+                    data_path=training_data,
+                    output_path=os.path.join(viz_dir, "concept_action_heatmap.png")
+                )
+            
+            # Tree rules
+            self.dt_log.insert(tk.END, "Exporting tree rules...\n")
+            self.dt_log.see(tk.END)
+            visualizer.export_tree_rules_with_labels(
+                output_path=os.path.join(viz_dir, "tree_rules_semantic.txt")
+            )
+            
+            # Summary report
+            test_results_path = os.path.join(output_dir, "test_results.pkl")
+            if os.path.exists(test_results_path):
+                self.dt_log.insert(tk.END, "Creating summary report...\n")
+                self.dt_log.see(tk.END)
+                visualizer.create_summary_report(
+                    output_path=os.path.join(viz_dir, "summary_report.txt"),
+                    test_results_path=test_results_path
+                )
+            
+            self.dt_log.insert(tk.END, f"\n✅ Visualizations Complete!\n")
+            self.dt_log.insert(tk.END, f"Output directory: {viz_dir}\n")
+            self.dt_log.insert(tk.END, f"{'='*60}\n")
+            self.dt_log.see(tk.END)
+            
+            self.dt_status_var.set("✅ Step 4 Complete")
+            
+        except Exception as e:
+            import traceback
+            self.dt_log.insert(tk.END, f"\n❌ Error: {str(e)}\n")
+            self.dt_log.insert(tk.END, traceback.format_exc())
+            self.dt_log.see(tk.END)
+            self.dt_status_var.set("❌ Error in Step 4")
+            messagebox.showerror("Visualization Error", str(e))
+        
+        finally:
+            self.dt_viz_btn.config(state=tk.NORMAL)
+    
+    def run_dt_all(self):
+        """Run all DT steps sequentially"""
+        # Validate inputs
+        if not self.dt_ig_dir_var.get().strip():
+            messagebox.showerror("Error", "Please select IG directory first!")
+            return
+        
+        if not self.dt_ppo_model_var.get().strip():
+            messagebox.showerror("Error", "Please select PPO model first!")
+            return
+        
+        # Disable all buttons
+        self.dt_run_all_btn.config(state=tk.DISABLED)
+        self.dt_status_var.set("⏳ Running full pipeline...")
+        
+        self.dt_log.insert(tk.END, f"\n\n{'='*60}\n")
+        self.dt_log.insert(tk.END, "🚀 Starting Full DT Pipeline\n")
+        self.dt_log.insert(tk.END, f"{'='*60}\n\n")
+        self.dt_log.see(tk.END)
+        
+        # Run sequentially in thread
+        thread = threading.Thread(target=self._run_dt_all_thread)
+        thread.daemon = True
+        thread.start()
+    
+    def _run_dt_all_thread(self):
+        """Run all steps sequentially"""
+        try:
+            # Step 1: Parse
+            self.dt_current_step = 1
+            self._run_dt_parse_thread()
+            
+            # Step 2: Train
+            self.dt_current_step = 2
+            self._run_dt_train_thread()
+            
+            # Step 3: Test
+            self.dt_current_step = 3
+            self._run_dt_test_thread()
+            
+            # Step 4: Visualize (if labels provided)
+            if self.dt_labels_var.get().strip():
+                self.dt_current_step = 4
+                self._run_dt_visualize_thread()
+            
+            self.dt_log.insert(tk.END, f"\n\n{'='*60}\n")
+            self.dt_log.insert(tk.END, "🎉 Full Pipeline Complete!\n")
+            self.dt_log.insert(tk.END, f"{'='*60}\n")
+            self.dt_log.see(tk.END)
+            
+            self.dt_status_var.set("✅ All Steps Complete")
+            
+        except Exception as e:
+            import traceback
+            self.dt_log.insert(tk.END, f"\n❌ Pipeline Error: {str(e)}\n")
+            self.dt_log.insert(tk.END, traceback.format_exc())
+            self.dt_log.see(tk.END)
+            self.dt_status_var.set(f"❌ Error in Step {self.dt_current_step}")
+        
+        finally:
+            self.dt_run_all_btn.config(state=tk.NORMAL)
+    
+    def open_dt_output(self):
+        """Open DT output directory"""
+        output_dir = self.last_dt_output or "dt_output"
+        if os.path.exists(output_dir):
+            import subprocess
+            import platform
+            system = platform.system()
+            if system == "Darwin":
+                subprocess.run(["open", output_dir])
+            elif system == "Windows":
+                subprocess.run(["explorer", output_dir])
+            else:
+                subprocess.run(["xdg-open", output_dir])
     
     def open_gemini_json(self):
         """Open labels JSON file"""

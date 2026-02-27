@@ -200,6 +200,8 @@ class MinigridFeaturesExtractor(BaseFeaturesExtractor):
                     nn.Linear(n_concepts, features_dim),
                     nn.ReLU()
                 )
+                # Initialize attribute (will be populated during forward pass)
+                self.last_concept_bottleneck = None
             else:
                 # Mode 1/2/3: Standard FC layers
                 self.linear = nn.Sequential(
