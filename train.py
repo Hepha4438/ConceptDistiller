@@ -78,6 +78,8 @@ Examples:
     # PPO_CONCEPT specific
     parser.add_argument("--n-concepts", type=int, default=None,
                         help="PPO_CONCEPT number of concepts (default: auto-detect based on env difficulty)")
+    parser.add_argument("--n-continuous-concepts", type=int, default=None,
+                        help="PPO_CONCEPT number of continuous concepts for mode 5 (default: 1, rest are binary with STE)")
     parser.add_argument("--concept-mode", type=int, default=None, choices=[1, 2, 3, 4, 5],
                         help="PPO_CONCEPT extraction mode: 1=flatten, 2=avg pool, 3=max pool, 4=FC-bottleneck (default: 1)")
     parser.add_argument("--lambda-1", type=float, default=None,
@@ -148,6 +150,8 @@ Examples:
         if algo == "PPO_CONCEPT":
             if args.n_concepts is not None:
                 config["n_concepts"] = args.n_concepts
+            if args.n_continuous_concepts is not None:
+                config["n_continuous_concepts"] = args.n_continuous_concepts
             if args.concept_mode is not None:
                 config["concept_mode"] = args.concept_mode
             if args.lambda_1 is not None:
