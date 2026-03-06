@@ -1,0 +1,4110 @@
+======================================================================
+Episode: 2026-03-04 20:27:38
+Environment: MiniGrid-Empty-5x5-v0
+Reward: 0.0000
+Status: FAILED
+Total steps: 100
+Model: 4 concepts, mode 5, 1 continuous
+======================================================================
+
+Step    0:
+  Concept Vector (bottleneck (after STE)): [0.847154, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    1:
+  Concept Vector (bottleneck (after STE)): [0.632471, 0.000000, 0.000000, 1.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    2:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    3:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    4:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    5:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    6:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    7:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    8:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    9:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   10:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   11:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   12:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   13:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   14:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   15:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   16:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   17:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   18:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   19:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   20:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   21:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   22:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   23:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   24:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   25:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   26:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   27:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   28:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   29:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   30:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   31:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   32:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   33:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   34:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   35:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   36:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   37:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   38:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   39:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   40:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   41:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   42:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   43:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   44:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   45:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   46:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   47:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   48:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   49:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   50:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   51:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   52:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   53:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   54:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   55:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   56:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   57:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   58:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   59:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   60:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   61:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   62:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   63:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   64:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   65:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   66:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   67:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   68:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   69:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   70:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   71:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   72:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   73:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   74:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   75:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   76:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   77:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   78:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   79:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   80:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   81:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   82:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   83:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   84:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   85:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   86:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   87:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   88:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   89:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   90:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   91:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   92:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   93:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   94:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   95:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   96:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   97:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   98:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   99:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+----------------------------------------------------------------------
+
+======================================================================
+Episode: 2026-03-04 20:27:38
+Environment: MiniGrid-Empty-5x5-v0
+Reward: 0.0000
+Status: FAILED
+Total steps: 100
+Model: 4 concepts, mode 5, 1 continuous
+======================================================================
+
+Step    0:
+  Concept Vector (bottleneck (after STE)): [0.847154, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    1:
+  Concept Vector (bottleneck (after STE)): [0.632471, 0.000000, 0.000000, 1.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    2:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    3:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    4:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    5:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    6:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    7:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    8:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    9:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   10:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   11:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   12:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   13:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   14:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   15:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   16:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   17:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   18:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   19:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   20:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   21:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   22:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   23:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   24:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   25:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   26:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   27:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   28:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   29:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   30:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   31:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   32:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   33:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   34:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   35:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   36:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   37:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   38:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   39:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   40:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   41:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   42:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   43:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   44:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   45:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   46:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   47:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   48:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   49:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   50:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   51:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   52:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   53:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   54:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   55:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   56:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   57:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   58:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   59:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   60:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   61:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   62:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   63:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   64:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   65:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   66:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   67:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   68:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   69:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   70:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   71:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   72:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   73:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   74:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   75:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   76:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   77:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   78:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   79:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   80:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   81:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   82:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   83:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   84:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   85:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   86:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   87:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   88:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   89:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   90:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   91:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   92:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   93:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   94:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   95:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   96:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   97:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   98:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   99:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+----------------------------------------------------------------------
+
+======================================================================
+Episode: 2026-03-04 20:27:38
+Environment: MiniGrid-Empty-5x5-v0
+Reward: 0.0000
+Status: FAILED
+Total steps: 100
+Model: 4 concepts, mode 5, 1 continuous
+======================================================================
+
+Step    0:
+  Concept Vector (bottleneck (after STE)): [0.847154, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    1:
+  Concept Vector (bottleneck (after STE)): [0.632471, 0.000000, 0.000000, 1.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    2:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    3:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    4:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    5:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    6:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    7:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    8:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    9:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   10:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   11:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   12:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   13:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   14:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   15:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   16:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   17:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   18:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   19:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   20:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   21:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   22:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   23:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   24:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   25:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   26:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   27:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   28:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   29:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   30:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   31:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   32:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   33:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   34:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   35:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   36:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   37:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   38:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   39:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   40:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   41:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   42:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   43:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   44:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   45:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   46:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   47:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   48:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   49:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   50:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   51:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   52:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   53:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   54:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   55:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   56:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   57:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   58:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   59:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   60:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   61:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   62:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   63:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   64:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   65:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   66:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   67:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   68:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   69:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   70:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   71:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   72:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   73:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   74:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   75:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   76:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   77:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   78:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   79:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   80:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   81:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   82:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   83:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   84:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   85:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   86:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   87:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   88:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   89:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   90:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   91:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   92:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   93:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   94:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   95:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   96:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   97:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   98:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   99:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+----------------------------------------------------------------------
+
+======================================================================
+Episode: 2026-03-04 20:27:38
+Environment: MiniGrid-Empty-5x5-v0
+Reward: 0.0000
+Status: FAILED
+Total steps: 100
+Model: 4 concepts, mode 5, 1 continuous
+======================================================================
+
+Step    0:
+  Concept Vector (bottleneck (after STE)): [0.847154, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    1:
+  Concept Vector (bottleneck (after STE)): [0.632471, 0.000000, 0.000000, 1.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    2:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    3:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    4:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    5:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    6:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    7:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    8:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    9:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   10:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   11:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   12:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   13:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   14:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   15:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   16:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   17:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   18:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   19:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   20:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   21:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   22:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   23:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   24:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   25:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   26:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   27:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   28:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   29:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   30:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   31:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   32:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   33:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   34:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   35:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   36:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   37:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   38:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   39:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   40:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   41:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   42:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   43:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   44:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   45:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   46:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   47:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   48:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   49:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   50:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   51:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   52:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   53:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   54:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   55:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   56:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   57:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   58:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   59:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   60:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   61:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   62:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   63:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   64:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   65:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   66:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   67:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   68:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   69:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   70:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   71:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   72:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   73:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   74:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   75:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   76:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   77:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   78:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   79:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   80:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   81:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   82:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   83:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   84:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   85:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   86:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   87:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   88:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   89:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   90:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   91:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   92:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   93:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   94:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   95:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   96:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   97:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   98:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   99:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+----------------------------------------------------------------------
+
+======================================================================
+Episode: 2026-03-04 20:27:38
+Environment: MiniGrid-Empty-5x5-v0
+Reward: 0.0000
+Status: FAILED
+Total steps: 100
+Model: 4 concepts, mode 5, 1 continuous
+======================================================================
+
+Step    0:
+  Concept Vector (bottleneck (after STE)): [0.847154, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    1:
+  Concept Vector (bottleneck (after STE)): [0.632471, 0.000000, 0.000000, 1.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    2:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    3:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    4:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    5:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    6:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    7:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    8:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    9:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   10:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   11:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   12:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   13:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   14:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   15:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   16:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   17:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   18:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   19:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   20:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   21:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   22:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   23:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   24:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   25:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   26:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   27:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   28:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   29:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   30:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   31:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   32:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   33:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   34:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   35:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   36:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   37:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   38:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   39:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   40:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   41:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   42:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   43:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   44:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   45:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   46:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   47:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   48:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   49:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   50:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   51:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   52:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   53:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   54:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   55:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   56:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   57:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   58:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   59:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   60:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   61:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   62:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   63:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   64:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   65:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   66:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   67:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   68:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   69:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   70:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   71:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   72:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   73:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   74:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   75:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   76:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   77:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   78:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   79:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   80:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   81:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   82:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   83:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   84:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   85:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   86:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   87:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   88:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   89:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   90:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   91:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   92:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   93:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   94:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   95:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   96:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   97:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   98:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   99:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+----------------------------------------------------------------------
+
+======================================================================
+Episode: 2026-03-04 20:27:38
+Environment: MiniGrid-Empty-5x5-v0
+Reward: 0.0000
+Status: FAILED
+Total steps: 100
+Model: 4 concepts, mode 5, 1 continuous
+======================================================================
+
+Step    0:
+  Concept Vector (bottleneck (after STE)): [0.847154, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    1:
+  Concept Vector (bottleneck (after STE)): [0.632471, 0.000000, 0.000000, 1.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    2:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    3:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    4:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    5:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    6:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    7:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    8:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    9:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   10:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   11:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   12:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   13:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   14:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   15:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   16:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   17:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   18:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   19:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   20:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   21:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   22:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   23:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   24:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   25:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   26:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   27:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   28:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   29:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   30:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   31:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   32:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   33:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   34:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   35:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   36:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   37:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   38:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   39:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   40:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   41:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   42:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   43:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   44:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   45:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   46:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   47:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   48:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   49:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   50:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   51:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   52:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   53:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   54:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   55:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   56:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   57:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   58:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   59:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   60:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   61:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   62:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   63:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   64:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   65:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   66:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   67:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   68:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   69:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   70:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   71:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   72:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   73:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   74:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   75:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   76:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   77:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   78:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   79:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   80:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   81:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   82:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   83:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   84:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   85:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   86:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   87:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   88:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   89:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   90:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   91:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   92:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   93:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   94:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   95:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   96:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   97:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   98:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   99:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+----------------------------------------------------------------------
+
+======================================================================
+Episode: 2026-03-04 20:27:38
+Environment: MiniGrid-Empty-5x5-v0
+Reward: 0.0000
+Status: FAILED
+Total steps: 100
+Model: 4 concepts, mode 5, 1 continuous
+======================================================================
+
+Step    0:
+  Concept Vector (bottleneck (after STE)): [0.847154, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    1:
+  Concept Vector (bottleneck (after STE)): [0.632471, 0.000000, 0.000000, 1.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    2:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    3:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    4:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    5:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    6:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    7:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    8:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    9:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   10:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   11:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   12:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   13:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   14:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   15:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   16:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   17:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   18:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   19:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   20:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   21:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   22:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   23:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   24:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   25:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   26:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   27:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   28:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   29:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   30:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   31:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   32:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   33:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   34:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   35:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   36:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   37:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   38:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   39:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   40:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   41:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   42:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   43:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   44:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   45:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   46:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   47:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   48:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   49:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   50:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   51:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   52:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   53:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   54:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   55:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   56:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   57:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   58:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   59:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   60:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   61:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   62:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   63:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   64:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   65:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   66:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   67:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   68:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   69:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   70:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   71:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   72:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   73:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   74:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   75:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   76:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   77:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   78:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   79:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   80:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   81:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   82:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   83:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   84:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   85:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   86:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   87:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   88:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   89:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   90:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   91:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   92:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   93:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   94:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   95:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   96:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   97:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   98:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   99:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+----------------------------------------------------------------------
+
+======================================================================
+Episode: 2026-03-04 20:27:38
+Environment: MiniGrid-Empty-5x5-v0
+Reward: 0.0000
+Status: FAILED
+Total steps: 100
+Model: 4 concepts, mode 5, 1 continuous
+======================================================================
+
+Step    0:
+  Concept Vector (bottleneck (after STE)): [0.847154, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    1:
+  Concept Vector (bottleneck (after STE)): [0.632471, 0.000000, 0.000000, 1.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    2:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    3:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    4:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    5:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    6:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    7:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    8:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    9:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   10:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   11:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   12:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   13:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   14:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   15:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   16:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   17:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   18:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   19:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   20:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   21:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   22:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   23:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   24:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   25:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   26:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   27:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   28:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   29:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   30:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   31:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   32:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   33:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   34:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   35:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   36:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   37:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   38:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   39:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   40:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   41:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   42:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   43:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   44:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   45:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   46:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   47:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   48:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   49:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   50:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   51:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   52:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   53:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   54:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   55:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   56:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   57:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   58:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   59:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   60:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   61:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   62:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   63:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   64:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   65:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   66:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   67:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   68:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   69:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   70:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   71:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   72:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   73:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   74:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   75:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   76:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   77:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   78:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   79:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   80:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   81:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   82:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   83:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   84:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   85:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   86:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   87:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   88:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   89:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   90:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   91:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   92:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   93:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   94:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   95:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   96:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   97:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   98:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   99:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+----------------------------------------------------------------------
+
+======================================================================
+Episode: 2026-03-04 20:27:38
+Environment: MiniGrid-Empty-5x5-v0
+Reward: 0.0000
+Status: FAILED
+Total steps: 100
+Model: 4 concepts, mode 5, 1 continuous
+======================================================================
+
+Step    0:
+  Concept Vector (bottleneck (after STE)): [0.847154, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    1:
+  Concept Vector (bottleneck (after STE)): [0.632471, 0.000000, 0.000000, 1.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    2:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    3:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    4:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    5:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    6:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    7:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    8:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    9:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   10:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   11:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   12:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   13:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   14:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   15:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   16:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   17:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   18:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   19:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   20:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   21:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   22:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   23:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   24:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   25:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   26:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   27:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   28:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   29:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   30:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   31:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   32:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   33:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   34:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   35:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   36:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   37:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   38:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   39:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   40:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   41:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   42:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   43:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   44:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   45:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   46:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   47:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   48:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   49:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   50:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   51:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   52:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   53:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   54:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   55:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   56:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   57:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   58:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   59:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   60:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   61:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   62:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   63:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   64:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   65:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   66:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   67:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   68:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   69:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   70:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   71:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   72:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   73:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   74:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   75:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   76:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   77:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   78:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   79:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   80:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   81:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   82:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   83:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   84:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   85:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   86:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   87:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   88:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   89:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   90:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   91:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   92:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   93:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   94:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   95:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   96:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   97:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   98:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   99:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+----------------------------------------------------------------------
+
+======================================================================
+Episode: 2026-03-04 20:27:38
+Environment: MiniGrid-Empty-5x5-v0
+Reward: 0.0000
+Status: FAILED
+Total steps: 100
+Model: 4 concepts, mode 5, 1 continuous
+======================================================================
+
+Step    0:
+  Concept Vector (bottleneck (after STE)): [0.847154, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    1:
+  Concept Vector (bottleneck (after STE)): [0.632471, 0.000000, 0.000000, 1.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    2:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    3:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    4:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    5:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    6:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    7:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    8:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step    9:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   10:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   11:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   12:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   13:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   14:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   15:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   16:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   17:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   18:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   19:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   20:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   21:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   22:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   23:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   24:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   25:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   26:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   27:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   28:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   29:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   30:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   31:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   32:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   33:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   34:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   35:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   36:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   37:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   38:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   39:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   40:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   41:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   42:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   43:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   44:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   45:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   46:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   47:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   48:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   49:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   50:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   51:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   52:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   53:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   54:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   55:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   56:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   57:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   58:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   59:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   60:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   61:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   62:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   63:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   64:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   65:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   66:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   67:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   68:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   69:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   70:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   71:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   72:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   73:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   74:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   75:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   76:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   77:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   78:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   79:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   80:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   81:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   82:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   83:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   84:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   85:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   86:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   87:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   88:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   89:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   90:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   91:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   92:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   93:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   94:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   95:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   96:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   97:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   98:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+Step   99:
+  Concept Vector (bottleneck (after STE)): [0.917966, 0.000000, 1.000000, 0.000000]
+  Action: 2 (MOVE_FORWARD)
+
+----------------------------------------------------------------------
+
