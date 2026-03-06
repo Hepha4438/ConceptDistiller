@@ -8,6 +8,7 @@ from gymnasium.wrappers import RecordVideo
 from minigrid.wrappers import ImgObsWrapper
 from stable_baselines3 import PPO, DQN
 from train_ppo_concept import ConceptPPO
+from train_sdt import SDTPolicy
 import numpy as np
 import argparse
 import os
@@ -56,6 +57,8 @@ def test_agent(model_path, env_id="MiniGrid-Empty-5x5-v0", algorithm="PPO",
             model = DQN.load(model_path, env=env)
         elif algorithm.upper() == "PPO_CONCEPT":
             model = ConceptPPO.load(model_path, env=env)
+        elif algorithm.upper() == "SDT":
+            model = PPO.load(model_path, env=env, custom_objects={"policy_class": SDTPolicy})
         else:
             raise ValueError(f"Unknown algorithm: {algorithm}")
     except FileNotFoundError:
@@ -190,8 +193,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test trained MiniGrid agents")
     parser.add_argument("--env", type=str, default="MiniGrid-Empty-5x5-v0",
                         help="MiniGrid environment ID")
-    parser.add_argument("--algo", type=str, default="PPO", choices=["PPO", "DQN", "PPO_CONCEPT", "ppo", "dqn", "ppo_concept"],
-                        help="Algorithm (PPO, DQN, or PPO_CONCEPT)")
+    parser.add_argument("--algo", type=str, default="PPO", choices=["PPO", "DQN", "PPO_CONCEPT", "SDT", "ppo", "dqn", "ppo_concept", "sdt"],
+                        help="Algorithm (PPO, DQN, PPO_CONCEPT, or SDT)")
     parser.add_argument("--model", type=str, default=None,
                         help="Path to model file (optional, will auto-detect if not provided)")
     parser.add_argument("--episodes", type=int, default=10,

@@ -129,6 +129,113 @@ PPO_CONFIGS = {
     }
 }
 
+# Soft Decision Tree (SDT) Hyperparameters - Based on PPO with tree-based policy learning from concepts
+SDT_CONFIGS = {
+    # Easy environments
+    "easy": {
+        "total_timesteps": 300000,
+        "learning_rate": 3e-4,
+        "n_steps": 2048,
+        "batch_size": 256,
+        "n_epochs": 10,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": 0.2,
+        "ent_coef": 0.01,
+        "vf_coef": 0.5,
+        "max_grad_norm": 0.5,
+        "n_envs": 4,
+        "n_concepts": 3,  # Number of concepts from feature extractor
+        "concept_mode": 5,  # Same as PPO_CONCEPT: Mode 5 with STE
+        "lambda_1": 0.05,  # Orthogonality regularization
+        "lambda_2": 0.004,  # Sparsity regularization
+        "lambda_3": 2.0,  # L1 regularization
+        "constraint_lambda": 1.0,  # Mode 5 constraint
+        "n_continuous_concepts": 1,  # Mode 5: continuous concepts
+        "tree_depth": 4,  # 2^4 = 16 leaf nodes
+        "tree_temperature": 1.0,  # Temperature for soft routing
+        "penalty_coef": 0.01,  # Coefficient for tree decision penalty
+    },
+    
+    # Medium environments
+    "medium": {
+        "total_timesteps": 1000000,
+        "learning_rate": 3e-4,
+        "n_steps": 2048,
+        "batch_size": 256,
+        "n_epochs": 10,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": 0.2,
+        "ent_coef": 0.01,
+        "vf_coef": 0.5,
+        "max_grad_norm": 0.5,
+        "n_envs": 8,
+        "n_concepts": 5,
+        "concept_mode": 5,
+        "lambda_1": 0.05,
+        "lambda_2": 0.004,
+        "lambda_3": 2.0,
+        "constraint_lambda": 1.0,
+        "n_continuous_concepts": 1,
+        "tree_depth": 5,  # 2^5 = 32 leaf nodes
+        "tree_temperature": 1.0,
+        "penalty_coef": 0.01,
+    },
+    
+    # Hard environments
+    "hard": {
+        "total_timesteps": 4000000,
+        "learning_rate": 3e-4,
+        "n_steps": 2048,
+        "batch_size": 256,
+        "n_epochs": 10,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": 0.2,
+        "ent_coef": 0.01,
+        "vf_coef": 0.5,
+        "max_grad_norm": 0.5,
+        "n_envs": 8,
+        "n_concepts": 6,
+        "concept_mode": 5,
+        "lambda_1": 0.05,
+        "lambda_2": 0.004,
+        "lambda_3": 2.0,
+        "constraint_lambda": 1.0,
+        "n_continuous_concepts": 1,
+        "tree_depth": 6,  # 2^6 = 64 leaf nodes
+        "tree_temperature": 1.0,
+        "penalty_coef": 0.01,
+    },
+
+    # Extremely hard environments
+    "extreme": {
+        "total_timesteps": 10000000,
+        "learning_rate": 3e-4,
+        "n_steps": 2048,
+        "batch_size": 256,
+        "n_epochs": 10,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": 0.2,
+        "ent_coef": 0.01,
+        "vf_coef": 0.5,
+        "max_grad_norm": 0.5,
+        "n_envs": 16,
+        "n_concepts": 8,
+        "concept_mode": 5,
+        "lambda_1": 0.05,
+        "lambda_2": 0.004,
+        "lambda_3": 2.0,
+        "constraint_lambda": 1.0,
+        "n_continuous_concepts": 1,
+        "tree_depth": 6,  # 2^6 = 64 leaf nodes
+        "tree_temperature": 1.0,
+        "penalty_coef": 0.01,
+    }
+}
+
 # PPO Concept Hyperparameters - Based on PPO with concept learning
 PPO_CONCEPT_CONFIGS = {
     # Easy environments - 3 concepts
@@ -308,6 +415,12 @@ def get_ppo_concept_config(env_id):
     return PPO_CONCEPT_CONFIGS[difficulty].copy()
 
 
+def get_sdt_config(env_id):
+    """Get SDT hyperparameters for a specific environment."""
+    difficulty = ENV_DIFFICULTY.get(env_id, "medium")
+    return SDT_CONFIGS[difficulty].copy()
+
+
 def get_optuna_tuning_config(env_id):
     """Get Optuna tuning parameters for a specific environment."""
     difficulty = ENV_DIFFICULTY.get(env_id, "medium")
@@ -322,6 +435,8 @@ def print_config(env_id, algorithm="DQN"):
         config = get_ppo_config(env_id)
     elif algorithm.upper() == "PPO_CONCEPT":
         config = get_ppo_concept_config(env_id)
+    elif algorithm.upper() == "SDT":
+        config = get_sdt_config(env_id)
     else:
         raise ValueError(f"Unknown algorithm: {algorithm}")
     

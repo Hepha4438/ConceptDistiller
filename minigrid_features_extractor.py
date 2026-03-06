@@ -224,6 +224,10 @@ class MinigridFeaturesExtractor(BaseFeaturesExtractor):
     # Forward
     # --------------------------------------------------
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
+        # Normalize observations from uint8 [0, 255] to float32 [0, 1]
+        if observations.dtype == torch.uint8:
+            observations = observations.float() / 255.0
+        
         x = self.cnn(observations)  # [B,C,H,W]
 
         if self.concept_distilling:
@@ -236,16 +240,22 @@ class MinigridFeaturesExtractor(BaseFeaturesExtractor):
             if self.concept_mode == 1:
                 # Mode 1: Flatten concept_map [B,K,H,W] -> [B,K*H*W] -> FC
                 x_fc = concept_map.flatten(start_dim=1)
+                # Store concept_vector for SDT
+                self.last_concepts = concept_vector  # [B,K]
                 return self.linear(x_fc)
                 
             elif self.concept_mode == 2:
                 # Mode 2: Global average pooling -> concept_vector [B,K] -> FC
                 x_fc = concept_vector
+                # Store concepts for SDT
+                self.last_concepts = concept_vector  # [B,K]
                 return self.linear(x_fc)
                 
             elif self.concept_mode == 3:
                 # Mode 3: Global max pooling -> concept_vector [B,K] -> FC
                 x_fc = concept_map.flatten(2).max(dim=2)[0]  # [B,K]
+                # Store concepts for SDT
+                self.last_concepts = x_fc  # [B,K]
                 return self.linear(x_fc)
                 
             elif self.concept_mode == 4:
@@ -258,6 +268,8 @@ class MinigridFeaturesExtractor(BaseFeaturesExtractor):
                 
                 # Store additional concept bottleneck for visualization/analysis
                 self.last_concept_bottleneck = concept_bottleneck_vector
+                # Store concepts for SDT
+                self.last_concepts = concept_bottleneck_vector  # [B,K]
                 
                 # Continue through FC2
                 return self.fc2(concept_bottleneck_vector)
@@ -307,6 +319,8 @@ class MinigridFeaturesExtractor(BaseFeaturesExtractor):
                 
                 # Store for visualization/analysis
                 self.last_concept_bottleneck = concept_bottleneck_vector
+                # Store concepts for SDT
+                self.last_concepts = concept_bottleneck_vector  # [B,K]
                 
                 # Continue through FC2
                 return self.fc2(concept_bottleneck_vector)

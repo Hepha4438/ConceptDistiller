@@ -7,7 +7,8 @@ import argparse
 from train_dqn import train_dqn
 from train_ppo import train_ppo
 from train_ppo_concept import train_ppo_concept
-from config import get_dqn_config, get_ppo_config, get_ppo_concept_config, print_config
+from train_sdt import train_sdt
+from config import get_dqn_config, get_ppo_config, get_ppo_concept_config, get_sdt_config, print_config
 
 
 def main():
@@ -33,8 +34,8 @@ Examples:
     # Required arguments
     parser.add_argument("--env", type=str, required=True,
                         help="MiniGrid environment ID (e.g., MiniGrid-Empty-5x5-v0)")
-    parser.add_argument("--algo", type=str, required=True, choices=["DQN", "PPO", "PPO_CONCEPT", "dqn", "ppo", "ppo_concept"],
-                        help="Algorithm to use (DQN, PPO, or PPO_CONCEPT)")
+    parser.add_argument("--algo", type=str, required=True, choices=["DQN", "PPO", "PPO_CONCEPT", "SDT", "dqn", "ppo", "ppo_concept", "sdt"],
+                        help="Algorithm to use (DQN, PPO, PPO_CONCEPT, or SDT)")
     
     # Optional arguments
     parser.add_argument("--timesteps", type=int, default=None,
@@ -91,6 +92,17 @@ Examples:
     parser.add_argument("--constraint-lambda", type=float, default=None,
                         help="PPO_CONCEPT mode 5 constraint loss weight (default: 0.1)")
     
+    # SDT specific
+    parser.add_argument("--tree-depth", type=int, default=None,
+                        help="SDT tree depth (2^depth = number of leaf nodes, default: auto-detect)")
+    parser.add_argument("--tree-temperature", type=float, default=None,
+                        help="SDT temperature for soft routing (default: 1.0)")
+    parser.add_argument("--penalty-coef", type=float, default=None,
+                        help="SDT coefficient for tree decision penalty (default: 0.01)")
+    
+    # Note: SDT also uses concept parameters (n-concepts, concept-mode, lambda-1/2/3, etc.)
+    # These are shared with PPO_CONCEPT arguments above
+    
     # Utility
     parser.add_argument("--show-config", action="store_true",
                         help="Show recommended configuration and exit")
@@ -107,6 +119,8 @@ Examples:
         config = get_ppo_config(args.env)
     elif algo == "PPO_CONCEPT":
         config = get_ppo_concept_config(args.env)
+    elif algo == "SDT":
+        config = get_sdt_config(args.env)
     else:
         raise ValueError(f"Unknown algorithm: {algo}")
     
@@ -162,6 +176,31 @@ Examples:
                 config["lambda_3"] = args.lambda_3
             if args.constraint_lambda is not None:
                 config["constraint_lambda"] = args.constraint_lambda
+        
+        # SDT specific (also uses concept parameters + tree parameters)
+        if algo == "SDT":
+            # Concept parameters
+            if args.n_concepts is not None:
+                config["n_concepts"] = args.n_concepts
+            if args.n_continuous_concepts is not None:
+                config["n_continuous_concepts"] = args.n_continuous_concepts
+            if args.concept_mode is not None:
+                config["concept_mode"] = args.concept_mode
+            if args.lambda_1 is not None:
+                config["lambda_1"] = args.lambda_1
+            if args.lambda_2 is not None:
+                config["lambda_2"] = args.lambda_2
+            if args.lambda_3 is not None:
+                config["lambda_3"] = args.lambda_3
+            if args.constraint_lambda is not None:
+                config["constraint_lambda"] = args.constraint_lambda
+            # Tree parameters
+            if args.tree_depth is not None:
+                config["tree_depth"] = args.tree_depth
+            if args.tree_temperature is not None:
+                config["tree_temperature"] = args.tree_temperature
+            if args.penalty_coef is not None:
+                config["penalty_coef"] = args.penalty_coef
     
     # Show configuration
     if args.show_config:
@@ -189,6 +228,8 @@ Examples:
         model = train_ppo(env_id=args.env, **config)
     elif algo == "PPO_CONCEPT":
         model = train_ppo_concept(env_id=args.env, **config)
+    elif algo == "SDT":
+        model = train_sdt(env_id=args.env, **config)
     else:
         raise ValueError(f"Unknown algorithm: {algo}")
     
