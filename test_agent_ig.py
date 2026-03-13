@@ -149,6 +149,23 @@ def create_concept_values_bar(concept_values, width=200, height=None):
 
 
 # ============================================================
+# Helpers for PostHoc vs PPO_CONCEPT compatibility
+# ============================================================
+
+def get_cnn_from_extractor(features_extractor):
+    """
+    Get CNN module from features extractor.
+    Handles both PPO_CONCEPT (has 'cnn') and POST_HOC_CONCEPT (has 'pretrained_cnn').
+    """
+    if hasattr(features_extractor, 'pretrained_cnn'):
+        return features_extractor.pretrained_cnn
+    elif hasattr(features_extractor, 'cnn'):
+        return features_extractor.cnn
+    else:
+        raise AttributeError(f"Features extractor {type(features_extractor).__name__} has neither 'cnn' nor 'pretrained_cnn'")
+
+
+# ============================================================
 # Integrated Gradients
 # ============================================================
 
@@ -180,31 +197,56 @@ def compute_concept_integrated_gradients(features_extractor, obs_tensor, device,
     
     # Get concept values first
     with torch.no_grad():
-        # For Mode 4/5: need to run full forward to get concept_bottleneck
-        concept_mode = getattr(features_extractor, 'concept_mode', 1)
+        # Check if this is a posthoc model
+        is_posthoc_extractor = features_extractor.__class__.__name__ == 'PostHocConceptFeaturesExtractor'
         
-        if concept_mode in [4, 5]:
-            # Run full forward pass to populate last_concept_bottleneck
+        if is_posthoc_extractor:
+            # For posthoc models: obs → CNN → first_layer → h → encoder → z → decoder → h'
+            # features_extractor(obs) returns h' (reconstructed h)
+            # We need concept vector z from last_concepts
+            
+            # Run forward to populate last_concepts
             _ = features_extractor(obs_tensor)
             
-            # Use concept bottleneck vector (what the policy actually sees)
-            if hasattr(features_extractor, 'last_concept_bottleneck'):
-                concept_vector_for_vis = features_extractor.last_concept_bottleneck
-                print(f"DEBUG: Using concept_bottleneck from Mode {concept_mode}")
-            else:
-                # Fallback to ConceptLayer output
-                cnn_out = features_extractor.cnn(obs_tensor)
-                concept_map, concept_vector_for_vis = features_extractor.concept_layer(cnn_out)
-                print(f"DEBUG: Fallback to ConceptLayer output")
+            # Get concepts from stored last_concepts (z, not h')
+            concept_vector_for_vis = features_extractor.last_concepts
+            print(f"DEBUG: Using PostHocConceptFeaturesExtractor.last_concepts, concepts shape = {concept_vector_for_vis.shape}")
+            
+            # For heatmap, we need concept_map which doesn't exist in posthoc
+            # Use concept_vector as pseudo concept_map [B, K, 1, 1]
+            concept_map = concept_vector_for_vis.unsqueeze(-1).unsqueeze(-1)
+            K = concept_vector_for_vis.shape[1]
+            print(f"DEBUG: Created pseudo concept_map for posthoc: {concept_map.shape}")
         else:
-            # Mode 1/2/3: use ConceptLayer output
-            cnn_out = features_extractor.cnn(obs_tensor)
-            concept_map, concept_vector_for_vis = features_extractor.concept_layer(cnn_out)
-            print(f"DEBUG: Using ConceptLayer output for Mode {concept_mode}")
-        
-        # For heatmap computation, we still need concept_map from ConceptLayer
-        cnn_out = features_extractor.cnn(obs_tensor)
-        concept_map, _ = features_extractor.concept_layer(cnn_out)
+            # Original PPO_CONCEPT extraction logic
+            # For Mode 4/5: need to run full forward to get concept_bottleneck
+            concept_mode = getattr(features_extractor, 'concept_mode', 1)
+            
+            if concept_mode in [4, 5]:
+                # Run full forward pass to populate last_concept_bottleneck
+                _ = features_extractor(obs_tensor)
+                
+                # Use concept bottleneck vector (what the policy actually sees)
+                if hasattr(features_extractor, 'last_concept_bottleneck'):
+                    concept_vector_for_vis = features_extractor.last_concept_bottleneck
+                    print(f"DEBUG: Using concept_bottleneck from Mode {concept_mode}")
+                else:
+                    # Fallback to ConceptLayer output
+                    cnn = get_cnn_from_extractor(features_extractor)
+                    cnn_out = cnn(obs_tensor)
+                    concept_map, concept_vector_for_vis = features_extractor.concept_layer(cnn_out)
+                    print(f"DEBUG: Fallback to ConceptLayer output")
+            else:
+                # Mode 1/2/3: use ConceptLayer output
+                cnn = get_cnn_from_extractor(features_extractor)
+                cnn_out = cnn(obs_tensor)
+                concept_map, concept_vector_for_vis = features_extractor.concept_layer(cnn_out)
+                print(f"DEBUG: Using ConceptLayer output for Mode {concept_mode}")
+            
+            # For heatmap computation, we still need concept_map from ConceptLayer
+            cnn = get_cnn_from_extractor(features_extractor)
+            cnn_out = cnn(obs_tensor)
+            concept_map, _ = features_extractor.concept_layer(cnn_out)
     
     print(f"DEBUG: concept_map shape = {concept_map.shape}")
     print(f"DEBUG: concept_vector_for_vis shape = {concept_vector_for_vis.shape}")
@@ -229,17 +271,21 @@ def compute_concept_integrated_gradients(features_extractor, obs_tensor, device,
         
         # Create a simple wrapper model that returns scalar output
         class ConceptKWrapper(torch.nn.Module):
-            def __init__(self, extractor, concept_idx, use_bottleneck=False):
+            def __init__(self, extractor, concept_idx, use_bottleneck=False, is_posthoc=False):
                 super().__init__()
                 self.extractor = extractor
                 self.k = concept_idx
                 self.use_bottleneck = use_bottleneck
+                self.is_posthoc = is_posthoc
             
             def forward(self, x):
                 # Aggressively ensure contiguity
                 x = x.contiguous()
                 
-                if self.use_bottleneck:
+                if self.is_posthoc:
+                    # Posthoc: CNN → first_layer → h → concepts
+                    concept_vec = self.extractor(x)
+                elif self.use_bottleneck:
                     # Mode 4/5: Use concept bottleneck (what policy actually uses)
                     # Run full forward to get concept_bottleneck
                     features = self.extractor(x)  # This populates last_concept_bottleneck
@@ -263,10 +309,12 @@ def compute_concept_integrated_gradients(features_extractor, obs_tensor, device,
                 
                 return output
         
-        # Create wrapper - use bottleneck for Mode 4/5
+        # Create wrapper - check if posthoc or use bottleneck for Mode 4/5
+        is_posthoc_extractor_local = features_extractor.__class__.__name__ == 'PostHocConceptFeaturesExtractor'
         concept_mode = getattr(features_extractor, 'concept_mode', 1)
-        use_bottleneck = (concept_mode in [4, 5])
-        wrapper = ConceptKWrapper(features_extractor, k, use_bottleneck=use_bottleneck)
+        use_bottleneck = (concept_mode in [4, 5]) and not is_posthoc_extractor_local
+        wrapper = ConceptKWrapper(features_extractor, k, use_bottleneck=use_bottleneck, 
+                                 is_posthoc=is_posthoc_extractor_local)
         wrapper.eval()
         
         # Initialize IG with wrapper
@@ -314,7 +362,8 @@ def compute_concept_integrated_gradients(features_extractor, obs_tensor, device,
                             print(f"                             Using concept_map activation instead of IG.")
                             
                             # Use concept_map activation as heatmap
-                            cnn_out = features_extractor.cnn(obs_tensor)
+                            cnn = get_cnn_from_extractor(features_extractor)
+                            cnn_out = cnn(obs_tensor)
                             concept_map_temp, _ = features_extractor.concept_layer(cnn_out)
                             activation_map = concept_map_temp[0, k].detach().cpu().numpy()
                             
@@ -496,7 +545,12 @@ def run_and_collect_best_episode(model_path,
     env = gym.make(env_id, render_mode="rgb_array")
     env = ImgObsWrapper(env)
     
-    if algorithm.upper() == "PPO_CONCEPT":
+    # Load model based on algorithm
+    if algorithm.upper() == "POST_HOC_CONCEPT":
+        print(f"Loading POST_HOC_CONCEPT model")
+        from train_concept_posthoc import load_posthoc_model
+        model = load_posthoc_model(model_path, env)
+    elif algorithm.upper() == "PPO_CONCEPT":
         model = ConceptPPO.load(model_path, env=env, device=device)
     elif algorithm.upper().startswith("PPO"):
         model = PPO.load(model_path, env=env, device=device)
@@ -667,12 +721,17 @@ def log_concept_actions(model, obs_list, actions_list, reward, out_dir, env_id, 
                 if hasattr(fx, 'last_concept_bottleneck'):
                     concept_vec = fx.last_concept_bottleneck[0].cpu().numpy()
                     vector_type = "bottleneck (after STE)"
-                else:
-                    # Fallback to concept_layer output
-                    cnn_out = fx.cnn(obs_t)
+                elif hasattr(fx, 'concept_layer'):
+                    # Fallback to concept_layer output (PPO_CONCEPT only)
+                    cnn = get_cnn_from_extractor(fx)
+                    cnn_out = cnn(obs_t)
                     _, concept_vector = fx.concept_layer(cnn_out)
                     concept_vec = concept_vector[0].cpu().numpy()
                     vector_type = "concept_layer"
+                else:
+                    # PostHoc model - use last_concepts
+                    concept_vec = fx.last_concepts[0].cpu().numpy() if hasattr(fx, 'last_concepts') else np.zeros(1)
+                    vector_type = "last_concepts (posthoc)"
             
             # Format concept vector with higher precision (6 decimals to avoid conflicts)
             concept_str = "[" + ", ".join([f"{v:.6f}" for v in concept_vec]) + "]"

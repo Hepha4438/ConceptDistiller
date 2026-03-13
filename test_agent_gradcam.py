@@ -181,7 +181,18 @@ def compute_concept_gradcams(features_extractor, obs_tensor, device):
         img_rgb:       HxWx3 uint8 original (from obs_tensor)
         cams_list:     list[K] of Hc x Wc floats in [0,1]
         concept_values: numpy array of K concept neuron outputs (floats)
+    
+    Note: POST_HOC_CONCEPT models not supported (no concept_map).
+          Use Integrated Gradients (test_agent_ig.py) instead.
     """
+    # Check if this is a posthoc model
+    if features_extractor.__class__.__name__ == 'PostHocConceptFeaturesExtractor':
+        raise ValueError(
+            "GradCAM is not supported for POST_HOC_CONCEPT models.\n"
+            "POST_HOC_CONCEPT models don't have spatial concept_map (only concept vectors).\n"
+            "Please use Integrated Gradients analysis instead: test_agent_ig.py"
+        )
+    
     features_extractor.to(device)
     features_extractor.eval()
 
@@ -440,7 +451,10 @@ def run_and_collect_best_episode(model_path,
     env = gym.make(env_id, render_mode="rgb_array")
     env = ImgObsWrapper(env)
 
-    if algorithm.upper() == "PPO_CONCEPT":
+    if algorithm.upper() == "POST_HOC_CONCEPT":
+        from train_concept_posthoc import load_posthoc_model
+        model = load_posthoc_model(model_path, env)
+    elif algorithm.upper() == "PPO_CONCEPT":
         model = ConceptPPO.load(model_path, env=env, device=device)
     elif algorithm.upper().startswith("PPO"):
         model = PPO.load(model_path, env=env, device=device)
@@ -587,7 +601,10 @@ def run_and_save_all_episodes(model_path,
     env = gym.make(env_id, render_mode="rgb_array")
     env = ImgObsWrapper(env)
 
-    if algorithm.upper() == "PPO_CONCEPT":
+    if algorithm.upper() == "POST_HOC_CONCEPT":
+        from train_concept_posthoc import load_posthoc_model
+        model = load_posthoc_model(model_path, env)
+    elif algorithm.upper() == "PPO_CONCEPT":
         model = ConceptPPO.load(model_path, env=env, device=device)
     elif algorithm.upper().startswith("PPO"):
         model = PPO.load(model_path, env=env, device=device)

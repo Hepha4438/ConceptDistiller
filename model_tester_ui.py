@@ -17,7 +17,7 @@ from stable_baselines3.common.callbacks import BaseCallback
 import numpy as np
 from datetime import datetime
 
-from config import get_dqn_config, get_ppo_config, get_ppo_concept_config, get_sdt_config, ENV_DIFFICULTY
+from config import get_dqn_config, get_ppo_config, get_ppo_concept_config, get_sdt_config, get_posthoc_concept_config, ENV_DIFFICULTY
 
 
 def get_next_model_number(save_dir, prefix="minigrid"):
@@ -112,6 +112,9 @@ def run_env_human_mode(model_path, env_id, algorithm, num_episodes, result_queue
             model = DQN.load(model_path, env=env)
         elif algorithm.upper() == "PPO_CONCEPT":
             model = ConceptPPO.load(model_path, env=env)
+        elif algorithm.upper() == "POST_HOC_CONCEPT":
+            from train_concept_posthoc import load_posthoc_model
+            model = load_posthoc_model(model_path, env)
         elif algorithm.upper() == "SDT":
             model = PPO.load(model_path, env=env, custom_objects={"policy_class": SDTPolicy})
         else:
@@ -296,7 +299,7 @@ class ModelTesterUI:
         
         ttk.Label(algo_frame, text="Select Algorithm:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=2)
         self.train_algo_var = tk.StringVar(value="PPO")
-        algo_combo = ttk.Combobox(algo_frame, textvariable=self.train_algo_var, values=["PPO", "DQN", "PPO_CONCEPT", "SDT"], width=15)
+        algo_combo = ttk.Combobox(algo_frame, textvariable=self.train_algo_var, values=["PPO", "DQN", "PPO_CONCEPT", "SDT", "POST_HOC_CONCEPT"], width=15)
         algo_combo.grid(row=0, column=1, padx=5, pady=2, sticky=tk.W)
         algo_combo.bind('<<ComboboxSelected>>', self.on_algo_changed)
         
@@ -562,6 +565,8 @@ class ModelTesterUI:
             config = get_ppo_concept_config(env_id)
         elif algo == "SDT":
             config = get_sdt_config(env_id)
+        elif algo == "POST_HOC_CONCEPT":
+            config = get_posthoc_concept_config(env_id)
         else:
             config = get_ppo_config(env_id)  # fallback
         
@@ -615,6 +620,66 @@ class ModelTesterUI:
             
             row += 1
         
+        # Add pretrained_model_path for POST_HOC_CONCEPT
+        if algo == "POST_HOC_CONCEPT":
+            ttk.Label(self.hyperparam_frame, text="pretrained_model_path:", 
+                     foreground="red", font=('Arial', 9, 'bold')).grid(row=row, column=0, sticky=tk.W, padx=5, pady=3)
+            pretrained_var = tk.StringVar(value="models/MiniGrid-Empty-5x5-v0/ppo/ppo_minigrid_000.zip")
+            entry = ttk.Entry(self.hyperparam_frame, textvariable=pretrained_var, width=40)
+            entry.grid(row=row, column=1, columnspan=2, sticky=tk.W+tk.E, padx=5, pady=3)
+            
+            # Add browse button
+            def browse_model():
+                from tkinter import filedialog
+                filename = filedialog.askopenfilename(
+                    title="Select Pretrained PPO Model",
+                    filetypes=[("Model files", "*.zip"), ("All files", "*.*")],
+                    initialdir="models/"
+                )
+                if filename:
+                    pretrained_var.set(filename)
+            
+            browse_btn = ttk.Button(self.hyperparam_frame, text="Browse...", command=browse_model, width=10)
+            browse_btn.grid(row=row, column=3, padx=5, pady=3)
+            
+            self.hyperparam_vars['pretrained_model_path'] = pretrained_var
+            row += 1
+            
+            # Add dataset_path (optional - for pre-collected datasets)
+            ttk.Label(self.hyperparam_frame, text="dataset_path (optional):", 
+                     foreground="blue").grid(row=row, column=0, sticky=tk.W, padx=5, pady=3)
+            dataset_var = tk.StringVar(value="")
+            entry = ttk.Entry(self.hyperparam_frame, textvariable=dataset_var, width=40)
+            entry.grid(row=row, column=1, columnspan=2, sticky=tk.W+tk.E, padx=5, pady=3)
+            
+            # Add browse button for dataset
+            def browse_dataset():
+                from tkinter import filedialog
+                filename = filedialog.askopenfilename(
+                    title="Select Pre-collected Dataset",
+                    filetypes=[("Dataset files", "*.pt"), ("All files", "*.*")],
+                    initialdir="posthoc_datasets/"
+                )
+                if filename:
+                    dataset_var.set(filename)
+            
+            browse_dataset_btn = ttk.Button(self.hyperparam_frame, text="Browse...", command=browse_dataset, width=10)
+            browse_dataset_btn.grid(row=row, column=3, padx=5, pady=3)
+            
+            self.hyperparam_vars['dataset_path'] = dataset_var
+            row += 1
+            
+            # Add "Collect Dataset Only" button
+            def collect_dataset_only():
+                self.collect_posthoc_dataset()
+            
+            collect_btn = ttk.Button(self.hyperparam_frame, text="📂 Collect Dataset Only", 
+                                    command=collect_dataset_only, width=25)
+            collect_btn.grid(row=row, column=1, columnspan=2, pady=5)
+            ttk.Label(self.hyperparam_frame, text="(Save for later training)", 
+                     foreground="gray", font=('Arial', 8, 'italic')).grid(row=row, column=3, sticky=tk.W, padx=5)
+            row += 1
+        
         # Add device and seed (not in config)
         ttk.Label(self.hyperparam_frame, text="seed:").grid(row=row, column=0, sticky=tk.W, padx=5, pady=3)
         seed_var = tk.IntVar(value=42)
@@ -628,6 +693,119 @@ class ModelTesterUI:
     def on_algo_changed(self, event):
         """Handle algorithm selection change"""
         self.load_hyperparameters()
+    
+    def collect_posthoc_dataset(self):
+        """Collect dataset for POST_HOC_CONCEPT training"""
+        # Get configuration
+        env_id = self.train_env_var.get()
+        algo = self.train_algo_var.get()
+        device = self.train_device_var.get()
+        
+        if algo != "POST_HOC_CONCEPT":
+            messagebox.showwarning("Warning", "This feature is only for POST_HOC_CONCEPT algorithm!")
+            return
+        
+        # Get hyperparameters
+        pretrained_model_path = self.hyperparam_vars.get('pretrained_model_path', tk.StringVar()).get()
+        collection_timesteps = self.hyperparam_vars.get('collection_timesteps', tk.IntVar()).get()
+        seed = self.hyperparam_vars.get('seed', tk.IntVar()).get()
+        
+        # Validate pretrained model path
+        if not pretrained_model_path or not os.path.exists(pretrained_model_path):
+            messagebox.showerror("Error", 
+                               "Please specify a valid pretrained PPO model path!\n\n"
+                               "Use the 'Browse...' button to select a model.")
+            return
+        
+        # Confirm
+        msg = f"Collect dataset from pretrained model?\n\n"
+        msg += f"Environment: {env_id}\n"
+        msg += f"Model: {os.path.basename(pretrained_model_path)}\n"
+        msg += f"Samples: {collection_timesteps:,}\n"
+        msg += f"Device: {device}\n\n"
+        msg += f"This will save the dataset for later training.\n"
+        msg += f"Time: ~1-2 minutes for 500k samples."
+        
+        if not messagebox.askyesno("Confirm Dataset Collection", msg):
+            return
+        
+        # Log start
+        self.train_log.delete(1.0, tk.END)
+        self.train_log.insert(tk.END, f"{'='*60}\n")
+        self.train_log.insert(tk.END, f"Collecting POST_HOC_CONCEPT Dataset\n")
+        self.train_log.insert(tk.END, f"{'='*60}\n")
+        self.train_log.insert(tk.END, f"Environment: {env_id}\n")
+        self.train_log.insert(tk.END, f"Model: {os.path.basename(pretrained_model_path)}\n")
+        self.train_log.insert(tk.END, f"Samples: {collection_timesteps:,}\n")
+        self.train_log.insert(tk.END, f"Device: {device}\n")
+        self.train_log.insert(tk.END, f"Seed: {seed}\n")
+        self.train_log.insert(tk.END, f"{'='*60}\n\n")
+        self.train_log.see(tk.END)
+        
+        # Disable buttons and start progress
+        self.train_button.config(state=tk.DISABLED)
+        self.stop_button.config(state=tk.NORMAL)
+        self.train_progress_bar['mode'] = 'indeterminate'
+        self.train_progress_bar.start(10)
+        self.train_status_var.set("Collecting dataset...")
+        
+        # Run in thread
+        thread = threading.Thread(target=self._collect_dataset_thread, 
+                                 args=(pretrained_model_path, env_id, collection_timesteps, device, seed))
+        thread.daemon = True
+        thread.start()
+    
+    def _collect_dataset_thread(self, pretrained_model_path, env_id, collection_timesteps, device, seed):
+        """Thread for dataset collection"""
+        try:
+            from train_concept_posthoc import collect_posthoc_dataset
+            
+            self.train_log.insert(tk.END, "Starting dataset collection...\n")
+            self.train_log.see(tk.END)
+            
+            # Collect dataset
+            dataset_path = collect_posthoc_dataset(
+                pretrained_model_path=pretrained_model_path,
+                env_id=env_id,
+                n_samples=collection_timesteps,
+                device=device,
+                seed=seed,
+                save_dir="posthoc_datasets"
+            )
+            
+            # Update UI
+            self.train_log.insert(tk.END, f"\n{'='*60}\n")
+            self.train_log.insert(tk.END, f"✓ Dataset Collection Complete!\n")
+            self.train_log.insert(tk.END, f"{'='*60}\n")
+            self.train_log.insert(tk.END, f"Saved to: {dataset_path}\n")
+            self.train_log.insert(tk.END, f"\nYou can now use this dataset for training.\n")
+            self.train_log.insert(tk.END, f"The dataset path has been automatically filled.\n")
+            self.train_log.see(tk.END)
+            
+            # Automatically fill dataset_path field
+            if 'dataset_path' in self.hyperparam_vars:
+                self.hyperparam_vars['dataset_path'].set(dataset_path)
+            
+            self.train_status_var.set("Dataset collection completed!")
+            messagebox.showinfo("Success", 
+                              f"Dataset collected successfully!\n\n"
+                              f"Saved to: {os.path.basename(dataset_path)}\n\n"
+                              f"You can now start training with this dataset.")
+            
+        except Exception as e:
+            import traceback
+            error_msg = f"{str(e)}\n{traceback.format_exc()}"
+            self.train_log.insert(tk.END, f"\n❌ Error during collection:\n{error_msg}\n")
+            self.train_log.see(tk.END)
+            self.train_status_var.set("Collection failed!")
+            messagebox.showerror("Error", f"Dataset collection failed:\n\n{str(e)}")
+        
+        finally:
+            # Re-enable buttons and stop progress
+            self.train_button.config(state=tk.NORMAL)
+            self.stop_button.config(state=tk.DISABLED)
+            self.train_progress_bar.stop()
+            self.train_progress_bar['mode'] = 'determinate'
     
     def start_training(self):
         """Start training in a separate thread"""
@@ -650,8 +828,11 @@ class ModelTesterUI:
                     hyperparams[param_name] = var.get()
                 elif isinstance(var, tk.StringVar):
                     val_str = var.get()
+                    # Special handling for file paths
+                    if param_name in ['pretrained_model_path', 'dataset_path']:
+                        hyperparams[param_name] = val_str
                     # Try to convert to appropriate type
-                    if '.' in val_str or 'e-' in val_str.lower():
+                    elif '.' in val_str or 'e-' in val_str.lower():
                         hyperparams[param_name] = float(val_str)
                     else:
                         try:
@@ -666,11 +847,19 @@ class ModelTesterUI:
         hyperparams['env_id'] = env_id
         
         # Confirm
-        total_timesteps = hyperparams.get('total_timesteps', 100000)
-        msg = f"Start training {algo} on {env_id}?\n\n"
-        msg += f"Total timesteps: {total_timesteps:,}\n"
-        msg += f"Device: {device}\n"
-        msg += f"\nThis may take several minutes..."
+        if algo == "POST_HOC_CONCEPT":
+            total_timesteps = hyperparams.get('collection_timesteps', 100000)
+            msg = f"Start training {algo} on {env_id}?\n\n"
+            msg += f"Collection timesteps: {total_timesteps:,}\n"
+            msg += f"Training epochs: {hyperparams.get('training_epochs', 100)}\n"
+            msg += f"Device: {device}\n"
+            msg += f"\nThis may take several minutes..."
+        else:
+            total_timesteps = hyperparams.get('total_timesteps', 100000)
+            msg = f"Start training {algo} on {env_id}?\n\n"
+            msg += f"Total timesteps: {total_timesteps:,}\n"
+            msg += f"Device: {device}\n"
+            msg += f"\nThis may take several minutes..."
         
         if not messagebox.askyesno("Confirm Training", msg):
             return
@@ -690,7 +879,11 @@ class ModelTesterUI:
         self.train_log.insert(tk.END, f"Environment: {env_id}\n")
         self.train_log.insert(tk.END, f"Algorithm: {algo}\n")
         self.train_log.insert(tk.END, f"Device: {device}\n")
-        self.train_log.insert(tk.END, f"Total timesteps: {total_timesteps:,}\n")
+        if algo == "POST_HOC_CONCEPT":
+            self.train_log.insert(tk.END, f"Collection timesteps: {total_timesteps:,}\n")
+            self.train_log.insert(tk.END, f"Training epochs: {hyperparams.get('training_epochs', 100)}\n")
+        else:
+            self.train_log.insert(tk.END, f"Total timesteps: {total_timesteps:,}\n")
         self.train_log.insert(tk.END, "-" * 50 + "\n")
         
         # Reset last logged percent for new training session
@@ -718,8 +911,13 @@ class ModelTesterUI:
             
             env_id = hyperparams.pop('env_id')
             seed = hyperparams.pop('seed', 42)
-            total_timesteps = hyperparams.pop('total_timesteps')
             device = hyperparams.pop('device', 'mps')
+            
+            # POST_HOC_CONCEPT uses collection_timesteps instead of total_timesteps
+            if algo == "POST_HOC_CONCEPT":
+                total_timesteps = hyperparams.get('collection_timesteps', 100000)
+            else:
+                total_timesteps = hyperparams.pop('total_timesteps')
             
             if algo == "DQN":
                 from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
@@ -1231,6 +1429,78 @@ class ModelTesterUI:
                     'env_id': env_id,
                     'save_path': final_save_path + '.zip'
                 }))
+            
+            elif algo == "POST_HOC_CONCEPT":  # Post-hoc Concept Extraction
+                from train_concept_posthoc import train_posthoc_concepts
+                
+                # Get hyperparameters
+                n_concepts = hyperparams.pop('n_concepts', 5)
+                n_continuous_concepts = hyperparams.pop('n_continuous_concepts', 1)
+                collection_timesteps = hyperparams.pop('collection_timesteps', 500000)
+                training_epochs = hyperparams.pop('training_epochs', 100)
+                batch_size = hyperparams.pop('batch_size', 256)
+                learning_rate = hyperparams.pop('learning_rate', 1e-3)
+                lambda_rec = hyperparams.pop('lambda_rec', 1.0)
+                lambda_p = hyperparams.pop('lambda_p', 0.5)
+                lambda_o = hyperparams.pop('lambda_o', 0.05)
+                lambda_s = hyperparams.pop('lambda_s', 0.004)
+                lambda_b = hyperparams.pop('lambda_b', 0.1)
+                pretrained_model_path = hyperparams.pop('pretrained_model_path', '')
+                dataset_path = hyperparams.pop('dataset_path', '')  # NEW: optional dataset path
+                
+                if not pretrained_model_path or not os.path.exists(pretrained_model_path):
+                    raise ValueError(f"Invalid pretrained model path: {pretrained_model_path}")
+                
+                # Use dataset if provided, otherwise collect new
+                use_dataset = dataset_path and os.path.exists(dataset_path)
+                
+                self.training_queue.put(('progress', {
+                    'timesteps': 0,
+                    'total_timesteps': (0 if use_dataset else collection_timesteps) + training_epochs * 1000,
+                    'progress': 0
+                }))
+                
+                try:
+                    # Train post-hoc concept model
+                    model, save_path = train_posthoc_concepts(
+                        pretrained_model_path=pretrained_model_path,
+                        env_id=env_id,
+                        n_concepts=n_concepts,
+                        n_continuous=n_continuous_concepts,
+                        dataset_path=dataset_path if use_dataset else None,  # NEW: pass dataset_path
+                        collection_timesteps=collection_timesteps,
+                        training_epochs=training_epochs,
+                        batch_size=batch_size,
+                        learning_rate=learning_rate,
+                        lambda_rec=lambda_rec,
+                        lambda_p=lambda_p,
+                        lambda_o=lambda_o,
+                        lambda_s=lambda_s,
+                        lambda_b=lambda_b,
+                        device=device,
+                        seed=seed
+                    )
+                    
+                    # Check if training was stopped early
+                    if not self.is_training:
+                        self.training_queue.put(('stopped', {
+                            'algo': algo,
+                            'env_id': env_id
+                        }))
+                        return
+                    
+                    self.training_queue.put(('complete', {
+                        'algo': algo,
+                        'env_id': env_id,
+                        'save_path': save_path + '.zip'
+                    }))
+                    
+                except KeyboardInterrupt:
+                    self.training_queue.put(('stopped', {
+                        'algo': algo,
+                        'env_id': env_id
+                    }))
+                    return
                 
         except Exception as e:
             import traceback
@@ -1434,6 +1704,15 @@ class ModelTesterUI:
             messagebox.showwarning("Warning", "Models directory not found!")
             return
         
+        # Map folder names to algorithm names
+        folder_to_algo = {
+            'ppo': 'PPO',
+            'dqn': 'DQN',
+            'ppo_concept': 'PPO_CONCEPT',
+            'posthoc_concept': 'POST_HOC_CONCEPT',
+            'sdt': 'SDT'
+        }
+        
         # Scan for models
         for env_id in os.listdir(models_dir):
             env_path = os.path.join(models_dir, env_id)
@@ -1443,10 +1722,13 @@ class ModelTesterUI:
             env_node = self.model_tree.insert("", "end", text=env_id, 
                                             values=("☐", env_id, "", "", "Environment"))
             
-            for algorithm in os.listdir(env_path):
-                algo_path = os.path.join(env_path, algorithm)
+            for folder_name in os.listdir(env_path):
+                algo_path = os.path.join(env_path, folder_name)
                 if not os.path.isdir(algo_path):
                     continue
+                
+                # Map folder name to algorithm name
+                algorithm = folder_to_algo.get(folder_name.lower(), folder_name.upper())
                 
                 # Find model files
                 for model_file in os.listdir(algo_path):
@@ -1959,7 +2241,7 @@ class ModelTesterUI:
         self.load_gradcam_models()
     
     def load_gradcam_models(self):
-        """Load PPO_CONCEPT models from models directory"""
+        """Load PPO_CONCEPT and POST_HOC_CONCEPT models from models directory"""
         # Clear existing
         for item in self.gradcam_tree.get_children():
             self.gradcam_tree.delete(item)
@@ -1975,23 +2257,34 @@ class ModelTesterUI:
             if not os.path.isdir(env_path):
                 continue
             
-            ppo_concept_path = os.path.join(env_path, "ppo_concept")
-            if not os.path.exists(ppo_concept_path):
-                continue
+            # Check both ppo_concept and posthoc_concept folders
+            has_models = False
+            env_node = None
             
-            # Create environment node
-            env_node = self.gradcam_tree.insert("", "end", text="", values=(env_id, ""))
-            
-            # Add models
-            for model_file in sorted(os.listdir(ppo_concept_path)):
-                if model_file.endswith('.zip') and not model_file.startswith('.'):
-                    model_path = os.path.join(ppo_concept_path, model_file)
-                    self.gradcam_tree.insert(env_node, "end", text="", 
-                                           values=("", model_file),
-                                           tags=('model',))
-                    count += 1
+            for folder_name in ['ppo_concept', 'posthoc_concept']:
+                concept_path = os.path.join(env_path, folder_name)
+                if not os.path.exists(concept_path):
+                    continue
+                
+                # Create environment node if it doesn't exist yet
+                if env_node is None:
+                    env_node = self.gradcam_tree.insert("", "end", text="", values=(env_id, ""))
+                    has_models = True
+                
+                # Add models from this folder
+                for model_file in sorted(os.listdir(concept_path)):
+                    if model_file.endswith('.zip') and not model_file.startswith('.'):
+                        model_path = os.path.join(concept_path, model_file)
+                        # Add algorithm identifier to display
+                        algo_label = "POST_HOC" if folder_name == 'posthoc_concept' else "PPO_CONCEPT"
+                        display_name = f"[{algo_label}] {model_file}"
+                        # Store full path and algorithm in values
+                        self.gradcam_tree.insert(env_node, "end", text="", 
+                                               values=(model_path, display_name),
+                                               tags=('model',))
+                        count += 1
         
-        self.gradcam_log.insert(tk.END, f"✓ Loaded {count} PPO_CONCEPT models\n")
+        self.gradcam_log.insert(tk.END, f"✓ Loaded {count} concept models\n")
         self.gradcam_log.see(tk.END)
     
     def run_gradcam_analysis(self):
@@ -2014,9 +2307,16 @@ class ModelTesterUI:
         parent = self.gradcam_tree.parent(item)
         parent_values = self.gradcam_tree.item(parent, 'values')
         env_id = parent_values[0]
-        model_file = values[1]
         
-        model_path = f"models/{env_id}/ppo_concept/{model_file}"
+        # Extract model path and algorithm from values
+        model_path = values[0]  # Full path stored in first column
+        display_name = values[1]  # Display name with [ALGO] prefix
+        
+        # Parse algorithm from display name
+        if display_name.startswith('[POST_HOC]'):
+            algorithm = 'POST_HOC_CONCEPT'
+        else:
+            algorithm = 'PPO_CONCEPT'
         
         if not os.path.exists(model_path):
             messagebox.showerror("Error", f"Model file not found:\n{model_path}")
@@ -2029,15 +2329,17 @@ class ModelTesterUI:
         save_mode = self.gradcam_save_mode_var.get()
         
         # Output directory
-        model_name = model_file.replace('.zip', '')
-        out_dir = f"gradcam_out/{env_id}/ppo_concept/{model_name}"
+        model_name = os.path.basename(model_path).replace('.zip', '')
+        algo_folder = 'posthoc_concept' if algorithm == 'POST_HOC_CONCEPT' else 'ppo_concept'
+        out_dir = f"gradcam_out/{env_id}/{algo_folder}/{model_name}"
         
         # Log start
         self.gradcam_log.insert(tk.END, f"\n{'='*60}\n")
         self.gradcam_log.insert(tk.END, f"Starting GradCAM Analysis\n")
         self.gradcam_log.insert(tk.END, f"{'='*60}\n")
         self.gradcam_log.insert(tk.END, f"Environment: {env_id}\n")
-        self.gradcam_log.insert(tk.END, f"Model: {model_file}\n")
+        self.gradcam_log.insert(tk.END, f"Algorithm: {algorithm}\n")
+        self.gradcam_log.insert(tk.END, f"Model: {os.path.basename(model_path)}\n")
         self.gradcam_log.insert(tk.END, f"Episodes: {episodes}\n")
         self.gradcam_log.insert(tk.END, f"Device: {device}\n")
         self.gradcam_log.insert(tk.END, f"Save mode: {save_mode}\n")
@@ -2052,11 +2354,11 @@ class ModelTesterUI:
         
         # Run in thread
         thread = threading.Thread(target=self._run_gradcam_thread, 
-                                 args=(model_path, env_id, episodes, device, out_dir, fps, save_mode))
+                                 args=(model_path, env_id, algorithm, episodes, device, out_dir, fps, save_mode))
         thread.daemon = True
         thread.start()
     
-    def _run_gradcam_thread(self, model_path, env_id, episodes, device, out_dir, fps, save_mode):
+    def _run_gradcam_thread(self, model_path, env_id, algorithm, episodes, device, out_dir, fps, save_mode):
         """Run GradCAM analysis in background thread"""
         try:
             if save_mode == "best":
@@ -2070,7 +2372,7 @@ class ModelTesterUI:
                 model, best_obs, frames, agent_dirs, best_reward, _ = run_and_collect_best_episode(
                     model_path=model_path,
                     env_id=env_id,
-                    algorithm="PPO_CONCEPT",
+                    algorithm=algorithm,
                     num_episodes=episodes,
                     deterministic=True,
                     device=device,
@@ -2106,7 +2408,7 @@ class ModelTesterUI:
                 run_dirs = run_and_save_all_episodes(
                     model_path=model_path,
                     env_id=env_id,
-                    algorithm="PPO_CONCEPT",
+                    algorithm=algorithm,
                     num_episodes=episodes,
                     deterministic=True,
                     device=device,
@@ -3001,7 +3303,7 @@ class ModelTesterUI:
         self.load_ig_models()
     
     def load_ig_models(self):
-        """Load PPO_CONCEPT models for IG analysis"""
+        """Load PPO_CONCEPT and POST_HOC_CONCEPT models for IG analysis"""
         # Clear log and add refresh message
         self.ig_log.insert(tk.END, "🔄 Refreshing models...\n")
         self.ig_log.see(tk.END)
@@ -3020,20 +3322,29 @@ class ModelTesterUI:
             if not os.path.isdir(env_path):
                 continue
             
-            ppo_concept_path = os.path.join(env_path, "ppo_concept")
-            if not os.path.exists(ppo_concept_path):
-                continue
+            # Check both ppo_concept and posthoc_concept folders
+            env_node = None
             
-            env_node = self.ig_tree.insert("", "end", text="", values=(env_id, ""))
-            
-            for model_file in sorted(os.listdir(ppo_concept_path)):
-                if model_file.endswith('.zip') and not model_file.startswith('.'):
-                    self.ig_tree.insert(env_node, "end", text="", 
-                                       values=("", model_file),
-                                       tags=('model',))
-                    count += 1
+            for folder_name in ['ppo_concept', 'posthoc_concept']:
+                concept_path = os.path.join(env_path, folder_name)
+                if not os.path.exists(concept_path):
+                    continue
+                
+                # Create environment node if it doesn't exist yet
+                if env_node is None:
+                    env_node = self.ig_tree.insert("", "end", text="", values=(env_id, ""))
+                
+                for model_file in sorted(os.listdir(concept_path)):
+                    if model_file.endswith('.zip') and not model_file.startswith('.'):
+                        model_path = os.path.join(concept_path, model_file)
+                        algo_label = "POST_HOC" if folder_name == 'posthoc_concept' else "PPO_CONCEPT"
+                        display_name = f"[{algo_label}] {model_file}"
+                        self.ig_tree.insert(env_node, "end", text="", 
+                                           values=(model_path, display_name),
+                                           tags=('model',))
+                        count += 1
         
-        self.ig_log.insert(tk.END, f"✓ Loaded {count} PPO_CONCEPT models\n")
+        self.ig_log.insert(tk.END, f"✓ Loaded {count} concept models\n")
         self.ig_log.see(tk.END)
     
     def run_ig_analysis(self):
@@ -3053,9 +3364,16 @@ class ModelTesterUI:
         parent = self.ig_tree.parent(item)
         parent_values = self.ig_tree.item(parent, 'values')
         env_id = parent_values[0]
-        model_file = values[1]
         
-        model_path = f"models/{env_id}/ppo_concept/{model_file}"
+        # Extract model path and algorithm from values
+        model_path = values[0]
+        display_name = values[1]
+        
+        # Parse algorithm from display name
+        if display_name.startswith('[POST_HOC]'):
+            algorithm = 'POST_HOC_CONCEPT'
+        else:
+            algorithm = 'PPO_CONCEPT'
         
         if not os.path.exists(model_path):
             messagebox.showerror("Error", f"Model file not found:\n{model_path}")
@@ -3081,17 +3399,18 @@ class ModelTesterUI:
         
         # Run in thread
         self.ig_thread = threading.Thread(target=self._run_ig_thread,
-                                          args=(model_path, env_id, episodes, ig_steps, fps, device, save_mode, organize_ste))
+                                          args=(model_path, env_id, algorithm, episodes, ig_steps, fps, device, save_mode, organize_ste))
         self.ig_thread.daemon = True
         self.ig_thread.start()
     
-    def _run_ig_thread(self, model_path, env_id, episodes, ig_steps, fps, device, save_mode, organize_ste):
+    def _run_ig_thread(self, model_path, env_id, algorithm, episodes, ig_steps, fps, device, save_mode, organize_ste):
         """Thread function for IG analysis"""
         try:
             self.ig_log.insert(tk.END, f"\n{'='*60}\n")
             self.ig_log.insert(tk.END, f"Starting IG Analysis at {datetime.now().strftime('%H:%M:%S')}\n")
-            self.ig_log.insert(tk.END, f"Model: {model_path}\n")
+            self.ig_log.insert(tk.END, f"Model: {os.path.basename(model_path)}\n")
             self.ig_log.insert(tk.END, f"Environment: {env_id}\n")
+            self.ig_log.insert(tk.END, f"Algorithm: {algorithm}\n")
             self.ig_log.insert(tk.END, f"Episodes: {episodes}\n")
             self.ig_log.insert(tk.END, f"Save Mode: {save_mode}\n")
             self.ig_log.insert(tk.END, f"IG Steps: {ig_steps}\n")
@@ -3104,7 +3423,8 @@ class ModelTesterUI:
             from test_agent_ig import test_agent_ig
             
             model_name = os.path.splitext(os.path.basename(model_path))[0]
-            out_dir = f"ig_out/{env_id}/ppo_concept/{model_name}"
+            algo_folder = 'posthoc_concept' if algorithm == 'POST_HOC_CONCEPT' else 'ppo_concept'
+            out_dir = f"ig_out/{env_id}/{algo_folder}/{model_name}"
             
             # Run IG analysis
             if save_mode == "best_run":
@@ -3116,7 +3436,7 @@ class ModelTesterUI:
             test_agent_ig(
                 model_path=model_path,
                 env_id=env_id,
-                algorithm="PPO_CONCEPT",
+                algorithm=algorithm,
                 num_episodes=episodes,
                 device=device,
                 outdir=out_dir,

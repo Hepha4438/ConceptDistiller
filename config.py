@@ -236,6 +236,69 @@ SDT_CONFIGS = {
     }
 }
 
+# Post-hoc Concept Extraction - Extract concepts from pretrained PPO models
+POST_HOC_CONCEPT_CONFIGS = {
+    # Easy environments - 3 concepts
+    "easy": {
+        "collection_timesteps": 150000,  # Half of PPO training timesteps for dataset
+        "training_epochs": 100,  # Epochs for concept training
+        "learning_rate": 1e-3,
+        "batch_size": 256,
+        "n_concepts": 3,
+        "n_continuous_concepts": 1,  # Rest are binary
+        "lambda_rec": 1.0,   # Reconstruction loss weight
+        "lambda_p": 0.5,     # Policy matching loss weight
+        "lambda_o": 0.05,    # Orthogonality (same as lambda_1)
+        "lambda_s": 0.004,   # Sparsity (same as lambda_2)
+        "lambda_b": 0.1,     # Binary enforcement weight
+    },
+    
+    # Medium environments - 5 concepts
+    "medium": {
+        "collection_timesteps": 500000,
+        "training_epochs": 100,
+        "learning_rate": 1e-3,
+        "batch_size": 256,
+        "n_concepts": 5,
+        "n_continuous_concepts": 1,
+        "lambda_rec": 1.0,
+        "lambda_p": 0.5,
+        "lambda_o": 0.05,
+        "lambda_s": 0.004,
+        "lambda_b": 0.1,
+    },
+    
+    # Hard environments - 6 concepts
+    "hard": {
+        "collection_timesteps": 2000000,
+        "training_epochs": 100,
+        "learning_rate": 1e-3,
+        "batch_size": 256,
+        "n_concepts": 6,
+        "n_continuous_concepts": 1,
+        "lambda_rec": 1.0,
+        "lambda_p": 0.5,
+        "lambda_o": 0.05,
+        "lambda_s": 0.004,
+        "lambda_b": 0.1,
+    },
+    
+    # Extremely hard environments - 8 concepts
+    "extreme": {
+        "collection_timesteps": 5000000,
+        "training_epochs": 100,
+        "learning_rate": 1e-3,
+        "batch_size": 256,
+        "n_concepts": 8,
+        "n_continuous_concepts": 1,
+        "lambda_rec": 1.0,
+        "lambda_p": 0.5,
+        "lambda_o": 0.05,
+        "lambda_s": 0.004,
+        "lambda_b": 0.1,
+    }
+}
+
 # PPO Concept Hyperparameters - Based on PPO with concept learning
 PPO_CONCEPT_CONFIGS = {
     # Easy environments - 3 concepts
@@ -421,6 +484,12 @@ def get_sdt_config(env_id):
     return SDT_CONFIGS[difficulty].copy()
 
 
+def get_posthoc_concept_config(env_id):
+    """Get Post-hoc Concept Extraction hyperparameters for a specific environment."""
+    difficulty = ENV_DIFFICULTY.get(env_id, "medium")
+    return POST_HOC_CONCEPT_CONFIGS[difficulty].copy()
+
+
 def get_optuna_tuning_config(env_id):
     """Get Optuna tuning parameters for a specific environment."""
     difficulty = ENV_DIFFICULTY.get(env_id, "medium")
@@ -431,6 +500,8 @@ def print_config(env_id, algorithm="DQN"):
     """Print the recommended configuration for an environment."""
     if algorithm.upper() == "DQN":
         config = get_dqn_config(env_id)
+    elif algorithm.upper() == "POST_HOC_CONCEPT" or algorithm.upper() == "POSTHOC":
+        config = get_posthoc_concept_config(env_id)
     elif algorithm.upper() == "PPO":
         config = get_ppo_config(env_id)
     elif algorithm.upper() == "PPO_CONCEPT":
