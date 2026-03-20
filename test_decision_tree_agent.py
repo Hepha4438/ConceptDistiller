@@ -40,21 +40,32 @@ class DecisionTreeAgent:
         print(f"🤖 Initializing Decision Tree Agent")
         print(f"{'='*60}")
         
-        # Load PPO model (for CNN feature extraction)
-        print(f"📂 Loading PPO model from: {ppo_model_path}")
-        self.ppo_model = ConceptPPO.load(ppo_model_path, device=device)
-        self.device = device
-        self.epsilon = epsilon  # For epsilon-greedy exploration
-        
-        # Load DT policy
+        # Load DT policy FIRST to extract metadata and environment
         print(f"📂 Loading DT policy from: {dt_model_path}")
         with open(dt_model_path, 'rb') as f:
             dt_data = pickle.load(f)
-        
+            
         self.dt_model = dt_data['model']
         self.metadata = dt_data.get('metadata', {})
         self.action_names = dt_data.get('action_names', ACTION_NAMES)
         self.training_stats = dt_data.get('training_stats', {})
+        
+        env_id = self.metadata.get('environment', 'MiniGrid-DoorKey-6x6-v0')
+        print(f"\n✓ DT Model loaded successfully! Environment: {env_id}")
+        
+        # Load PPO model (for CNN feature extraction)
+        print(f"📂 Loading PPO model from: {ppo_model_path}")
+        if 'posthoc' in str(ppo_model_path).lower():
+            print("  Detected PostHoc concept model...")
+            from train_concept_posthoc import load_posthoc_model
+            # Create a dummy env since posthoc model requires it for observation_space
+            dummy_env = ImgObsWrapper(gym.make(env_id))
+            self.ppo_model = load_posthoc_model(ppo_model_path, dummy_env)
+        else:
+            self.ppo_model = ConceptPPO.load(ppo_model_path, device=device)
+            
+        self.device = device
+        self.epsilon = epsilon  # For epsilon-greedy exploration
         
         print(f"\n✓ Model loaded successfully!")
         print(f"  Concept dimensions: {self.metadata.get('n_concepts', 'N/A')}")
@@ -77,16 +88,22 @@ class DecisionTreeAgent:
         """Quick verification that concept extraction uses correct format (with STE)"""
         fx = self.ppo_model.policy.features_extractor
         
-        # Check if model uses Mode 4/5 (with concept bottleneck)
+        # Check if model uses Mode 4/5 (with concept bottleneck) or Posthoc
         has_concept_bottleneck = hasattr(fx, 'last_concept_bottleneck')
+        has_posthoc_concepts = hasattr(fx, 'last_concepts')
         
-        if not has_concept_bottleneck:
-            print(f"\n⚠️  Concept extraction: last_concept_bottleneck not available")
-            print(f"    Model may not be using Mode 4/5 (concept bottleneck)")
+        if not has_concept_bottleneck and not has_posthoc_concepts:
+            print(f"⚠️  Concept extraction: last_concept_bottleneck and last_concepts not available")
+            print(f"    Model may not be using Mode 4/5 or Posthoc concept bottleneck")
             print(f"    → Expected success rate may be low")
             return
+            
+        print(f"✅ Concept extraction verification passed")
         
-        # Check concept_mode
+        # Posthoc models don't have concept_mode
+        if has_posthoc_concepts:
+            return
+            
         concept_mode = getattr(fx, 'concept_mode', None)
         if concept_mode not in [4, 5]:
             print(f"\n⚠️  Model is using concept_mode={concept_mode}, expected Mode 4 or 5")
@@ -134,14 +151,15 @@ class DecisionTreeAgent:
             # This matches "Concept Vector (bottleneck (after STE))" from training logs
             fx = self.ppo_model.policy.features_extractor
             
-            if not hasattr(fx, 'last_concept_bottleneck') or fx.last_concept_bottleneck is None:
+            if hasattr(fx, 'last_concept_bottleneck') and fx.last_concept_bottleneck is not None:
+                concept_vector = fx.last_concept_bottleneck.cpu().numpy().flatten()
+            elif hasattr(fx, 'last_concepts') and fx.last_concepts is not None:
+                concept_vector = fx.last_concepts.cpu().numpy().flatten()
+            else:
                 raise RuntimeError(
-                    "Model does not have concept bottleneck (Mode 4/5 required)!\n"
-                    "DT policy requires a PPO model trained with concept_mode=5.\n"
-                    f"Current model: concept_mode={getattr(fx, 'concept_mode', 'unknown')}"
+                    "Model does not have concept bottleneck (Mode 4/5 required) or Posthoc concepts!\n"
+                    "DT policy requires a PPO model with concepts extracted.\n"
                 )
-            
-            concept_vector = fx.last_concept_bottleneck.cpu().numpy().flatten()
             
             # ⚠️  CRITICAL: Round to .6f to match training data precision
             # Training data was logged with 6 decimal places
@@ -437,10 +455,15 @@ def compare_with_mlp(dt_agent: DecisionTreeAgent,
     
     # Test MLP policy
     print("\nTesting MLP Policy...")
-    mlp_model = ConceptPPO.load(ppo_model_path)
     
     env = gym.make(env_id)
     env = ImgObsWrapper(env)
+    
+    if 'posthoc' in str(ppo_model_path).lower():
+        from train_concept_posthoc import load_posthoc_model
+        mlp_model = load_posthoc_model(ppo_model_path, env)
+    else:
+        mlp_model = ConceptPPO.load(ppo_model_path)
     
     mlp_rewards = []
     mlp_lengths = []

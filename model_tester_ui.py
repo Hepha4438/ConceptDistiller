@@ -4309,9 +4309,19 @@ class ModelTesterUI:
                 y_train = y_test = y
                 skip_val_split = True
             else:
-                X_train, X_test, y_train, y_test = train_test_split(
-                    X, y, test_size=test_split, random_state=42, stratify=y
-                )
+                # Check for classes with only 1 sample, which breaks stratify
+                unique_classes, counts = np.unique(y, return_counts=True)
+                min_class_count = np.min(counts)
+                
+                if min_class_count < 2:
+                    self.dt_log.insert(tk.END, f"⚠️ Warning: Found class with < 2 samples. Disabling stratification.\n")
+                    X_train, X_test, y_train, y_test = train_test_split(
+                        X, y, test_size=test_split, random_state=42
+                    )
+                else:
+                    X_train, X_test, y_train, y_test = train_test_split(
+                        X, y, test_size=test_split, random_state=42, stratify=y
+                    )
                 skip_val_split = False
             
             self.dt_log.insert(tk.END, f"Training samples: {len(X_train)}\n")

@@ -214,9 +214,18 @@ def train_decision_tree(X_train: np.ndarray, y_train: np.ndarray,
             y_val = y_train
         else:
             print(f"ℹ️  No validation set provided, splitting training set (80/20)...")
-            X_train, X_val, y_train, y_val = train_test_split(
-                X_train, y_train, test_size=0.2, random_state=42, stratify=y_train
-            )
+            unique_classes, counts = np.unique(y_train, return_counts=True)
+            min_class_count = np.min(counts)
+            
+            if min_class_count < 2:
+                print(f"⚠️  WARNING: Found class with < 2 samples in training set. Disabling stratification.")
+                X_train, X_val, y_train, y_val = train_test_split(
+                    X_train, y_train, test_size=0.2, random_state=42
+                )
+            else:
+                X_train, X_val, y_train, y_val = train_test_split(
+                    X_train, y_train, test_size=0.2, random_state=42, stratify=y_train
+                )
     
     print(f"\n{'='*60}")
     print(f"🌳 Training Decision Tree Policy")
@@ -595,9 +604,19 @@ def main():
         y_train = y_test = y
         skip_val_split = True
     else:
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=args.test_split, random_state=args.random_seed, stratify=y
-        )
+        # Check for classes with only 1 sample, which breaks stratify
+        unique_classes, counts = np.unique(y, return_counts=True)
+        min_class_count = np.min(counts)
+        
+        if min_class_count < 2:
+            print(f"\n⚠️  WARNING: Found class with < 2 samples. Disabling stratification in train_test_split.")
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=args.test_split, random_state=args.random_seed
+            )
+        else:
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=args.test_split, random_state=args.random_seed, stratify=y
+            )
         skip_val_split = False
     
     print(f"\n✓ Train/Test Split:")

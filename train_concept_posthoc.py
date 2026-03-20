@@ -807,6 +807,31 @@ def load_posthoc_model(model_path: str, env):
     # Load pretrained PPO model to get the EXACT CNN architecture
     # Cannot create MinigridFeaturesExtractor from scratch - need features_dim from original model
     pretrained_model_path = concepts_data['config']['pretrained_model_path']
+    
+    # Try alternate paths if original absolute path (e.g. from another machine) doesn't exist
+    if not os.path.exists(pretrained_model_path) and not os.path.exists(f"{pretrained_model_path}.zip"):
+        env_id = concepts_data['config'].get('env_id')
+        if not env_id and hasattr(env, 'unwrapped') and hasattr(env.unwrapped, 'spec') and env.unwrapped.spec:
+            env_id = env.unwrapped.spec.id
+            
+        basename = os.path.basename(pretrained_model_path)
+        if not basename.endswith('.zip'):
+            basename_zip = f"{basename}.zip"
+        else:
+            basename_zip = basename
+            
+        alt_paths = [
+            basename_zip,
+            os.path.join("models", env_id, "ppo", basename_zip) if env_id else None
+        ]
+        
+        for p in alt_paths:
+            if p and (os.path.exists(p) or os.path.exists(p.replace('.zip', ''))):
+                print(f"Original path {pretrained_model_path} not found.")
+                print(f"Using alternative path: {p}")
+                pretrained_model_path = p
+                break
+                
     print(f"Loading original pretrained model from: {pretrained_model_path}")
     pretrained_model = PPO.load(pretrained_model_path, device='cpu')
     
