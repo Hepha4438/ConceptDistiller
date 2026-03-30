@@ -165,6 +165,35 @@ def get_cnn_from_extractor(features_extractor):
         raise AttributeError(f"Features extractor {type(features_extractor).__name__} has neither 'cnn' nor 'pretrained_cnn'")
 
 
+def get_model_metadata(features_extractor):
+    """
+    Extract model metadata (n_concepts, concept_mode, n_continuous) from features extractor.
+    Handles both PostHoc and PPO_CONCEPT models correctly.
+    
+    Returns:
+        tuple: (n_concepts, concept_mode, n_continuous, is_posthoc)
+    """
+    is_posthoc = features_extractor.__class__.__name__ == 'PostHocConceptFeaturesExtractor'
+    
+    if is_posthoc:
+        # PostHoc model: metadata is in concept_encoder
+        encoder = features_extractor.concept_encoder
+        n_concepts = encoder.n_concepts
+        concept_mode = encoder.mode  # 'gated' or 'ste'
+        n_continuous = encoder.n_continuous
+        # Keep mode as string for PostHoc
+        concept_mode_for_log = concept_mode
+    else:
+        # PPO_CONCEPT model: metadata is on features_extractor
+        n_concepts = getattr(features_extractor, 'n_concepts', 0)
+        concept_mode = getattr(features_extractor, 'concept_mode', 1)
+        n_continuous = getattr(features_extractor, 'n_continuous_concepts', 1)
+        # Keep mode as int for PPO_CONCEPT
+        concept_mode_for_log = concept_mode
+    
+    return n_concepts, concept_mode_for_log, n_continuous, is_posthoc
+
+
 # ============================================================
 # Integrated Gradients
 # ============================================================
@@ -211,6 +240,12 @@ def compute_concept_integrated_gradients(features_extractor, obs_tensor, device,
             # Get concepts from stored last_concepts (z, not h')
             concept_vector_for_vis = features_extractor.last_concepts
             print(f"DEBUG: Using PostHocConceptFeaturesExtractor.last_concepts, concepts shape = {concept_vector_for_vis.shape}")
+            
+            # Get model metadata to check if STE mode
+            n_concepts, concept_mode_str, n_continuous, is_posthoc_model = get_model_metadata(features_extractor)
+            print(f"DEBUG: PostHoc model - {n_concepts} concepts, mode={concept_mode_str}, continuous={n_continuous}")
+            
+            # STE mode concepts are now naturally hard 0/1 from forward pass
             
             # For heatmap, we need concept_map which doesn't exist in posthoc
             # Use concept_vector as pseudo concept_map [B, K, 1, 1]
@@ -684,10 +719,8 @@ def log_concept_actions(model, obs_list, actions_list, reward, out_dir, env_id, 
     else:
         log_file = os.path.join(out_dir, "failed_runs.txt")
     
-    # Get model metadata
-    n_concepts = getattr(fx, 'n_concepts', 0)
-    concept_mode = getattr(fx, 'concept_mode', 1)
-    n_continuous_concepts = getattr(fx, 'n_continuous_concepts', 1)
+    # Get model metadata using correct extraction method
+    n_concepts, concept_mode, n_continuous_concepts, is_posthoc = get_model_metadata(fx)
     
     # Open file in append mode
     with open(log_file, 'a') as f:
@@ -713,11 +746,11 @@ def log_concept_actions(model, obs_list, actions_list, reward, out_dir, env_id, 
             
             obs_t = torch.from_numpy(obs_np).float().unsqueeze(0).to(device)
             
-            # Get concept vector (after STE for Mode 5)
+            # Get concept vector (after STE for Mode 5 or STE PostHoc)
             with torch.no_grad():
                 _ = fx(obs_t)
                 
-                # Try to get concept_bottleneck first (Mode 4/5)
+                # Try to get concept_bottleneck first (Mode 4/5 PPO_CONCEPT)
                 if hasattr(fx, 'last_concept_bottleneck'):
                     concept_vec = fx.last_concept_bottleneck[0].cpu().numpy()
                     vector_type = "bottleneck (after STE)"
@@ -730,8 +763,14 @@ def log_concept_actions(model, obs_list, actions_list, reward, out_dir, env_id, 
                     vector_type = "concept_layer"
                 else:
                     # PostHoc model - use last_concepts
-                    concept_vec = fx.last_concepts[0].cpu().numpy() if hasattr(fx, 'last_concepts') else np.zeros(1)
-                    vector_type = "last_concepts (posthoc)"
+                    if hasattr(fx, 'last_concepts'):
+                        concept_vec_t = fx.last_concepts[0].clone()
+                        
+                        concept_vec = concept_vec_t.cpu().numpy()
+                        vector_type = f"last_concepts (posthoc {concept_mode})"
+                    else:
+                        concept_vec = np.zeros(1)
+                        vector_type = "unknown"
             
             # Format concept vector with higher precision (6 decimals to avoid conflicts)
             concept_str = "[" + ", ".join([f"{v:.6f}" for v in concept_vec]) + "]"
@@ -786,14 +825,30 @@ def organize_ste_concept_frames(model, best_obs, frames, agent_dirs, all_attribu
     fx.to(device)
     fx.eval()
     
-    # Check if this is Mode 5
-    concept_mode = getattr(fx, 'concept_mode', 1)
-    if concept_mode != 5:
-        print(f"⚠️  Model is not Mode 5 (current mode: {concept_mode}). Skipping STE frame organization.")
-        return
+    # Check if this is STE model (PPO Mode 5 OR PostHoc STE)
+    is_posthoc = fx.__class__.__name__ == 'PostHocConceptFeaturesExtractor'
     
-    n_concepts = getattr(fx, 'n_concepts', 0)
-    n_continuous_concepts = getattr(fx, 'n_continuous_concepts', 1)  # Default to 1 for backward compatibility
+    if is_posthoc:
+        # PostHoc model: check if STE mode
+        encoder = fx.concept_encoder
+        concept_mode = encoder.mode  # 'gated' or 'ste'
+        if concept_mode != 'ste':
+            print(f"⚠️  PostHoc model is not in STE mode (current mode: {concept_mode}). Skipping STE frame organization.")
+            return
+        
+        n_concepts = encoder.n_concepts
+        n_continuous_concepts = encoder.n_continuous
+        model_type_str = "PostHoc STE"
+    else:
+        # PPO_CONCEPT model: check if Mode 5
+        concept_mode = getattr(fx, 'concept_mode', 1)
+        if concept_mode != 5:
+            print(f"⚠️  PPO_CONCEPT model is not Mode 5 (current mode: {concept_mode}). Skipping STE frame organization.")
+            return
+        
+        n_concepts = getattr(fx, 'n_concepts', 0)
+        n_continuous_concepts = getattr(fx, 'n_continuous_concepts', 1)  # Default to 1 for backward compatibility
+        model_type_str = "PPO_CONCEPT Mode 5"
     
     if n_concepts <= n_continuous_concepts:
         print(f"⚠️  Model has {n_concepts} total concepts with {n_continuous_concepts} continuous. No STE concepts to organize.")
@@ -802,7 +857,7 @@ def organize_ste_concept_frames(model, best_obs, frames, agent_dirs, all_attribu
     n_ste_concepts = n_concepts - n_continuous_concepts  # Remaining concepts are STE
     
     print(f"\n{'='*70}")
-    print(f"📊 Organizing frames by STE concept activation (Mode 5)")
+    print(f"📊 Organizing frames by STE concept activation ({model_type_str})")
     print(f"{'='*70}")
     print(f"Total concepts: {n_concepts}")
     print(f"Continuous concepts: {n_continuous_concepts} (C1 to C{n_continuous_concepts})")
@@ -848,22 +903,29 @@ def organize_ste_concept_frames(model, best_obs, frames, agent_dirs, all_attribu
         
         obs_t = torch.from_numpy(obs_np_transposed).float().unsqueeze(0).to(device)
         
-        # Get concept bottleneck values (to determine activated/inactive)
+        # Get concept values (to determine activated/inactive)
         with torch.no_grad():
-            _ = fx(obs_t)  # Run forward to populate last_concept_bottleneck
+            _ = fx(obs_t)  # Run forward to populate last_concepts or last_concept_bottleneck
             
-            if not hasattr(fx, 'last_concept_bottleneck'):
-                print(f"⚠️  Warning: Model doesn't have last_concept_bottleneck. Skipping.")
-                return
-            
-            concept_bottleneck = fx.last_concept_bottleneck[0].cpu().numpy()  # [K]
+            if is_posthoc:
+                # PostHoc: get concepts from last_concepts
+                if not hasattr(fx, 'last_concepts'):
+                    print(f"⚠️  Warning: PostHoc model doesn't have last_concepts. Skipping.")
+                    return
+                concept_values = fx.last_concepts[0].cpu().numpy()  # [K]
+            else:
+                # PPO Mode 5: get concepts from last_concept_bottleneck
+                if not hasattr(fx, 'last_concept_bottleneck'):
+                    print(f"⚠️  Warning: PPO Mode 5 model doesn't have last_concept_bottleneck. Skipping.")
+                    return
+                concept_values = fx.last_concept_bottleneck[0].cpu().numpy()  # [K]
         
         # Get corresponding God View frame
         god_view_frame = frames[i]
         
         # Classify and save composite image for each STE concept
         for k in range(n_continuous_concepts, n_concepts):  # Skip continuous concepts
-            concept_value = concept_bottleneck[k]
+            concept_value = concept_values[k]
             
             # Determine activation status
             is_activated = (concept_value > 0.5)

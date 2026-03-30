@@ -43,23 +43,31 @@ def get_next_model_number(save_dir, prefix="posthoc_minigrid"):
 
 class ConceptEncoderDecoder(nn.Module):
     """
-    Encoder-Decoder with gated concepts: z = tanh(g ⊙ v)
-    - g: sigmoid gates (first n_continuous continuous, rest pushed to binary via loss)
-    - v: ReLU values
-    - z: gated concepts
+    Encoder-Decoder with concept extraction.
+    
+    Two modes:
+    - Mode 'gated' (default): z = g * v with sigmoid gates pushed to binary via loss
+    - Mode 'ste': z = [continuous_sigmoid, binary_ste, ...] with STE for binary concepts
     """
-    def __init__(self, h_dim: int = 256, n_concepts: int = 5, n_continuous: int = 1):
+    def __init__(self, h_dim: int = 256, n_concepts: int = 5, n_continuous: int = 1, mode: str = 'gated'):
         super().__init__()
         self.h_dim = h_dim
         self.n_concepts = n_concepts
         self.n_continuous = n_continuous
         self.n_binary = n_concepts - n_continuous
+        self.mode = mode  # 'gated' or 'ste'
         
-        # Encoder: h → g, v
-        self.encoder_g = nn.Linear(h_dim, n_concepts)  # Gates
-        self.encoder_v = nn.Linear(h_dim, n_concepts)  # Values
+        if self.mode == 'gated':
+            # Gated mode: h -> g, v
+            self.encoder_g = nn.Linear(h_dim, n_concepts)  # Gates
+            self.encoder_v = nn.Linear(h_dim, n_concepts)  # Values
+        elif self.mode == 'ste':
+            # STE mode: h -> continuous_sigmoid, binary_sigmoid (then apply STE)
+            self.encoder = nn.Linear(h_dim, n_concepts)  # Single encoder
+        else:
+            raise ValueError(f"Invalid mode: {mode}. Must be 'gated' or 'ste'")
         
-        # Decoder: z → ĥ
+        # Decoder: z -> h_recon (same for both modes)
         self.decoder = nn.Sequential(
             nn.Linear(n_concepts, h_dim),
             nn.ReLU(),
@@ -71,27 +79,43 @@ class ConceptEncoderDecoder(nn.Module):
         Args:
             h: hidden features [B, h_dim]
         Returns:
-            z: gated concepts [B, n_concepts]
+            z: concepts [B, n_concepts]
             h_recon: reconstructed h [B, h_dim]
-            g: gates for loss computation [B, n_concepts]
+            gates: for debug/loss computation (different meaning in gated vs ste mode)
         """
-        # Encode
-        g = torch.sigmoid(self.encoder_g(h))  # [B, K] gates
-        v = F.relu(self.encoder_v(h))          # [B, K] values
-        
-        # Gate: z = g ⊙ v
-        z = g * v  # Element-wise multiplication
+        if self.mode == 'gated':
+            # Gated: z = g * v
+            g = torch.sigmoid(self.encoder_g(h))  # [B, K] gates
+            v = F.relu(self.encoder_v(h))         # [B, K] values
+            z = g * v                               # Element-wise multiplication
+            gates = g  # Return gates for loss computation
+        else:  # mode == 'ste'
+            # STE: return continuous sigmoid + binary STE
+            raw = self.encoder(h)  # [B, K]
+            sigmoid = torch.sigmoid(raw)  # [B, K]
+            
+            # Split: continuous sigmoid + binary STE
+            z_continuous = sigmoid[:, :self.n_continuous]  # [B, n_cont] - continuous
+            
+            if self.n_binary > 0:
+                z_binary_sigmoid = sigmoid[:, self.n_continuous:]  # [B, n_bin]
+                z_binary_hard = (z_binary_sigmoid > 0.5).float()   # [B, n_bin] - hard 0/1
+                # STE: forward uses hard values, backward uses sigmoid gradient
+                z_binary_ste = z_binary_sigmoid + (z_binary_hard - z_binary_sigmoid).detach()
+                z = torch.cat([z_continuous, z_binary_ste], dim=1)  # [B, K]
+            else:
+                z = z_continuous  # All continuous
+            
+            gates = sigmoid  # Return sigmoid for debug purposes
         
         # Decode
         h_recon = self.decoder(z)
         
-        return z, h_recon, g
+        return z, h_recon, gates
     
     def extract_concepts(self, h: torch.Tensor) -> torch.Tensor:
         """Extract only concepts without reconstruction."""
-        g = torch.sigmoid(self.encoder_g(h))
-        v = F.relu(self.encoder_v(h))
-        z = g * v
+        z, _, _ = self.forward(h)
         return z
 
 
@@ -167,7 +191,8 @@ class PostHocConceptModel(nn.Module):
         pretrained_model: PPO,
         n_concepts: int = 5,
         n_continuous: int = 1,
-        h_dim: int = 256
+        h_dim: int = 256,
+        concept_mode: str = 'gated'  # NEW: 'gated' or 'ste'
     ):
         super().__init__()
         
@@ -181,12 +206,14 @@ class PostHocConceptModel(nn.Module):
         self.concept_model = ConceptEncoderDecoder(
             h_dim=h_dim,
             n_concepts=n_concepts,
-            n_continuous=n_continuous
+            n_continuous=n_continuous,
+            mode=concept_mode  # Pass mode to encoder-decoder
         )
         
         self.n_concepts = n_concepts
         self.n_continuous = n_continuous
         self.n_binary = n_concepts - n_continuous
+        self.concept_mode = concept_mode
         
     def extract_h(self, obs: torch.Tensor) -> torch.Tensor:
         """Extract hidden representation h from pretrained model."""
@@ -248,12 +275,18 @@ def compute_losses(
     lambda_p: float = 0.5,
     lambda_o: float = 0.05,
     lambda_s: float = 0.004,
-    lambda_b: float = 0.1
+    lambda_b: float = 0.1,
+    use_binary_loss: bool = True
 ) -> Dict[str, torch.Tensor]:
     """
     Compute all loss components.
     
-    Loss = λ_rec·L_rec + λ_p·L_policy + λ_o·L_ortho + λ_s·L_sparse + λ_b·L_binary
+    If use_binary_loss=True (default, gated mode):
+        Loss = λ_rec·L_rec + λ_p·L_policy + λ_o·L_ortho + λ_s·L_sparse + λ_b·L_binary
+    
+    If use_binary_loss=False (STE mode):
+        Loss = λ_rec·L_rec + λ_p·L_policy + λ_o·L_ortho + λ_s·L_sparse
+        (Binary loss not needed since STE already enforces binary values)
     """
     h = outputs['h']
     h_recon = outputs['h_recon']
@@ -296,21 +329,30 @@ def compute_losses(
     L_sparse = 1.0 - sparsity  # Minimize to maximize sparsity
     
     # 5. Binary enforcement loss (push binary concepts to 0 or 1)
-    # Apply only to last n_binary concepts
-    if n_binary > 0:
+    # Only used in gated mode. In STE mode, binary is already enforced.
+    if use_binary_loss and n_binary > 0:
         g_binary = g[:, -n_binary:]  # Last n_binary gates
         L_binary = torch.mean((g_binary ** 2) * ((1 - g_binary) ** 2))  # Minimize g^2(1-g)^2
     else:
         L_binary = torch.tensor(0.0, device=g.device)
     
     # Total loss
-    loss = (
-        lambda_rec * L_rec +
-        lambda_p * L_policy +
-        lambda_o * L_ortho +
-        lambda_s * L_sparse +
-        lambda_b * L_binary
-    )
+    if use_binary_loss:
+        loss = (
+            lambda_rec * L_rec +
+            lambda_p * L_policy +
+            lambda_o * L_ortho +
+            lambda_s * L_sparse +
+            lambda_b * L_binary
+        )
+    else:
+        # STE mode: no binary loss needed
+        loss = (
+            lambda_rec * L_rec +
+            lambda_p * L_policy +
+            lambda_o * L_ortho +
+            lambda_s * L_sparse
+        )
     
     return {
         'loss': loss,
@@ -462,7 +504,8 @@ def train_posthoc_concepts(
     env_id: str,
     n_concepts: int = 5,
     n_continuous: int = 1,
-    dataset_path: str = None,  # ← NEW: Path to pre-collected dataset
+    concept_mode: str = 'gated',  # NEW: 'gated' or 'ste'
+    dataset_path: str = None,  # Path to pre-collected dataset
     collection_timesteps: int = 500000,  # Only used if dataset_path is None
     training_epochs: int = 100,
     batch_size: int = 256,
@@ -479,6 +522,8 @@ def train_posthoc_concepts(
     Train post-hoc concept extraction model from pretrained PPO.
     
     Args:
+        concept_mode: 'gated' (default, sigmoid gates pushed to binary via loss) or
+                      'ste' (binary concepts use Straight-Through Estimator, no binary loss)
         dataset_path: Path to pre-collected dataset. If None, will collect new dataset.
         collection_timesteps: Only used if dataset_path is None.
     """
@@ -489,6 +534,11 @@ def train_posthoc_concepts(
     print(f"Environment: {env_id}")
     print(f"Pretrained model: {pretrained_model_path}")
     print(f"Concepts: {n_concepts} total ({n_continuous} continuous, {n_concepts-n_continuous} binary)")
+    print(f"Concept mode: {concept_mode}")
+    if concept_mode == 'ste':
+        print(f"  -> Binary concepts use STE (no binary loss)")
+    else:
+        print(f"  -> Binary concepts pushed to 0/1 via loss (gated mode)")
     print(f"Training epochs: {training_epochs}")
     print(f"{'='*60}\n")
     
@@ -541,7 +591,8 @@ def train_posthoc_concepts(
         pretrained_model=pretrained_model,
         n_concepts=n_concepts,
         n_continuous=n_continuous,
-        h_dim=256  # SB3 default MLP hidden size
+        h_dim=256,  # SB3 default MLP hidden size
+        concept_mode=concept_mode  # NEW: 'gated' or 'ste'
     ).to(device)
     print(f"✓ Concept model created")
     
@@ -571,6 +622,7 @@ def train_posthoc_concepts(
             outputs = model(batch_obs)
             
             # Compute losses
+            use_binary_loss = (concept_mode == 'gated')
             losses = compute_losses(
                 outputs,
                 n_binary=model.n_binary,
@@ -578,7 +630,8 @@ def train_posthoc_concepts(
                 lambda_p=lambda_p,
                 lambda_o=lambda_o,
                 lambda_s=lambda_s,
-                lambda_b=lambda_b
+                lambda_b=lambda_b,
+                use_binary_loss=use_binary_loss
             )
             
             # Backward pass
@@ -598,6 +651,7 @@ def train_posthoc_concepts(
             with torch.no_grad():
                 sample_batch = dataset[:batch_size]
                 outputs = model(sample_batch)
+                use_binary_loss = (concept_mode == 'gated')
                 losses = compute_losses(
                     outputs,
                     n_binary=model.n_binary,
@@ -605,7 +659,8 @@ def train_posthoc_concepts(
                     lambda_p=lambda_p,
                     lambda_o=lambda_o,
                     lambda_s=lambda_s,
-                    lambda_b=lambda_b
+                    lambda_b=lambda_b,
+                    use_binary_loss=use_binary_loss
                 )
                 print(f"  L_rec={losses['L_rec'].item():.4f}, "
                       f"L_policy={losses['L_policy'].item():.4f}, "
@@ -734,10 +789,12 @@ def train_posthoc_concepts(
         'concept_encoder_decoder': model.concept_model.state_dict(),
         'n_concepts': n_concepts,
         'n_continuous': n_continuous,
+        'concept_mode': concept_mode,  # NEW: save the mode
         'is_posthoc': True,  # Flag to identify posthoc models
         'config': {
             'env_id': env_id,
             'pretrained_model_path': pretrained_model_path,
+            'concept_mode': concept_mode,  # NEW: include in config too
             'lambda_rec': lambda_rec,
             'lambda_p': lambda_p,
             'lambda_o': lambda_o,
@@ -800,8 +857,9 @@ def load_posthoc_model(model_path: str, env):
         policy_state_dict = state_dict
     
     # Create concept encoder and load weights
+    concept_mode = concepts_data.get('concept_mode', 'gated')  # Default to 'gated' for backward compatibility
     concept_encoder = ConceptEncoderDecoder(h_dim=256, n_concepts=n_concepts,
-                                           n_continuous=n_continuous)
+                                           n_continuous=n_continuous, mode=concept_mode)
     concept_encoder.load_state_dict(concepts_data['concept_encoder_decoder'])
     
     # Load pretrained PPO model to get the EXACT CNN architecture

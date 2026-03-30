@@ -579,16 +579,29 @@ class ModelTesterUI:
             
             # Entry - special handling for certain parameters
             if param_name == "concept_mode":
-                # Dropdown for concept_mode: 1-5
-                var = tk.IntVar(value=param_value)
-                widget = ttk.Combobox(self.hyperparam_frame, textvariable=var, 
-                                     values=[1, 2, 3, 4, 5], width=18, state="readonly")
-                widget.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
-                # Add tooltip
-                tooltip_label = ttk.Label(self.hyperparam_frame, 
-                                         text="(1:flatten, 2:avg, 3:max, 4:FC, 5:FC+STE)", 
-                                         foreground="gray", font=('Arial', 8))
-                tooltip_label.grid(row=row, column=2, sticky=tk.W, padx=5, pady=3)
+                # Different concept_mode options based on algorithm
+                if algo == "PPO_CONCEPT":
+                    # PPO_CONCEPT: INT values 1-5
+                    var = tk.IntVar(value=param_value)
+                    widget = ttk.Combobox(self.hyperparam_frame, textvariable=var, 
+                                         values=[1, 2, 3, 4, 5], width=18, state="readonly")
+                    widget.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
+                    # Add tooltip
+                    tooltip_label = ttk.Label(self.hyperparam_frame, 
+                                             text="(1:flatten, 2:avg, 3:max, 4:FC, 5:FC+STE)", 
+                                             foreground="gray", font=('Arial', 8))
+                    tooltip_label.grid(row=row, column=2, sticky=tk.W, padx=5, pady=3)
+                elif algo == "POST_HOC_CONCEPT":
+                    # POST_HOC_CONCEPT: STRING values 'gated' or 'ste'
+                    var = tk.StringVar(value=param_value)
+                    widget = ttk.Combobox(self.hyperparam_frame, textvariable=var, 
+                                         values=["gated", "ste"], width=18, state="readonly")
+                    widget.grid(row=row, column=1, sticky=tk.W, padx=5, pady=3)
+                    # Add tooltip
+                    tooltip_label = ttk.Label(self.hyperparam_frame, 
+                                             text="(gated: soft gates, ste: hard binary concepts)", 
+                                             foreground="green", font=('Arial', 8))
+                    tooltip_label.grid(row=row, column=2, sticky=tk.W, padx=5, pady=3)
             elif param_name == "n_continuous_concepts":
                 # Special field for n_continuous_concepts (Mode 5)
                 var = tk.IntVar(value=param_value)
@@ -1445,6 +1458,7 @@ class ModelTesterUI:
                 lambda_o = hyperparams.pop('lambda_o', 0.05)
                 lambda_s = hyperparams.pop('lambda_s', 0.004)
                 lambda_b = hyperparams.pop('lambda_b', 0.1)
+                concept_mode = hyperparams.pop('concept_mode', 'gated')  # NEW: concept_mode (gated or ste)
                 pretrained_model_path = hyperparams.pop('pretrained_model_path', '')
                 dataset_path = hyperparams.pop('dataset_path', '')  # NEW: optional dataset path
                 
@@ -1477,6 +1491,7 @@ class ModelTesterUI:
                         lambda_o=lambda_o,
                         lambda_s=lambda_s,
                         lambda_b=lambda_b,
+                        concept_mode=concept_mode,  # NEW: pass concept_mode (gated or ste)
                         device=device,
                         seed=seed
                     )
@@ -3642,7 +3657,7 @@ class ModelTesterUI:
         self.load_gemini_ig_dirs()
     
     def load_gemini_ig_dirs(self):
-        """Load IG analysis outputs for labeling"""
+        """Load IG analysis outputs for labeling (both PPO_CONCEPT and PostHoc)"""
         self.gemini_log.insert(tk.END, "🔄 Searching for IG outputs...\n")
         self.gemini_log.see(tk.END)
         
@@ -3660,31 +3675,41 @@ class ModelTesterUI:
             if not os.path.isdir(env_path):
                 continue
             
-            ppo_concept_path = os.path.join(env_path, "ppo_concept")
-            if not os.path.exists(ppo_concept_path):
-                continue
+            env_node = None
             
-            env_node = self.gemini_tree.insert("", "end", text="", values=(env_id, "", ""))
-            
-            for model_dir in sorted(os.listdir(ppo_concept_path)):
-                model_path = os.path.join(ppo_concept_path, model_dir)
-                if not os.path.isdir(model_path):
+            # Check for both PPO_CONCEPT and PostHoc models
+            for algo_dir in ["ppo_concept", "posthoc_concept"]:
+                algo_path = os.path.join(env_path, algo_dir)
+                if not os.path.exists(algo_path):
                     continue
                 
-                model_node = self.gemini_tree.insert(env_node, "end", text="", 
-                                                    values=("", model_dir, ""))
+                # Create environment node if needed
+                if env_node is None:
+                    env_node = self.gemini_tree.insert("", "end", text="", values=(env_id, "", ""))
                 
-                # Find IG run directories (ig_YYYYMMDD_HHMMSS)
-                for ig_run in sorted(os.listdir(model_path)):
-                    ig_run_path = os.path.join(model_path, ig_run)
-                    if os.path.isdir(ig_run_path) and ig_run.startswith('ig_'):
-                        # Check if success_runs.txt exists
-                        success_file = os.path.join(ig_run_path, 'success_runs.txt')
-                        if os.path.exists(success_file):
-                            self.gemini_tree.insert(model_node, "end", text="", 
-                                                  values=("", "", ig_run),
-                                                  tags=('ig_run',))
-                            count += 1
+                algo_label = "POST_HOC" if algo_dir == "posthoc_concept" else "PPO_CONCEPT"
+                algo_node = self.gemini_tree.insert(env_node, "end", text="", 
+                                                   values=("", algo_label, ""))
+                
+                for model_dir in sorted(os.listdir(algo_path)):
+                    model_path = os.path.join(algo_path, model_dir)
+                    if not os.path.isdir(model_path):
+                        continue
+                    
+                    model_node = self.gemini_tree.insert(algo_node, "end", text="", 
+                                                        values=("", model_dir, ""))
+                    
+                    # Find IG run directories (ig_YYYYMMDD_HHMMSS)
+                    for ig_run in sorted(os.listdir(model_path)):
+                        ig_run_path = os.path.join(model_path, ig_run)
+                        if os.path.isdir(ig_run_path) and ig_run.startswith('ig_'):
+                            # Check if success_runs.txt exists
+                            success_file = os.path.join(ig_run_path, 'success_runs.txt')
+                            if os.path.exists(success_file):
+                                self.gemini_tree.insert(model_node, "end", text="", 
+                                                      values=("", "", ig_run),
+                                                      tags=('ig_run',))
+                                count += 1
         
         self.gemini_log.insert(tk.END, f"✓ Found {count} IG analysis outputs\n")
         self.gemini_log.see(tk.END)
@@ -3717,11 +3742,17 @@ class ModelTesterUI:
         model_values = self.gemini_tree.item(model_item, 'values')
         model_dir = model_values[1]
         
-        env_item = self.gemini_tree.parent(model_item)
+        algo_item = self.gemini_tree.parent(model_item)
+        algo_values = self.gemini_tree.item(algo_item, 'values')
+        algo_label = algo_values[1]  # POST_HOC or PPO_CONCEPT
+        
+        env_item = self.gemini_tree.parent(algo_item)
         env_values = self.gemini_tree.item(env_item, 'values')
         env_id = env_values[0]
         
-        ig_dir = f"ig_out/{env_id}/ppo_concept/{model_dir}/{ig_run}"
+        # Determine algorithm directory
+        algo_dir = "posthoc_concept" if algo_label == "POST_HOC" else "ppo_concept"
+        ig_dir = f"ig_out/{env_id}/{algo_dir}/{model_dir}/{ig_run}"
         
         if not os.path.exists(ig_dir):
             messagebox.showerror("Error", f"IG directory not found:\n{ig_dir}")
@@ -3766,11 +3797,17 @@ class ModelTesterUI:
         model_values = self.gemini_tree.item(model_item, 'values')
         model_dir = model_values[1]
         
-        env_item = self.gemini_tree.parent(model_item)
+        algo_item = self.gemini_tree.parent(model_item)
+        algo_values = self.gemini_tree.item(algo_item, 'values')
+        algo_label = algo_values[1]  # POST_HOC or PPO_CONCEPT
+        
+        env_item = self.gemini_tree.parent(algo_item)
         env_values = self.gemini_tree.item(env_item, 'values')
         env_id = env_values[0]
         
-        ig_dir = f"ig_out/{env_id}/ppo_concept/{model_dir}/{ig_run}"
+        # Determine algorithm directory
+        algo_dir = "posthoc_concept" if algo_label == "POST_HOC" else "ppo_concept"
+        ig_dir = f"ig_out/{env_id}/{algo_dir}/{model_dir}/{ig_run}"
         
         if not os.path.exists(ig_dir):
             messagebox.showerror("Error", f"IG directory not found:\n{ig_dir}")

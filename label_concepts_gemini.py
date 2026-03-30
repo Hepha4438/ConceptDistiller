@@ -37,23 +37,41 @@ def parse_success_runs(txt_path: Path) -> Tuple[Dict, Dict]:
     # Extract model metadata from first episode header
     model_metadata = {
         'n_concepts': 4,  # Default fallback
-        'concept_mode': 5,  # Default fallback
-        'n_continuous_concepts': 1  # Default fallback
+        'concept_mode': 5,  # Default fallback (PPO Mode 5) or 'ste' (PostHoc STE)
+        'n_continuous_concepts': 1,  # Default fallback
+        'model_type': 'PPO_CONCEPT'  # Default fallback
     }
     
     # Try to parse model info from episode header
-    model_info_match = re.search(r'Model: (\d+) concepts, mode (\d+), (\d+) continuous', content)
+    # Handle both PPO_CONCEPT (mode is integer) and PostHoc STE (mode is string)
+    
+    # Try PostHoc format first: "Model: 5 concepts, mode ste, 1 continuous"
+    model_info_match = re.search(r'Model: (\d+) concepts, mode (ste|gated), (\d+) continuous', content)
     if model_info_match:
         model_metadata['n_concepts'] = int(model_info_match.group(1))
-        model_metadata['concept_mode'] = int(model_info_match.group(2))
+        model_metadata['concept_mode'] = model_info_match.group(2)  # 'ste' or 'gated'
         model_metadata['n_continuous_concepts'] = int(model_info_match.group(3))
+        model_metadata['model_type'] = 'PostHoc'
         print(f"\n📊 Model Metadata from success_runs.txt:")
+        print(f"   Model Type: PostHoc {model_metadata['concept_mode'].upper()}")
         print(f"   Total concepts: {model_metadata['n_concepts']}")
-        print(f"   Concept mode: {model_metadata['concept_mode']}")
         print(f"   Continuous concepts: {model_metadata['n_continuous_concepts']}")
         print(f"   STE concepts: {model_metadata['n_concepts'] - model_metadata['n_continuous_concepts']}\n")
     else:
-        print(f"\n⚠️  No model metadata found in success_runs.txt. Using defaults: {model_metadata}\n")
+        # Try PPO_CONCEPT format: "Model: 8 concepts, mode 5, 2 continuous"
+        model_info_match = re.search(r'Model: (\d+) concepts, mode (\d+), (\d+) continuous', content)
+        if model_info_match:
+            model_metadata['n_concepts'] = int(model_info_match.group(1))
+            model_metadata['concept_mode'] = int(model_info_match.group(2))
+            model_metadata['n_continuous_concepts'] = int(model_info_match.group(3))
+            model_metadata['model_type'] = 'PPO_CONCEPT'
+            print(f"\n📊 Model Metadata from success_runs.txt:")
+            print(f"   Model Type: PPO_CONCEPT Mode {model_metadata['concept_mode']}")
+            print(f"   Total concepts: {model_metadata['n_concepts']}")
+            print(f"   Continuous concepts: {model_metadata['n_continuous_concepts']}")
+            print(f"   STE concepts: {model_metadata['n_concepts'] - model_metadata['n_continuous_concepts']}\n")
+        else:
+            print(f"\n⚠️  No model metadata found in success_runs.txt. Using defaults: {model_metadata}\n")
     
     n_concepts = model_metadata['n_concepts']
     n_continuous = model_metadata['n_continuous_concepts']
@@ -141,7 +159,10 @@ def parse_success_runs(txt_path: Path) -> Tuple[Dict, Dict]:
 
 def select_representative_images_with_clustering(ig_out_dir: Path, n_samples: int = 5) -> Dict[str, List[Path]]:
     """
-    Select representative images using clustering
+    Select representative images using clustering OR directly from concept folders
+    Works with both PostHoc (has C2/, C3/, etc with activated/inactive subfolders directly) 
+    and PPO_CONCEPT (has episode_XXX/C1_activated/, etc.)
+    
     Returns dict: {
         "C1_low": [paths], "C1_medium": [paths], "C1_high": [paths],
         "C2_activated": [paths], "C2_inactive": [paths],
@@ -150,38 +171,71 @@ def select_representative_images_with_clustering(ig_out_dir: Path, n_samples: in
     """
     from cluster_concepts import create_clustering_output
     
-    print("🎯 Performing clustering on all concepts...")
+    print("🎯 Selecting representative images from concept folders...")
     
-    # Run clustering
-    cluster_dir = create_clustering_output(ig_out_dir, n_samples=n_samples)
+    # First, check if concept folders already exist at ig_out_dir level (PostHoc structure)
+    # PostHoc structure: C2/, C3/, C4/ with activated/ inactive/ subfolders
+    concept_folders_exist = any(ig_out_dir.glob("C[0-9]"))
     
-    # Collect clustered images
     clustered_images = {}
     
-    # Iterate through all concept folders
-    for concept_dir in sorted(cluster_dir.glob("C*")):
-        concept_name = concept_dir.name
+    if concept_folders_exist:
+        # PostHoc structure: concept folders are at top level with activated/inactive subfolders
+        print("  ✓ Found concept folders at top level (PostHoc STE structure)")
         
-        # Check if it's a continuous concept (has low/medium/high bins)
-        has_bins = (concept_dir / "low").exists() or (concept_dir / "medium").exists() or (concept_dir / "high").exists()
+        # Collect images from existing folders
+        for concept_dir in sorted(ig_out_dir.glob("C[0-9]*")):
+            if not concept_dir.is_dir():
+                continue
+            concept_name = concept_dir.name  # C2, C3, etc.
+            
+            # Check for activated/inactive/low/medium/high subfolders
+            for state_pattern in ["activated", "inactive", "low", "medium", "high"]:
+                state_dir = concept_dir / state_pattern
+                if state_dir.exists() and state_dir.is_dir():
+                    images = list(state_dir.glob("*.png"))
+                    
+                    # Sample n_samples from available images
+                    if len(images) > n_samples:
+                        import random
+                        images = random.sample(images, n_samples)
+                    
+                    if images:  # Only add if we found images
+                        clustered_images[f"{concept_name}_{state_pattern}"] = images
+                        print(f"   ✓ {concept_name} {state_pattern}: {len(images)} samples from {len(list(state_dir.glob('*.png')))} total")
+    else:
+        # PPO_CONCEPT structure: need to run clustering on episodes
+        print("  ℹ Clustering concept patterns from episodes...")
         
-        if has_bins:
-            # Continuous concept - collect from bins
-            for bin_name in ["low", "medium", "high"]:
-                bin_dir = concept_dir / bin_name
-                if bin_dir.exists():
-                    images = list(bin_dir.glob("sample_*.png"))
-                    clustered_images[f"{concept_name}_{bin_name}"] = images
-                    print(f"   ✓ {concept_name} {bin_name}: {len(images)} samples")
-        else:
-            # Binary concept - collect from activated/inactive
-            for state_name in ["activated", "inactive"]:
-                state_dir = concept_dir / state_name
-                if state_dir.exists():
-                    images = list(state_dir.glob("sample_*.png"))
-                    clustered_images[f"{concept_name}_{state_name}"] = images
-                    print(f"   ✓ {concept_name} {state_name}: {len(images)} samples")
+        # Run clustering
+        cluster_dir = create_clustering_output(ig_out_dir, n_samples=n_samples)
+        
+        # Collect clustered images
+        # Iterate through all concept folders
+        for concept_dir in sorted(cluster_dir.glob("C*")):
+            concept_name = concept_dir.name
+            
+            # Check if it's a continuous concept (has low/medium/high bins)
+            has_bins = (concept_dir / "low").exists() or (concept_dir / "medium").exists() or (concept_dir / "high").exists()
+            
+            if has_bins:
+                # Continuous concept - collect from bins
+                for bin_name in ["low", "medium", "high"]:
+                    bin_dir = concept_dir / bin_name
+                    if bin_dir.exists():
+                        images = list(bin_dir.glob("sample_*.png"))
+                        clustered_images[f"{concept_name}_{bin_name}"] = images
+                        print(f"   ✓ {concept_name} {bin_name}: {len(images)} samples")
+            else:
+                # Binary concept - collect from activated/inactive
+                for state_name in ["activated", "inactive"]:
+                    state_dir = concept_dir / state_name
+                    if state_dir.exists():
+                        images = list(state_dir.glob("sample_*.png"))
+                        clustered_images[f"{concept_name}_{state_name}"] = images
+                        print(f"   ✓ {concept_name} {state_name}: {len(images)} samples")
     
+    print(f"  ✓ Total images collected: {sum(len(v) for v in clustered_images.values())}")
     return clustered_images
 
 
@@ -192,6 +246,16 @@ def create_gemini_prompt(summary: Dict, env_name: str, clustered_images: Dict[st
     n_total_concepts = model_metadata.get('n_concepts', len(summary))
     n_continuous = model_metadata.get('n_continuous_concepts', 1)
     n_ste = n_total_concepts - n_continuous
+    model_type = model_metadata.get('model_type', 'PPO_CONCEPT')
+    concept_mode = model_metadata.get('concept_mode', 5)
+    
+    # Determine model type string for display
+    if model_type == 'PostHoc':
+        model_type_str = f"PostHoc {concept_mode.upper()}"
+    elif model_type == 'PPO_CONCEPT':
+        model_type_str = f"PPO_CONCEPT Mode {concept_mode}"
+    else:
+        model_type_str = str(model_type)
     
     # Build concept lists
     continuous_concepts = [f"C{i}" for i in range(1, n_continuous + 1)]
@@ -202,6 +266,10 @@ def create_gemini_prompt(summary: Dict, env_name: str, clustered_images: Dict[st
     all_concepts_str = ", ".join(continuous_concepts + ste_concepts)
     
     prompt = f"""You are analyzing learned concepts from a Reinforcement Learning agent trained on {env_name}.
+
+**Model Information:**
+- Architecture: {model_type_str}
+- Total concepts: {n_total_concepts} ({all_concepts_str})
 
 **Environment Description:**
 - Grid world: 6x6 cells
@@ -403,6 +471,13 @@ def label_concepts_with_gemini(
 ) -> Dict:
     """Main function to label concepts using Gemini API"""
     
+    # Convert to Path if string, and normalize the path
+    if isinstance(ig_out_dir, str):
+        ig_out_dir = Path(ig_out_dir)
+    
+    # Resolve to absolute path and normalize (handles //, .., etc)
+    ig_out_dir = ig_out_dir.resolve()
+    
     print(f"🔍 Analyzing IG output: {ig_out_dir}")
     
     # Parse success_runs.txt
@@ -590,7 +665,8 @@ def main():
     
     args = parser.parse_args()
     
-    ig_dir = Path(args.ig_dir)
+    # Normalize and resolve path
+    ig_dir = Path(args.ig_dir).resolve()
     if not ig_dir.exists():
         raise FileNotFoundError(f"Directory not found: {ig_dir}")
     

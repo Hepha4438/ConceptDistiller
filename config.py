@@ -251,6 +251,7 @@ POST_HOC_CONCEPT_CONFIGS = {
         "lambda_o": 0.05,    # Orthogonality (same as lambda_1)
         "lambda_s": 0.004,   # Sparsity (same as lambda_2)
         "lambda_b": 0.1,     # Binary enforcement weight
+        "concept_mode": "gated",  # 'gated' or 'ste' (Straight-Through Estimator)
     },
     
     # Medium environments - 5 concepts
@@ -266,6 +267,7 @@ POST_HOC_CONCEPT_CONFIGS = {
         "lambda_o": 0.05,
         "lambda_s": 0.004,
         "lambda_b": 0.1,
+        "concept_mode": "gated",  # 'gated' or 'ste' (Straight-Through Estimator)
     },
     
     # Hard environments - 6 concepts
@@ -281,6 +283,7 @@ POST_HOC_CONCEPT_CONFIGS = {
         "lambda_o": 0.05,
         "lambda_s": 0.004,
         "lambda_b": 0.1,
+        "concept_mode": "gated",  # 'gated' or 'ste' (Straight-Through Estimator)
     },
     
     # Extremely hard environments - 8 concepts
@@ -296,6 +299,7 @@ POST_HOC_CONCEPT_CONFIGS = {
         "lambda_o": 0.05,
         "lambda_s": 0.004,
         "lambda_b": 0.1,
+        "concept_mode": "gated",  # 'gated' or 'ste' (Straight-Through Estimator)
     }
 }
 
